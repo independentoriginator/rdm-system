@@ -1,0 +1,35 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="base-types" author="${user}">
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="s"/>
+			<column name="is_primitive" value="true"/>
+		</insert>
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="n"/>
+			<column name="is_primitive" value="true"/>
+		</insert>
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="d"/>
+			<column name="is_primitive" value="true"/>
+		</insert>
+		
+		<insert tableName="meta_type">
+			<column name="internal_name" value="b"/>
+			<column name="is_primitive" value="true"/>
+		</insert>
+
+	</changeSet>
+
+</databaseChangeLog>
