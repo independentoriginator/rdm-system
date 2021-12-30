@@ -1,0 +1,110 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="meta_type-name" author="${user}">
+	
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
+			<column name="internal_name" value="name"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="255"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_localisable" value="true"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
+			<column name="internal_name" value="name"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="255"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_localisable" value="true"/>
+		</insert>
+
+	</changeSet>
+
+	<changeSet id="meta_type-localised-names" author="${user}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_type_lc"/>
+			<tableExists tableName="meta_attribute_lc"/>
+		</preConditions>	
+
+		<insert tableName="meta_type_lc">
+			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.meta_type_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Метатип"/>
+		</insert>
+
+		<insert tableName="meta_type_lc">
+			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.meta_type_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'en')"/>
+			<column name="lc_string" value="Meta type"/>
+		</insert>
+		
+		<insert tableName="meta_attribute_lc">
+			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.meta_type_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Метаатрибут"/>
+		</insert>
+		
+		<insert tableName="meta_attribute_lc">
+			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.meta_type_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'en')"/>
+			<column name="lc_string" value="Meta attribute"/>
+		</insert>
+
+	</changeSet>
+
+</databaseChangeLog>
