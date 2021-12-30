@@ -154,8 +154,8 @@ begin
 				a.meta_type_id = l_type.id
 				and a.is_localisable = false
 			order by 
-				ordinal_position 
-				asc nulls last 
+				ordinal_position asc nulls last, 
+				id asc 
 		) 
 		loop
 			if l_attr.is_column_exists = false then 
@@ -181,51 +181,51 @@ begin
 						, l_attr.target_attr_type
 					);
 				end if;
-				
-				if l_attr.is_non_nullable = true and l_attr.is_notnull_constraint_exists = false then
-					execute format('
-						alter table %I.%I
-							alter column %I set not null
-						'
-						, '${database.defaultSchemaName}'
-						, l_type.internal_name 
-						, l_attr.internal_name 
-					);
-				elsif l_attr.is_non_nullable = false and l_attr.is_notnull_constraint_exists = true then
-					execute format('
-						alter table %I.%I
-							alter column %I drop not null
-						'
-						, '${database.defaultSchemaName}'
-						, l_type.internal_name 
-						, l_attr.internal_name 
-					);
-				end if;
-
-				if l_attr.is_unique = true and l_attr.is_unique_constraint_exists = false then
-					execute format('
-						alter table %I.%I
-							add constraint %I unique (%s)
-						'
-						, '${database.defaultSchemaName}'
-						, l_type.internal_name 
-						, l_attr.unique_constraint_name
-						, l_attr.internal_name
-					);
-				elsif l_attr.is_unique = false and l_attr.is_unique_constraint_exists = true then
-					execute format('
-						alter table %I.%I
-							drop constraint %I
-						'
-						, '${database.defaultSchemaName}'
-						, l_type.internal_name 
-						, l_attr.unique_constraint_name
-					);
-				end if;
-
 			end if;
+				
+			if l_attr.is_non_nullable = true and l_attr.is_notnull_constraint_exists = false then
+				execute format('
+					alter table %I.%I
+						alter column %I set not null
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.internal_name 
+				);
+			elsif l_attr.is_non_nullable = false and l_attr.is_notnull_constraint_exists = true then
+				execute format('
+					alter table %I.%I
+						alter column %I drop not null
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.internal_name 
+				);
+			end if;
+
+			if l_attr.is_unique = true and l_attr.is_unique_constraint_exists = false then
+				execute format('
+					alter table %I.%I
+						add constraint %I unique (%s)
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.unique_constraint_name
+					, l_attr.internal_name
+				);
+			elsif l_attr.is_unique = false and l_attr.is_unique_constraint_exists = true then
+				execute format('
+					alter table %I.%I
+						drop constraint %I
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.unique_constraint_name
+				);
+			end if;
+
 		end loop;
-		
+	
 		if l_type.is_localization_table_generated = true and l_type.is_localization_table_exists = false then
 			execute format('
 				create table %I.%I(
