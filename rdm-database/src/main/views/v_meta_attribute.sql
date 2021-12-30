@@ -14,7 +14,8 @@ with recursive attr as (
 		a.is_non_nullable, 
 		a.is_unique, 
 		a.is_localisable, 
-		a.ordinal_position
+		a.ordinal_position,
+		a.default_value
 	from 
 		${database.defaultSchemaName}.meta_type t
 	left join ${database.defaultSchemaName}.meta_attribute a on a.meta_type_id = t.id 
@@ -32,7 +33,8 @@ with recursive attr as (
 		a_inherited.is_non_nullable, 
 		a_inherited.is_unique, 
 		a_inherited.is_localisable, 
-		a_inherited.ordinal_position
+		a_inherited.ordinal_position,
+		a_inherited.default_value
 	from 
 		attr a
 	join ${database.defaultSchemaName}.meta_attribute a_inherited
@@ -51,7 +53,8 @@ select
 	a.is_non_nullable, 
 	a.is_unique, 
 	a.is_localisable, 
-	a.ordinal_position
+	a.ordinal_position,
+	a.default_value
 from 
 	attr a
 where 

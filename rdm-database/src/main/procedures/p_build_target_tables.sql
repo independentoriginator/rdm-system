@@ -132,7 +132,9 @@ begin
 				case when target_column.is_nullable = 'NO' then true else false end as is_notnull_constraint_exists,
 				a.is_unique,
 				'uc_' || l_type.internal_name || '$' || a.internal_name as unique_constraint_name,
-				case when u_constraint.constraint_name is not null then true else false end as is_unique_constraint_exists			
+				case when u_constraint.constraint_name is not null then true else false end as is_unique_constraint_exists,
+				a.default_value,
+				target_column.column_default
 			from 
 				${database.defaultSchemaName}.v_meta_attribute a
 			join 
@@ -221,6 +223,27 @@ begin
 					, '${database.defaultSchemaName}'
 					, l_type.internal_name 
 					, l_attr.unique_constraint_name
+				);
+			end if;
+
+			if l_attr.default_value is not null and l_attr.default_value <> coalesce(l_attr.column_default, '') then
+				execute format('
+					alter table %I.%I
+						alter column %I set default %s
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.internal_name 
+					, l_attr.default_value
+				);
+			elsif l_attr.default_value is null and l_attr.column_default is not null then
+				execute format('
+					alter table %I.%I
+						alter column %I drop default
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.internal_name 
 				);
 			end if;
 
