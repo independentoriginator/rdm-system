@@ -75,7 +75,7 @@
 				</property>
 			</activation>
 			<properties>
-				<profile.propertyFile>src/main/liquibase-dev.properties</profile.propertyFile>
+				<profile.propertyFile>.settings/liquibase-dev.properties</profile.propertyFile>
 				<profile.changeLogFile>src/main/db.changelog-master.xml</profile.changeLogFile>
 				<profile.verbose>true</profile.verbose>
 				<profile.logging>debug</profile.logging>
