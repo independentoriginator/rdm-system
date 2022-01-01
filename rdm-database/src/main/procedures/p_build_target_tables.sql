@@ -128,6 +128,16 @@ begin
 					else 
 						target_column.data_type
 				end as column_data_type,
+				case 
+					when attr_type.is_abstract = true and a.is_reflective_link = true 
+						then l_type.internal_name
+					else
+						attr_type.internal_name
+				end as attr_type_name,
+				case when attr_type.is_primitive = false then true else false end as is_fk_constraint_added,
+				'fk_' || l_type.internal_name || '$' || a.internal_name as fk_constraint_name,
+				case when fk_constraint.constraint_name is not null then true else false end as is_fk_constraint_exists,
+				case when fk_index.indexname is not null then true else false end as is_fk_index_exists,			
 				a.is_non_nullable,
 				case when target_column.is_nullable = 'NO' then true else false end as is_notnull_constraint_exists,
 				a.is_unique,
@@ -146,9 +156,18 @@ begin
 				and target_column.table_name = l_type.internal_name
 				and target_column.column_name = a.internal_name
 			left join 
+				information_schema.table_constraints fk_constraint 
+				on fk_constraint.table_schema = '${database.defaultSchemaName}'
+				and fk_constraint.table_name = l_type.internal_name
+				and fk_constraint.constraint_name = 'fk_' || l_type.internal_name || '$' || a.internal_name
+				and fk_constraint.constraint_type = 'FOREIGN KEY'
+			left join pg_catalog.pg_indexes fk_index	
+				on fk_index.schemaname = '${database.defaultSchemaName}'
+				and fk_index.tablename = l_type.internal_name
+				and fk_index.indexname = 'fk_' || l_type.internal_name || '$' || a.internal_name
+			left join 
 				information_schema.table_constraints u_constraint 
-				on a.is_unique = true
-				and u_constraint.table_schema = '${database.defaultSchemaName}'
+				on u_constraint.table_schema = '${database.defaultSchemaName}'
 				and u_constraint.table_name = l_type.internal_name
 				and u_constraint.constraint_name = 'uc_' || l_type.internal_name || '$' || a.internal_name
 				and u_constraint.constraint_type = 'UNIQUE'
@@ -184,7 +203,49 @@ begin
 					);
 				end if;
 			end if;
-				
+
+			if l_attr.is_fk_constraint_added = true and l_attr.is_fk_index_exists = false then
+				execute format('
+					create index %I on %I.%I (
+						%s
+					)'
+					, l_attr.fk_constraint_name
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.internal_name
+				);
+			elsif l_attr.is_fk_constraint_added = false and l_attr.is_fk_index_exists = true then
+				execute format('
+					drop index %I.%I
+					'
+					, '${database.defaultSchemaName}'
+					, l_attr.fk_constraint_name
+				);
+			end if;
+
+			if l_attr.is_fk_constraint_added = true and l_attr.is_fk_constraint_exists = false then
+				execute format('
+					alter table %I.%I
+						add constraint %I foreign key (%s) references %I.%I(id) 
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.fk_constraint_name
+					, l_attr.internal_name
+					, '${database.defaultSchemaName}'
+					, l_type.attr_type_name 
+				);
+			elsif l_attr.is_fk_constraint_added = false and l_attr.is_fk_constraint_exists = true then
+				execute format('
+					alter table %I.%I
+						drop constraint %I
+					'
+					, '${database.defaultSchemaName}'
+					, l_type.internal_name 
+					, l_attr.fk_constraint_name
+				);
+			end if;
+			
 			if l_attr.is_non_nullable = true and l_attr.is_notnull_constraint_exists = false then
 				execute format('
 					alter table %I.%I

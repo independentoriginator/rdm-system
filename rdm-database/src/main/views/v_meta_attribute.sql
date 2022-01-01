@@ -8,6 +8,7 @@ with recursive attr as (
         t.id as meta_type_id,
 		a.internal_name,
 		a.attr_type_id, 
+		case when a.attr_type_id = a.meta_type_id then true else false end as is_reflective_link,
 		a.length, 
 		a.precision, 
 		a.scale, 
@@ -27,6 +28,7 @@ with recursive attr as (
 		a_inherited.meta_type_id,
 		a_inherited.internal_name,
 		a_inherited.attr_type_id, 
+		case when a_inherited.attr_type_id = a_inherited.meta_type_id then true else false end as is_reflective_link,
 		a_inherited.length, 
 		a_inherited.precision, 
 		a_inherited.scale, 
@@ -54,7 +56,8 @@ select
 	a.is_unique, 
 	a.is_localisable, 
 	a.ordinal_position,
-	a.default_value
+	a.default_value,
+	a.is_reflective_link
 from 
 	attr a
 where 
