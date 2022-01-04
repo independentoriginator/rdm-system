@@ -13,7 +13,7 @@ begin
 			dependency_level desc
 	) 
 	loop
-		call p_build_target_table(
+		call ${database.defaultSchemaName}.p_build_target_table(
 			i_type_rec => l_type_rec
 		);
 	end loop;

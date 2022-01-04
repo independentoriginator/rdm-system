@@ -13,7 +13,7 @@
 		<createTable
 			tableName="meta_type" 
 			remarks="Метатип">
-			<column name="id" type="integer" autoIncrement="true" remarks="Идентификатор">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
 			<column name="internal_name" type="varchar(63)" remarks="Внутреннее наименование">
@@ -25,10 +25,10 @@
 			<column name="is_abstract" type="boolean" remarks="Признак абстрактного типа" defaultValueBoolean="false">
 				<constraints nullable="false" />
 			</column>
-			<column name="super_type_id" type="integer" remarks="Идентификатор супертипа">
+			<column name="super_type_id" type="bigint" remarks="Идентификатор супертипа">
 				<constraints nullable="true" />
 			</column>
-			<column name="master_type_id" type="integer" remarks="Идентификатор родительского типа">
+			<column name="master_type_id" type="bigint" remarks="Идентификатор родительского типа">
 				<constraints nullable="true" />
 			</column>
 			<column name="is_temporal" type="boolean" remarks="Признак версионного типа" defaultValueBoolean="false">
@@ -75,16 +75,16 @@
 		<createTable
 			tableName="meta_attribute" 
 			remarks="Метаатрибут составного метатипа">
-			<column name="id" type="integer" autoIncrement="true" remarks="Идентификатор">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
-			<column name="meta_type_id" type="integer" remarks="Идентификатор метатипа">
+			<column name="meta_type_id" type="bigint" remarks="Идентификатор метатипа">
 				<constraints nullable="false" />
 			</column>
 			<column name="internal_name" type="varchar(63)" remarks="Внутреннее наименование">
 				<constraints nullable="false" />
 			</column>
-			<column name="attr_type_id" type="integer" remarks="Идентификатор типа атрибута">
+			<column name="attr_type_id" type="bigint" remarks="Идентификатор типа атрибута">
 				<constraints nullable="false" />
 			</column>
 			<column name="length" type="integer" remarks="Максимальное количество символов в строке">

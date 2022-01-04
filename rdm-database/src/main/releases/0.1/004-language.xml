@@ -13,7 +13,7 @@
 		<createTable
 			tableName="language" 
 			remarks="Язык">
-			<column name="id" type="integer" autoIncrement="true" remarks="Идентификатор">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
 			<column name="tag" type="varchar(10)" remarks="Тег">
@@ -27,7 +27,7 @@
 			columnNames="id"/>
 			
 		<addUniqueConstraint 
-			constraintName="uc_language" 
+			constraintName="uc_language$tag" 
 			tableName="language"
 			columnNames="tag"/>
 

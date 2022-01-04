@@ -25,7 +25,7 @@
 			<column name="internal_name" value="is_deprecated"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'b')"/>
 			<column name="is_non_nullable" value="true"/>
-			<column name="default_value" value="false"/>
+			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'bool.false')"/>
 		</insert>
 
 	</changeSet>

@@ -7,16 +7,210 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+        
+	<changeSet id="dbms_type" author="${user}">
+
+		<createTable
+			tableName="dbms_type" 
+			remarks="Тип СУБД (Liquibase-compatible)">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="code" type="varchar(20)" remarks="Код">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		<addPrimaryKey 
+			constraintName="pk_dbms_type" 
+			tableName="dbms_type"
+			columnNames="id"/>
+			
+		<addUniqueConstraint 
+			constraintName="uc_dbms_type$code" 
+			tableName="dbms_type"
+			columnNames="code"/>
+			
+		<insert tableName="meta_type">
+			<column name="internal_name" value="dbms_type"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'dbms_type')"/>
+			<column name="internal_name" value="code"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="20"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_unique" value="true"/>			
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'dbms_type')"/>
+			<column name="internal_name" value="name"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="255"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_localisable" value="true"/>
+		</insert>
+		
+		<insert tableName="dbms_type">
+			<column name="code" value="postgresql"/>
+		</insert>
+
+	</changeSet>        
+        
+	<changeSet id="meta_expr" author="${user}">
+
+		<createTable
+			tableName="meta_expr" 
+			remarks="Метавыражение">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="tag" type="varchar(63)" remarks="Тег">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		<addPrimaryKey 
+			constraintName="pk_meta_expr" 
+			tableName="meta_expr"
+			columnNames="id"/>
+			
+		<addUniqueConstraint 
+			constraintName="uc_meta_expr$tag" 
+			tableName="meta_expr"
+			columnNames="tag"/>
+			
+		<createTable
+			tableName="meta_expr_body" 
+			remarks="Тело метавыражения">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="meta_expr_id" type="bigint" remarks="Идентификатор метавыражения">
+				<constraints nullable="true" />
+			</column>
+			<column name="dbms_type_id" type="bigint" remarks="Идентификатор типа СУБД">
+				<constraints nullable="true" />
+			</column>
+			<column name="expr_text" type="varchar(255)" remarks="Текст выражения">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		<createIndex 
+			indexName="i_meta_expr_body$meta_expr_id" 
+			tableName="meta_expr_body">
+			<column name="meta_expr_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_expr_body$meta_expr_id"
+			baseTableName="meta_expr_body" 
+			baseColumnNames="meta_expr_id" 
+			referencedTableName="meta_expr" 
+			referencedColumnNames="id" />
+		
+		<createIndex 
+			indexName="i_meta_expr_body$dbms_type_id" 
+			tableName="meta_expr_body">
+			<column name="dbms_type_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_expr_body$dbms_type_id"
+			baseTableName="meta_expr_body" 
+			baseColumnNames="dbms_type_id" 
+			referencedTableName="dbms_type" 
+			referencedColumnNames="id" />
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="meta_expr"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_expr')"/>
+			<column name="internal_name" value="tag"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="63"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_unique" value="true"/>			
+		</insert>
+		
+		<insert tableName="meta_type">
+			<column name="internal_name" value="meta_expr_body"/>
+			<column name="master_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_expr')"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_expr_body')"/>
+			<column name="internal_name" value="dbms_type_id"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'dbms_type')"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_expr_body')"/>
+			<column name="internal_name" value="expr_text"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="255"/>
+			<column name="is_non_nullable" value="true"/>
+		</insert>
+		
+		<insert tableName="meta_expr">
+			<column name="tag" value="bool.true"/>
+		</insert>
+
+		<insert tableName="meta_expr_body">
+			<column name="meta_expr_id" valueComputed="(select id from meta_expr where tag = 'bool.true')"/>
+			<column name="dbms_type_id" valueComputed="(select id from dbms_type where code = 'postgresql')"/>
+			<column name="expr_text" value="true"/>
+		</insert>
+		
+		<insert tableName="meta_expr">
+			<column name="tag" value="bool.false"/>
+		</insert>
+
+		<insert tableName="meta_expr_body">
+			<column name="meta_expr_id" valueComputed="(select id from meta_expr where tag = 'bool.false')"/>
+			<column name="dbms_type_id" valueComputed="(select id from dbms_type where code = 'postgresql')"/>
+			<column name="expr_text" value="false"/>
+		</insert>
+
+	</changeSet>        
 
 	<changeSet id="attribute-default-value" author="${user}">
 
 		<addColumn tableName="meta_attribute">
 			<column 
 				name="default_value" 
-				type="varchar(255)"
+				type="bigint"
 				remarks="Значение по умолчанию"
 			/>
 		</addColumn> 
+		
+		<createIndex 
+			indexName="i_meta_attribute$default_value" 
+			tableName="meta_attribute">
+			<column name="default_value" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_attribute$default_value"
+			baseTableName="meta_attribute" 
+			baseColumnNames="default_value" 
+			referencedTableName="meta_expr" 
+			referencedColumnNames="id" />
+
+	</changeSet>
+
+	<changeSet id="attribute-default-value-reg" author="${user}">
+
+		<insert tableName="meta_attribute">
+			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
+			<column name="internal_name" value="default_value"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_expr')"/>
+		</insert>
 
 	</changeSet>
 

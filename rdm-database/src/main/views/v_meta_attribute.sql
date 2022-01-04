@@ -52,7 +52,7 @@ select
 	a.internal_name,
 	case attr_type.internal_name
 		when 's' 
-			then 'varchar' ||
+			then 'character varying' ||
 				case when a.length is not null 
 					then '(' || a.length::text || ')' 
 					else ''
@@ -105,7 +105,7 @@ select
 	'uc_' || t.internal_name || '$' || a.internal_name as unique_constraint_name,
 	case when u_constraint.constraint_name is not null then true else false end as is_unique_constraint_exists,
 	'chk_' || t.internal_name || '$' || a.internal_name as check_constraint_name,
-	a.default_value,
+	def_val_expr.expr_text as default_value,
 	target_column.column_default
 from 
 	attr a
@@ -114,7 +114,7 @@ join
 	on t.id = a.descendant_type_id				
 join 
 	${database.defaultSchemaName}.meta_type attr_type
-	on attr_type.id = a.attr_type_id				
+	on attr_type.id = a.attr_type_id			
 left join 
 	information_schema.columns target_column
 	on target_column.table_schema = '${database.defaultSchemaName}'
@@ -136,6 +136,17 @@ left join
 	and u_constraint.table_name = t.internal_name
 	and u_constraint.constraint_name = 'uc_' || t.internal_name || '$' || a.internal_name
 	and u_constraint.constraint_type = 'UNIQUE'
+left join
+	${database.defaultSchemaName}.meta_expr_body def_val_expr
+	on def_val_expr.meta_expr_id = a.default_value
+	and def_val_expr.dbms_type_id = (
+		select 
+			id
+		from
+			${database.defaultSchemaName}.dbms_type
+		where
+			code = 'postgresql'
+	)
 where 
 	a.id is not null
 	and a.is_localisable = false
