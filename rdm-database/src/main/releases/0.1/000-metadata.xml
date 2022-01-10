@@ -78,7 +78,7 @@
 			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
-			<column name="meta_type_id" type="bigint" remarks="Идентификатор метатипа">
+			<column name="master_id" type="bigint" remarks="Идентификатор метатипа">
 				<constraints nullable="false" />
 			</column>
 			<column name="internal_name" type="varchar(63)" remarks="Внутреннее наименование">
@@ -118,18 +118,18 @@
 		<addUniqueConstraint 
 			constraintName="uc_meta_attribute" 
 			tableName="meta_attribute"
-			columnNames="meta_type_id, internal_name"/>
+			columnNames="master_id, internal_name"/>
 
 		<createIndex 
-			indexName="i_meta_attribute$meta_type_id" 
+			indexName="i_meta_attribute$master_id" 
 			tableName="meta_attribute">
-			<column name="meta_type_id" />
+			<column name="master_id" />
 		</createIndex>
 
 		<addForeignKeyConstraint 
-			constraintName="fk_meta_attribute$meta_type_id"
+			constraintName="fk_meta_attribute$master_id"
 			baseTableName="meta_attribute" 
-			baseColumnNames="meta_type_id" 
+			baseColumnNames="master_id" 
 			referencedTableName="meta_type" 
 			referencedColumnNames="id" />
 

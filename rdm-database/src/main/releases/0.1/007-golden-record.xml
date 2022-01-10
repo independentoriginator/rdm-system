@@ -15,13 +15,13 @@
 			- "Deprecation mark"</comment>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="golden_record_id"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 		</insert>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="is_deprecated"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'b')"/>
 			<column name="is_non_nullable" value="true"/>

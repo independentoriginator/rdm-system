@@ -11,7 +11,7 @@
 	<changeSet id="meta_type-name" author="${user}">
 	
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="255"/>
@@ -20,7 +20,7 @@
 		</insert>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="255"/>
@@ -38,14 +38,14 @@
 		</preConditions>	
 
 		<insert tableName="meta_type_lc">
-			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
 			<column name="attr_id" valueComputed="(
 				select 
 					a.id
 				from 
 					meta_type t 
 				join meta_attribute a 
-					on a.meta_type_id = t.id 
+					on a.master_id = t.id 
 				where 
 					t.internal_name = 'meta_type'
 					and a.internal_name = 'name'
@@ -55,14 +55,14 @@
 		</insert>
 
 		<insert tableName="meta_type_lc">
-			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
 			<column name="attr_id" valueComputed="(
 				select 
 					a.id
 				from 
 					meta_type t 
 				join meta_attribute a 
-					on a.meta_type_id = t.id 
+					on a.master_id = t.id 
 				where 
 					t.internal_name = 'meta_type'
 					and a.internal_name = 'name'
@@ -72,14 +72,14 @@
 		</insert>
 		
 		<insert tableName="meta_attribute_lc">
-			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
 			<column name="attr_id" valueComputed="(
 				select 
 					a.id
 				from 
 					meta_type t 
 				join meta_attribute a 
-					on a.meta_type_id = t.id 
+					on a.master_id = t.id 
 				where 
 					t.internal_name = 'meta_attribute'
 					and a.internal_name = 'name'
@@ -89,14 +89,14 @@
 		</insert>
 		
 		<insert tableName="meta_attribute_lc">
-			<column name="type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
 			<column name="attr_id" valueComputed="(
 				select 
 					a.id
 				from 
 					meta_type t 
 				join meta_attribute a 
-					on a.meta_type_id = t.id 
+					on a.master_id = t.id 
 				where 
 					t.internal_name = 'meta_attribute'
 					and a.internal_name = 'name'

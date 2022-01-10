@@ -16,7 +16,7 @@
 		</insert>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="code"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="20"/>			
@@ -25,7 +25,7 @@
 		</insert>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="4000"/>
@@ -34,7 +34,7 @@
 		</insert>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="description"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="4000"/>

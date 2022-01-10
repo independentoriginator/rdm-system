@@ -30,7 +30,23 @@ select
 		i_meta_type_id => t.id 
 	) as is_localization_table_generated,
 	t.internal_name || '_lc' as localization_table_name,
-	case when lc_table.table_name is not null then true else false end as is_localization_table_exists
+	case when lc_table.table_name is not null then true else false end as is_localization_table_exists,
+	t.master_type_id,
+	master_type.internal_name as master_type_name,
+	case 
+		when exists (
+				select 
+					1
+				from
+					information_schema.columns target_column
+				where
+					target_column.table_schema = '${database.defaultSchemaName}'
+					and target_column.table_name = t.internal_name
+					and target_column.column_name = 'master_id'
+			)
+		then true
+		else false
+	end as is_ref_to_master_column_exists
 from 
 	${database.defaultSchemaName}.meta_type t
 left join 
@@ -47,6 +63,9 @@ left join
 	on pk_constraint.table_schema = '${database.defaultSchemaName}'
 	and pk_constraint.table_name = t.internal_name
 	and pk_constraint.constraint_type = 'PRIMARY KEY'
+left join
+	${database.defaultSchemaName}.meta_type master_type
+	on master_type.id = t.master_type_id
 left join 
 	information_schema.tables lc_table 
 	on lc_table.table_schema = '${database.defaultSchemaName}'

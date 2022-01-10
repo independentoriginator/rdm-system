@@ -12,46 +12,103 @@
 
 		<insert tableName="meta_type">
 			<column name="internal_name" value="meta_index"/>
+			<column name="master_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
 		</insert>
-
+		
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
-			<column name="internal_name" value="internal_name"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
+			<column name="internal_name" value="tag"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="63"/>
 			<column name="is_non_nullable" value="true"/>
-			<column name="is_unique" value="true"/>			
-		</insert>
-
-		<insert tableName="meta_type">
-			<column name="internal_name" value="meta_index_attr"/>
-			<column name="master_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
-		</insert>
-
-		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_index_attr')"/>
-			<column name="internal_name" value="meta_attr_id"/>
-			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
-			<column name="is_non_nullable" value="true"/>
-		</insert>
-
-		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_index_attr')"/>
-			<column name="internal_name" value="ordinal_position"/>
-			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'n')"/>
-			<column name="is_non_nullable" value="true"/>
 		</insert>
 		
-	</changeSet>        
-
-	<changeSet id="meta_index-uniqueness" author="${user}">
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
 			<column name="internal_name" value="is_unique"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'b')"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'bool.false')"/>
 		</insert>
-	</changeSet>      
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="meta_index_column"/>
+			<column name="master_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index_column')"/>
+			<column name="internal_name" value="meta_attr_name"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="63"/>
+			<column name="is_non_nullable" value="true"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index_column')"/>
+			<column name="internal_name" value="ordinal_position"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'n')"/>
+			<column name="is_non_nullable" value="false"/>
+		</insert>
+		
+	</changeSet>       
+	
+	<changeSet id="meta_index-tag-uniqueness" author="${user}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_index"/>
+			<tableExists tableName="meta_index_column"/>
+		</preConditions>	
+
+		<insert tableName="meta_index">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
+			<column name="tag" value="master_id_tag"/>			
+			<column name="is_unique" value="true"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'meta_index'
+					)
+					and tag = 'master_id_tag' 
+			)"/>
+			<column name="meta_attr_name" value="master_id"/>
+			<column name="ordinal_position" value="0"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'meta_index'
+					)
+					and tag = 'master_id_tag' 
+			)"/>
+			<column name="meta_attr_name" value="tag"/>
+			<column name="ordinal_position" value="1"/>
+		</insert>
+
+	</changeSet>
+	 
 	
 </databaseChangeLog>

@@ -18,15 +18,15 @@ with recursive attr as (
 		a.default_value
 	from 
 		${database.defaultSchemaName}.meta_type t
-	left join ${database.defaultSchemaName}.meta_attribute a on a.meta_type_id = t.id 
+	left join ${database.defaultSchemaName}.meta_attribute a on a.master_id = t.id 
 	union all
 	select 
 		a_inherited.id,
         a.descendant_type_id,
         t.super_type_id,
-		a_inherited.meta_type_id,
+		a_inherited.master_id as meta_type_id,
 		a_inherited.internal_name,
-		case when a_inherited.attr_type_id = a_inherited.meta_type_id 
+		case when a_inherited.attr_type_id = a_inherited.master_id 
 			then a.descendant_type_id
 			else a_inherited.attr_type_id 
 		end as attr_type_id,
@@ -41,13 +41,13 @@ with recursive attr as (
 	from 
 		attr a
 	join ${database.defaultSchemaName}.meta_attribute a_inherited
-		on a_inherited.meta_type_id = a.super_type_id
+		on a_inherited.master_id = a.super_type_id
 	join ${database.defaultSchemaName}.meta_type t 
-		on t.id = a_inherited.meta_type_id
+		on t.id = a_inherited.master_id
 )
 select
 	a.id,
-	t.id as meta_type_id,
+	t.id as master_id,
 	t.internal_name as meta_type_name,
 	a.internal_name,
 	case attr_type.internal_name
@@ -138,7 +138,7 @@ left join
 	and u_constraint.constraint_type = 'UNIQUE'
 left join
 	${database.defaultSchemaName}.meta_expr_body def_val_expr
-	on def_val_expr.meta_expr_id = a.default_value
+	on def_val_expr.master_id = a.default_value
 	and def_val_expr.dbms_type_id = (
 		select 
 			id

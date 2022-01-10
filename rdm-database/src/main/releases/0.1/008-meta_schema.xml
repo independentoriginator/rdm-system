@@ -36,7 +36,7 @@
 		</insert>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
 			<column name="internal_name" value="internal_name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="63"/>
@@ -45,7 +45,7 @@
 		</insert>
 
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="255"/>
@@ -57,8 +57,7 @@
 			<column 
 				name="meta_schema_id" 
 				type="bigint"
-				remarks="Идентификатор метасхемы"
-			/>
+				remarks="Идентификатор метасхемы" />
 		</addColumn> 
 		
 		<createIndex 
@@ -75,7 +74,7 @@
 			referencedColumnNames="id" />
 			
 		<insert tableName="meta_attribute">
-			<column name="meta_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
 			<column name="internal_name" value="meta_schema_id"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
 			<column name="is_non_nullable" value="false"/>

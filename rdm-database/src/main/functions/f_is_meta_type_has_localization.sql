@@ -12,7 +12,7 @@ select
 			from 
 				${database.defaultSchemaName}.meta_attribute a
 			where
-				a.meta_type_id = t.id
+				a.master_id = t.id
 				and a.is_localisable = true
 		) or (
 			t.super_type_id is not null

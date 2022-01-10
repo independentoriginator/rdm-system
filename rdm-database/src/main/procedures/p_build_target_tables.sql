@@ -10,7 +10,7 @@ begin
 		from 
 			${database.defaultSchemaName}.v_meta_type t
 		order by 
-			dependency_level desc
+			dependency_level
 	) 
 	loop
 		call ${database.defaultSchemaName}.p_build_target_table(
