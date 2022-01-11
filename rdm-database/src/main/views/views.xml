@@ -29,4 +29,15 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="v_meta_index-view" author="${user}" runOnChange="true">
+		<createView 
+			viewName="v_meta_index" 
+			path="v_meta_index.sql"
+			remarks="Meta indexes"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 </databaseChangeLog>

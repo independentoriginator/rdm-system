@@ -53,13 +53,30 @@
 		
 	</changeSet>       
 	
+	<changeSet id="meta_index-tag-unique-index" author="${user}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_index"/>
+			<tableExists tableName="meta_index_column"/>
+		</preConditions>	
+		
+		<createIndex 
+			indexName="i_meta_index$master_id_tag" 
+			tableName="meta_index"
+			unique="true">
+			<column name="master_id" />
+			<column name="tag" />
+		</createIndex>
+		
+	</changeSet>
+	
 	<changeSet id="meta_index-tag-uniqueness" author="${user}">
 	
 		<preConditions onFail="CONTINUE">
 			<tableExists tableName="meta_index"/>
 			<tableExists tableName="meta_index_column"/>
 		</preConditions>	
-
+		
 		<insert tableName="meta_index">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
 			<column name="tag" value="master_id_tag"/>			
