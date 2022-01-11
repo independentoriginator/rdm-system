@@ -15,7 +15,7 @@ begin
 		execute format('
 			drop index %I.%I
 			'
-			, '${database.defaultSchemaName}'
+			, i_index_rec.schema_name
 			, i_index_rec.index_name
 		);
 		l_is_target_index_exists = false;
@@ -28,7 +28,7 @@ begin
 			)'
 			, case when i_index_rec.is_unique then 'unique' else '' end
 			, i_index_rec.index_name
-			, '${database.defaultSchemaName}'
+			, i_index_rec.schema_name
 			, i_index_rec.meta_type_name 
 			, i_index_rec.index_columns
 		);

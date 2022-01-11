@@ -55,27 +55,27 @@
 		
 		<addColumn tableName="meta_type">
 			<column 
-				name="meta_schema_id" 
+				name="schema_id" 
 				type="bigint"
 				remarks="Идентификатор метасхемы" />
 		</addColumn> 
 		
 		<createIndex 
-			indexName="i_meta_type$meta_schema_id" 
+			indexName="i_meta_type$schema_id" 
 			tableName="meta_type">
-			<column name="meta_schema_id" />
+			<column name="schema_id" />
 		</createIndex>
 
 		<addForeignKeyConstraint 
-			constraintName="fk_meta_type$meta_schema_id"
+			constraintName="fk_meta_type$schema_id"
 			baseTableName="meta_type" 
-			baseColumnNames="meta_schema_id" 
+			baseColumnNames="schema_id" 
 			referencedTableName="meta_schema" 
 			referencedColumnNames="id" />
 			
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
-			<column name="internal_name" value="meta_schema_id"/>
+			<column name="internal_name" value="schema_id"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
 			<column name="is_non_nullable" value="false"/>
 		</insert>

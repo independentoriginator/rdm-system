@@ -49,6 +49,7 @@ select
 	a.id,
 	t.id as master_id,
 	t.internal_name as meta_type_name,
+	coalesce(s.internal_name, '${database.defaultSchemaName}') as schema_name, 
 	a.internal_name,
 	case attr_type.internal_name
 		when 's' 
@@ -114,25 +115,29 @@ join
 	on t.id = a.descendant_type_id				
 join 
 	${database.defaultSchemaName}.meta_type attr_type
-	on attr_type.id = a.attr_type_id			
+	on attr_type.id = a.attr_type_id		
+left join ${database.defaultSchemaName}.meta_schema s
+	on s.id = t.schema_id
+left join information_schema.schemata target_schema
+	on target_schema.schema_name = coalesce(s.internal_name, '${database.defaultSchemaName}')
 left join 
 	information_schema.columns target_column
-	on target_column.table_schema = '${database.defaultSchemaName}'
+	on target_column.table_schema = target_schema.schema_name
 	and target_column.table_name = t.internal_name
 	and target_column.column_name = a.internal_name
 left join 
 	information_schema.table_constraints fk_constraint 
-	on fk_constraint.table_schema = '${database.defaultSchemaName}'
+	on fk_constraint.table_schema = target_schema.schema_name
 	and fk_constraint.table_name = t.internal_name
 	and fk_constraint.constraint_name = 'fk_' || t.internal_name || '$' || a.internal_name
 	and fk_constraint.constraint_type = 'FOREIGN KEY'
 left join pg_catalog.pg_indexes fk_index	
-	on fk_index.schemaname = '${database.defaultSchemaName}'
+	on fk_index.schemaname = target_schema.schema_name
 	and fk_index.tablename = t.internal_name
 	and fk_index.indexname = 'i_' || t.internal_name || '$' || a.internal_name
 left join 
 	information_schema.table_constraints u_constraint 
-	on u_constraint.table_schema = '${database.defaultSchemaName}'
+	on u_constraint.table_schema = target_schema.schema_name
 	and u_constraint.table_name = t.internal_name
 	and u_constraint.constraint_name = 'uc_' || t.internal_name || '$' || a.internal_name
 	and u_constraint.constraint_type = 'UNIQUE'

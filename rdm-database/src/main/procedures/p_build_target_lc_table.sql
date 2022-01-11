@@ -20,16 +20,16 @@ begin
 					constraint fk_%I$attr_id foreign key (attr_id) references %I.meta_attribute(id),
 					constraint fk_%I$lang_id foreign key (lang_id) references %I.language(id)
 				)'
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name				
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'				
+				, i_type_rec.schema_name				
 			);
 			
 			execute format('
@@ -38,13 +38,13 @@ begin
 				create index i_%I$lang_id on %I.%I(lang_id);
 				'
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 			);
 
@@ -55,7 +55,7 @@ begin
 				where is_default_value = true
 				'
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 			);
 		else
@@ -72,16 +72,16 @@ begin
 					constraint fk_%I$attr_id foreign key (attr_id) references %I.meta_attribute(id),
 					constraint fk_%I$lang_id foreign key (lang_id) references %I.language(id)
 				)'
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name				
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'				
+				, i_type_rec.schema_name				
 			);
 			
 			execute format('
@@ -90,13 +90,13 @@ begin
 				create index i_%I$lang_id on %I.%I(lang_id);
 				'
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 			);
 
@@ -107,7 +107,7 @@ begin
 				where is_default_value = true
 				'
 				, i_type_rec.localization_table_name
-				, '${database.defaultSchemaName}'
+				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 			);
 		end if;			
@@ -115,7 +115,7 @@ begin
 		execute format('
 			drop table %I.%I
 			'
-			, '${database.defaultSchemaName}'
+			, i_type_rec.schema_name
 			, i_type_rec.localization_table_name
 		);
 	end if;

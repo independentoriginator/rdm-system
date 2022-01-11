@@ -11,7 +11,7 @@ begin
 					add column %I %s %s null,
 					add column %I %s %s null
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 				, i_attr_rec.target_attr_type				
@@ -25,7 +25,7 @@ begin
 				alter table %I.%I
 					add column %I %s %s null
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 				, i_attr_rec.target_attr_type				
@@ -38,7 +38,7 @@ begin
 				alter table %I.%I
 					alter column %I set data type %s
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 				, i_attr_rec.target_attr_type
@@ -53,7 +53,7 @@ begin
 					%s, %s
 				)'
 				, i_attr_rec.index_name
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name
 				, i_attr_rec.version_ref_name
@@ -64,7 +64,7 @@ begin
 					%s
 				)'
 				, i_attr_rec.index_name
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name
 			);
@@ -73,7 +73,7 @@ begin
 		execute format('
 			drop index %I.%I
 			'
-			, '${database.defaultSchemaName}'
+			, i_attr_rec.schema_name
 			, i_attr_rec.index_name
 		);
 	end if;
@@ -85,12 +85,12 @@ begin
 					add constraint %I foreign key (%s, %s) references %I.%I(id, version),
 					add constraint %I check (case when %s is null then 1 else 0 end = case when %s is null then 1 else 0 end)
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.fk_constraint_name
 				, i_attr_rec.internal_name
 				, i_attr_rec.version_ref_name
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.attr_type_name 
 				, i_attr_rec.check_constraint_name
 				, i_attr_rec.internal_name
@@ -101,11 +101,11 @@ begin
 				alter table %I.%I
 					add constraint %I foreign key (%s) references %I.%I(id) 
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.fk_constraint_name
 				, i_attr_rec.internal_name
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.attr_type_name 
 			);
 		end if;
@@ -114,7 +114,7 @@ begin
 			alter table %I.%I
 				drop constraint %I
 			'
-			, '${database.defaultSchemaName}'
+			, i_attr_rec.schema_name
 			, i_attr_rec.meta_type_name 
 			, i_attr_rec.fk_constraint_name
 		);
@@ -127,7 +127,7 @@ begin
 					alter column %s set not null,
 					alter column %s set not null
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 				, i_attr_rec.version_ref_name
@@ -137,7 +137,7 @@ begin
 				alter table %I.%I
 					alter column %s set not null
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 			);
@@ -149,7 +149,7 @@ begin
 					alter column %s drop not null,
 					alter column %s drop not null
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 				, i_attr_rec.version_ref_name						
@@ -159,7 +159,7 @@ begin
 				alter table %I.%I
 					alter column %s drop not null
 				'
-				, '${database.defaultSchemaName}'
+				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 			);
@@ -171,7 +171,7 @@ begin
 			alter table %I.%I
 				add constraint %I unique (%s)
 			'
-			, '${database.defaultSchemaName}'
+			, i_attr_rec.schema_name
 			, i_attr_rec.meta_type_name 
 			, i_attr_rec.unique_constraint_name
 			, i_attr_rec.internal_name
@@ -181,7 +181,7 @@ begin
 			alter table %I.%I
 				drop constraint %I
 			'
-			, '${database.defaultSchemaName}'
+			, i_attr_rec.schema_name
 			, i_attr_rec.meta_type_name 
 			, i_attr_rec.unique_constraint_name
 		);
@@ -192,7 +192,7 @@ begin
 			alter table %I.%I
 				alter column %s set default %s
 			'
-			, '${database.defaultSchemaName}'
+			, i_attr_rec.schema_name
 			, i_attr_rec.meta_type_name 
 			, i_attr_rec.internal_name 
 			, i_attr_rec.default_value
@@ -202,7 +202,7 @@ begin
 			alter table %I.%I
 				alter column %s drop default
 			'
-			, '${database.defaultSchemaName}'
+			, i_attr_rec.schema_name
 			, i_attr_rec.meta_type_name 
 			, i_attr_rec.internal_name 
 		);

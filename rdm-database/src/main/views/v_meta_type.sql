@@ -6,6 +6,9 @@ select
 	${database.defaultSchemaName}.f_meta_type_dependency_level(
 		i_meta_type_id => t.id
 	) as dependency_level,
+	t.schema_id,
+	coalesce(s.internal_name, '${database.defaultSchemaName}') as schema_name,
+	case when target_schema.schema_name is not null and target_schema.schema_name = s.internal_name then true else false end as is_schema_exists,
 	case when target_table.table_name is not null then true else false end as is_table_exists,
 	'pk_' || t.internal_name as pk_index_name,
 	case when pk_index.indexname is not null then true else false end as is_pk_index_exists,			
@@ -19,7 +22,7 @@ select
 				from
 					information_schema.columns target_column
 				where
-					target_column.table_schema = '${database.defaultSchemaName}'
+					target_column.table_schema = target_schema.schema_name
 					and target_column.table_name = t.internal_name
 					and target_column.column_name = 'version'
 			)
@@ -40,7 +43,7 @@ select
 				from
 					information_schema.columns target_column
 				where
-					target_column.table_schema = '${database.defaultSchemaName}'
+					target_column.table_schema = target_schema.schema_name
 					and target_column.table_name = t.internal_name
 					and target_column.column_name = 'master_id'
 			)
@@ -49,26 +52,26 @@ select
 	end as is_ref_to_master_column_exists
 from 
 	${database.defaultSchemaName}.meta_type t
-left join 
-	information_schema.tables target_table 
-	on target_table.table_schema = '${database.defaultSchemaName}'
+left join ${database.defaultSchemaName}.meta_schema s
+	on s.id = t.schema_id
+left join information_schema.schemata target_schema
+	on target_schema.schema_name = coalesce(s.internal_name, '${database.defaultSchemaName}')
+left join information_schema.tables target_table 
+	on target_table.table_schema = target_schema.schema_name
 	and target_table.table_name = t.internal_name
 	and target_table.table_type = 'BASE TABLE'
 left join pg_catalog.pg_indexes pk_index	
-	on pk_index.schemaname = '${database.defaultSchemaName}'
+	on pk_index.schemaname = target_schema.schema_name
 	and pk_index.tablename = t.internal_name
 	and pk_index.indexname = 'pk_' || t.internal_name
-left join 
-	information_schema.table_constraints pk_constraint 
-	on pk_constraint.table_schema = '${database.defaultSchemaName}'
+left join information_schema.table_constraints pk_constraint 
+	on pk_constraint.table_schema = target_schema.schema_name
 	and pk_constraint.table_name = t.internal_name
 	and pk_constraint.constraint_type = 'PRIMARY KEY'
-left join
-	${database.defaultSchemaName}.meta_type master_type
+left join ${database.defaultSchemaName}.meta_type master_type
 	on master_type.id = t.master_type_id
-left join 
-	information_schema.tables lc_table 
-	on lc_table.table_schema = '${database.defaultSchemaName}'
+left join information_schema.tables lc_table 
+	on lc_table.table_schema = target_schema.schema_name
 	and lc_table.table_name = t.internal_name || '_lc'
 	and lc_table.table_type = 'BASE TABLE'
 where 

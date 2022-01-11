@@ -5,6 +5,7 @@ with recursive type_index as (
 		i.id,
         t.id AS descendant_type_id,
         t.super_type_id,
+        t.schema_id,
 		i.tag,
 		i.is_unique 
 	from 
@@ -15,6 +16,7 @@ with recursive type_index as (
 		i_inherited.id,
         i.descendant_type_id,
         t.super_type_id,
+        t.schema_id,
 		i_inherited.tag,
 		i_inherited.is_unique 
 	from 
@@ -28,6 +30,7 @@ select
 	i.id,
 	i.master_id,
 	i.meta_type_name,
+	i.schema_name,
 	i.index_name,
 	i.index_columns,
 	case when target_index.oid is not null then true else false end as is_target_index_exists,
@@ -38,14 +41,17 @@ from (
 		i.id,
 		t.id as master_id,
 		t.internal_name as meta_type_name,
+		coalesce(s.internal_name, '${database.defaultSchemaName}') as schema_name,
 		i.is_unique,
-		'i_' || t.internal_name || '$' || replace(ic.index_columns, ',', '_') as index_name,
+		'i_' || t.internal_name || '$' || i.tag as index_name,
 		ic.index_columns		
 	from 
 		type_index i
 	join 
 		${database.defaultSchemaName}.meta_type t
 		on t.id = i.descendant_type_id	
+	left join ${database.defaultSchemaName}.meta_schema s
+		on s.id = t.schema_id
 	join lateral (
 		select 
 			string_agg(ic.meta_attr_name, ',' order by ic.ordinal_position) as index_columns
@@ -55,8 +61,10 @@ from (
 			ic.master_id = i.id
 	) ic on true
 ) i
-join pg_catalog.pg_class target_table 
-	on target_table.relnamespace = '${database.defaultSchemaName}'::regnamespace
+left join pg_catalog.pg_namespace n 
+	on n.nspname = i.schema_name
+left join pg_catalog.pg_class target_table 
+	on target_table.relnamespace = n.oid
 	and target_table.relname = i.meta_type_name
 left join pg_catalog.pg_class target_index
 	on target_index.relnamespace = target_table.relnamespace

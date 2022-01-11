@@ -9,6 +9,79 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
         
 	<changeSet id="meta_index" author="${user}">
+	
+		<createTable
+			tableName="meta_index" 
+			remarks="Метаиндекс">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="master_id" type="bigint" remarks="Идентификатор метатипа">
+				<constraints nullable="false" />
+			</column>
+			<column name="tag" type="varchar(63)" remarks="Тег">
+				<constraints nullable="false" />
+			</column>
+			<column name="is_unique" type="boolean" remarks="Признак уникального индекса" defaultValueBoolean="false">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		<addPrimaryKey 
+			constraintName="pk_meta_index" 
+			tableName="meta_index"
+			columnNames="id"/>
+			
+		<createIndex 
+			indexName="i_meta_index$master_id" 
+			tableName="meta_index">
+			<column name="master_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_index$master_id"
+			baseTableName="meta_index" 
+			baseColumnNames="master_id" 
+			referencedTableName="meta_type" 
+			referencedColumnNames="id" />
+			
+		<createIndex 
+			indexName="i_meta_index$master_id_tag" 
+			tableName="meta_index"
+			unique="true">
+			<column name="master_id" />
+			<column name="tag" />
+		</createIndex>
+			
+		<createTable
+			tableName="meta_index_column" 
+			remarks="Столбец метаиндекса">
+			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="master_id" type="bigint" remarks="Идентификатор метаиндекса">
+				<constraints nullable="false" />
+			</column>
+			<column name="meta_attr_name" type="varchar(63)" remarks="Наименование столбца">
+				<constraints nullable="false" />
+			</column>
+			<column name="ordinal_position" type="numeric(3)" remarks="Порядковый номер">
+				<constraints nullable="true" />
+			</column>
+		</createTable>
+		
+		<createIndex 
+			indexName="i_meta_index_column$master_id" 
+			tableName="meta_index_column">
+			<column name="master_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_index_column$master_id"
+			baseTableName="meta_index_column" 
+			baseColumnNames="master_id" 
+			referencedTableName="meta_index" 
+			referencedColumnNames="id" />
 
 		<insert tableName="meta_type">
 			<column name="internal_name" value="meta_index"/>
@@ -49,26 +122,10 @@
 			<column name="internal_name" value="ordinal_position"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'n')"/>
 			<column name="is_non_nullable" value="false"/>
+			<column name="precision" value="3"/>
 		</insert>
 		
 	</changeSet>       
-	
-	<changeSet id="meta_index-tag-unique-index" author="${user}">
-	
-		<preConditions onFail="CONTINUE">
-			<tableExists tableName="meta_index"/>
-			<tableExists tableName="meta_index_column"/>
-		</preConditions>	
-		
-		<createIndex 
-			indexName="i_meta_index$master_id_tag" 
-			tableName="meta_index"
-			unique="true">
-			<column name="master_id" />
-			<column name="tag" />
-		</createIndex>
-		
-	</changeSet>
 	
 	<changeSet id="meta_index-tag-uniqueness" author="${user}">
 	
