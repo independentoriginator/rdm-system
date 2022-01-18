@@ -20,6 +20,9 @@
 
 		<liquibase.version>4.6.2</liquibase.version>
 		<postgresql.jdbcdriver.version>42.3.1</postgresql.jdbcdriver.version>
+		
+		<database.stagingSchemaName>etl_staging</database.stagingSchemaName>
+		<database.stagingTableSpace></database.stagingTableSpace>
 	</properties>
 
 	<dependencies>
@@ -51,6 +54,49 @@
 					<verbose>${profile.verbose}</verbose>
 					<logging>${profile.logging}</logging>
 					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+					<!-- custom properties  -->
+					<systemProperties>
+						<property>
+							<name>stagingSchemaName</name>
+							<value>${database.stagingSchemaName}</value>
+						</property>
+						<property>
+							<name>stagingTableSpace</name>
+							<value>${database.stagingTableSpace}</value>
+						</property>
+						<property>
+							<name>type.id</name>
+							<value>bigint</value>
+						</property>
+						<property>
+							<name>type.s</name>
+							<value>varchar</value>
+						</property>
+						<property>
+							<name>type.length.internal_name</name>
+							<value>63</value>
+						</property>
+						<property>
+							<name>type.internal_name</name>
+							<value>varchar(63)</value>
+						</property>
+						<property>
+							<name>type.length.name</name>
+							<value>255</value>
+						</property>
+						<property>
+							<name>type.length.description</name>
+							<value>4000</value>
+						</property>
+						<property>
+							<name>type.length.code</name>
+							<value>20</value>
+						</property>
+						<property>
+							<name>type.code</name>
+							<value>varchar(20)</value>
+						</property>
+					</systemProperties>
 				</configuration>
 				<executions>
 					<execution>

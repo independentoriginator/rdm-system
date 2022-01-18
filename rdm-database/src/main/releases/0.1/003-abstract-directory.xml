@@ -19,7 +19,7 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="code"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="20"/>			
+			<column name="length" value="${type.length.code}"/>			
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_unique" value="true"/>			
 		</insert>
@@ -28,7 +28,6 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="4000"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_localisable" value="true"/>
 		</insert>
@@ -37,7 +36,6 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="description"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="4000"/>
 			<column name="is_localisable" value="true"/>
 		</insert>
 

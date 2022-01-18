@@ -13,10 +13,10 @@
 		<createTable
 			tableName="meta_schema" 
 			remarks="Метасхема">
-			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
-			<column name="internal_name" type="varchar(63)" remarks="Внутреннее наименование">
+			<column name="internal_name" type="${type.internal_name}" remarks="Внутреннее наименование">
 				<constraints nullable="false" />
 			</column>
 		</createTable>
@@ -39,7 +39,7 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
 			<column name="internal_name" value="internal_name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="63"/>
+			<column name="length" value="${type.length.internal_name}"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_unique" value="true"/>			
 		</insert>
@@ -48,7 +48,7 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_schema')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="255"/>
+			<column name="length" value="${type.length.name}"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_localisable" value="true"/>
 		</insert>
@@ -56,7 +56,7 @@
 		<addColumn tableName="meta_type">
 			<column 
 				name="schema_id" 
-				type="bigint"
+				type="${type.id}"
 				remarks="Идентификатор метасхемы" />
 		</addColumn> 
 		

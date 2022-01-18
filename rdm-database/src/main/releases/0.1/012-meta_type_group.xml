@@ -17,9 +17,9 @@
 
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type_group')"/>
-			<column name="internal_name" value="code"/>
+			<column name="internal_name" value="internal_name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="63"/>			
+			<column name="length" value="${type.length.internal_name}"/>			
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_unique" value="true"/>			
 		</insert>
@@ -28,7 +28,6 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type_group')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="4000"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_localisable" value="true"/>
 		</insert>
@@ -37,7 +36,6 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type_group')"/>
 			<column name="internal_name" value="description"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="4000"/>
 			<column name="is_localisable" value="true"/>
 		</insert>
 
@@ -50,7 +48,7 @@
 		</preConditions>	
 		
 		<addColumn tableName="meta_type">
-			<column name="group_id" type="bigint" remarks="Идентификатор группы типов">
+			<column name="group_id" type="${type.id}" remarks="Идентификатор группы типов">
 				<constraints nullable="true" />
 			</column>
 		</addColumn>

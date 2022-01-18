@@ -13,10 +13,10 @@
 		<createTable
 			tableName="language" 
 			remarks="Язык">
-			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
-			<column name="tag" type="varchar(10)" remarks="Тег">
+			<column name="tag" type="${type.code}" remarks="Тег">
 				<constraints nullable="false" />
 			</column>
 		</createTable>
@@ -39,7 +39,7 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'language')"/>
 			<column name="internal_name" value="tag"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="10"/>
+			<column name="length" value="${type.length.code}"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_unique" value="true"/>			
 		</insert>
@@ -48,7 +48,6 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'language')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="255"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_localisable" value="true"/>
 		</insert>

@@ -53,10 +53,10 @@ select
 	a.internal_name,
 	case attr_type.internal_name
 		when 's' 
-			then 'character varying' ||
+			then 
 				case when a.length is not null 
-					then '(' || a.length::text || ')' 
-					else ''
+					then 'character varying(' || a.length::text || ')' 
+					else 'text'
 				end
 		when 'n' 
 			then 'numeric' ||

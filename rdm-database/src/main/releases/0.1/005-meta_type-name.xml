@@ -14,7 +14,6 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="255"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_localisable" value="true"/>
 		</insert>
@@ -23,7 +22,6 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
 			<column name="internal_name" value="name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="255"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_localisable" value="true"/>
 		</insert>

@@ -13,13 +13,13 @@
 		<createTable
 			tableName="meta_index" 
 			remarks="Метаиндекс">
-			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
-			<column name="master_id" type="bigint" remarks="Идентификатор метатипа">
+			<column name="master_id" type="${type.id}" remarks="Идентификатор метатипа">
 				<constraints nullable="false" />
 			</column>
-			<column name="tag" type="varchar(63)" remarks="Тег">
+			<column name="tag" type="${type.internal_name}" remarks="Тег">
 				<constraints nullable="false" />
 			</column>
 			<column name="is_unique" type="boolean" remarks="Признак уникального индекса" defaultValueBoolean="false">
@@ -56,13 +56,13 @@
 		<createTable
 			tableName="meta_index_column" 
 			remarks="Столбец метаиндекса">
-			<column name="id" type="bigint" autoIncrement="true" remarks="Идентификатор">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
-			<column name="master_id" type="bigint" remarks="Идентификатор метаиндекса">
+			<column name="master_id" type="${type.id}" remarks="Идентификатор метаиндекса">
 				<constraints nullable="false" />
 			</column>
-			<column name="meta_attr_name" type="varchar(63)" remarks="Наименование столбца">
+			<column name="meta_attr_name" type="${type.internal_name}" remarks="Наименование столбца">
 				<constraints nullable="false" />
 			</column>
 			<column name="ordinal_position" type="numeric(3)" remarks="Порядковый номер">
@@ -92,7 +92,7 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index')"/>
 			<column name="internal_name" value="tag"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="63"/>
+			<column name="length" value="${type.length.internal_name}"/>
 			<column name="is_non_nullable" value="true"/>
 		</insert>
 		
@@ -113,7 +113,7 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_index_column')"/>
 			<column name="internal_name" value="meta_attr_name"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="63"/>
+			<column name="length" value="${type.length.internal_name}"/>
 			<column name="is_non_nullable" value="true"/>
 		</insert>
 
