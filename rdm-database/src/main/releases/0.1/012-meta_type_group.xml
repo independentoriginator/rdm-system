@@ -1,0 +1,73 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="meta_type_group" author="${user}">
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="meta_type_group"/>
+			<column name="is_hierarchical" value="true"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type_group')"/>
+			<column name="internal_name" value="code"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="63"/>			
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_unique" value="true"/>			
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type_group')"/>
+			<column name="internal_name" value="name"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="4000"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_localisable" value="true"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type_group')"/>
+			<column name="internal_name" value="description"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="4000"/>
+			<column name="is_localisable" value="true"/>
+		</insert>
+
+	</changeSet>
+	
+	<changeSet id="meta_type_group-ref" author="${user}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_type_group"/>
+		</preConditions>	
+		
+		<addColumn tableName="meta_type">
+			<column name="group_id" type="bigint" remarks="Идентификатор группы типов">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+		
+		<createIndex 
+			indexName="i_meta_type$group_id" 
+			tableName="meta_type">
+			<column name="group_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_type$group_id"
+			baseTableName="meta_type" 
+			baseColumnNames="group_id" 
+			referencedTableName="meta_type_group" 
+			referencedColumnNames="id" />
+
+	</changeSet>
+
+</databaseChangeLog>
