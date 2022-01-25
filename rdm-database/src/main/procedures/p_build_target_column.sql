@@ -1,48 +1,51 @@
 create or replace procedure p_build_target_column(
-	i_attr_rec record
+	i_type_rec record
+	, i_attr_rec record
 )
 language plpgsql
 as $procedure$
 begin
-	if i_attr_rec.is_staging_table_column_exists = false then 
-		if i_attr_rec.is_referenced_type_temporal = true then 
-			execute format('
-				alter table %I.%I
-					add column %I %s %snull,
-					add column %I %s %snull
-				'
-				, i_attr_rec.staging_schema_name
-				, i_attr_rec.meta_type_name 
-				, i_attr_rec.internal_name 
-				, i_attr_rec.target_attr_type				
-				, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
-				, i_attr_rec.version_ref_name
-				, i_attr_rec.target_attr_type				
-				, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
-			);
+	if i_type_rec.is_staging_table_generated = true then
+		if i_attr_rec.is_staging_table_column_exists = false then 
+			if i_attr_rec.is_referenced_type_temporal = true then 
+				execute format('
+					alter table %I.%I
+						add column %I %s %snull,
+						add column %I %s %snull
+					'
+					, i_attr_rec.staging_schema_name
+					, i_attr_rec.meta_type_name 
+					, i_attr_rec.internal_name 
+					, i_attr_rec.target_attr_type				
+					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
+					, i_attr_rec.version_ref_name
+					, i_attr_rec.target_attr_type				
+					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
+				);
+			else
+				execute format('
+					alter table %I.%I
+						add column %I %s %snull
+					'
+					, i_attr_rec.staging_schema_name
+					, i_attr_rec.meta_type_name 
+					, i_attr_rec.internal_name 
+					, i_attr_rec.target_attr_type				
+					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
+				);
+			end if;
 		else
-			execute format('
-				alter table %I.%I
-					add column %I %s %snull
-				'
-				, i_attr_rec.staging_schema_name
-				, i_attr_rec.meta_type_name 
-				, i_attr_rec.internal_name 
-				, i_attr_rec.target_attr_type				
-				, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
-			);
-		end if;
-	else
-		if i_attr_rec.target_attr_type <> i_attr_rec.column_data_type then 
-			execute format('
-				alter table %I.%I
-					alter column %I set data type %s
-				'
-				, i_attr_rec.staging_schema_name
-				, i_attr_rec.meta_type_name 
-				, i_attr_rec.internal_name 
-				, i_attr_rec.target_attr_type
-			);
+			if i_attr_rec.target_attr_type <> i_attr_rec.column_data_type then 
+				execute format('
+					alter table %I.%I
+						alter column %I set data type %s
+					'
+					, i_attr_rec.staging_schema_name
+					, i_attr_rec.meta_type_name 
+					, i_attr_rec.internal_name 
+					, i_attr_rec.target_attr_type
+				);
+			end if;
 		end if;
 	end if;
 	

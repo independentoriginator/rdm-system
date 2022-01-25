@@ -203,6 +203,7 @@ begin
 	) 
 	loop
 		call ${database.defaultSchemaName}.p_build_target_column(
+			i_type_rec => i_type_rec,
 			i_attr_rec => l_attr_rec
 		);
 	end loop;	
@@ -228,6 +229,5 @@ begin
 	call ${database.defaultSchemaName}.p_build_target_api(
 		i_type_rec => i_type_rec
 	);
-	
 end
 $procedure$;			

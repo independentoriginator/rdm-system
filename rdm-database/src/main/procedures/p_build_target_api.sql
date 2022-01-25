@@ -4,14 +4,14 @@ create or replace procedure p_build_target_api(
 language plpgsql
 as $$
 begin
-	if i_type_rec.is_staging_table_generated = true then
+	if i_type_rec.is_staging_table_generated = false then
 		return;
 	end if;
 		
 	execute format($target_procedure$
 		create or replace procedure %I.p_apply_%I(
-			i_data_package_id in %I.data_package.id%type
-			, io_check_date in out %I.data_package.state_change_date%type
+			i_data_package_id in %I.data_package.id%%type
+			, io_check_date in out %I.data_package.state_change_date%%type
 		)
 		language plpgsql
 		as $procedure$
@@ -28,15 +28,15 @@ begin
 					p.id = i_data_package_id
 				for update
 			);
-			l_state_change_date := current_timestamp;
+			l_state_change_date timestamp without time zone := current_timestamp;
 		begin
 			if io_check_date <> l_data_package.state_change_date then
-				raise exception 'The data package has changed since it was accessed: %', l_data_package.state_change_date
+				raise exception 'The data package has changed since it was accessed: %%', l_data_package.state_change_date
 					using hint = 'Try to repeat the operation';
   			end if;
   			
   			if l_data_package.state_name <> 'created' then  
-				raise exception 'The data package has unexpected state: %', l_data_package.state_name;
+				raise exception 'The data package has unexpected state: %%', l_data_package.state_name;
   			end if;
   			
   			if l_data_package.is_deletion = false then
@@ -81,7 +81,7 @@ begin
 					where 
 						s.internal_name = 'applied'
 				)
-				, state_change_date = l_state_change_date;
+				, state_change_date = l_state_change_date
 			where 
 				p.id = i_data_package_id
 			;

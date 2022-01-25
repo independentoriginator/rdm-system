@@ -66,6 +66,7 @@ select
 	end as is_staging_table_generated
 	, case when staging_table.table_name is not null then true else false end as is_staging_table_exists
 	, a.non_localisable_attributes
+	, a.insert_expr_on_conflict_update_part
 from 
 	${database.defaultSchemaName}.meta_type t
 left join ${database.defaultSchemaName}.meta_schema s
@@ -101,14 +102,14 @@ join lateral (
 				when a.is_localisable = false 
 				then a.internal_name
 			end
-			, ',' order by a.ordinal_position
+			, ', ' order by a.ordinal_position
 		) as non_localisable_attributes
 		, string_agg(
 			case 
 				when a.is_localisable = false 
 				then a.internal_name || ' = excluded.' || a.internal_name
 			end
-			, ',' order by a.ordinal_position
+			, ', ' order by a.ordinal_position
 		) as insert_expr_on_conflict_update_part		
 	from
 		${database.defaultSchemaName}.meta_attribute a
