@@ -8,6 +8,17 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
+	<changeSet id="v_meta_attribute-view" author="${user}" runOnChange="true">
+		<createView 
+			viewName="v_meta_attribute" 
+			path="v_meta_attribute.sql"
+			remarks="Meta attributes full list including inherited attributes"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 	<changeSet id="v_meta_type-view" author="${user}" runOnChange="true">
 		<createView 
 			viewName="v_meta_type" 
@@ -19,17 +30,6 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="v_meta_attribute-view" author="${user}" runOnChange="true">
-		<createView 
-			viewName="v_meta_attribute" 
-			path="v_meta_attribute.sql"
-			remarks="Meta attributes full list including inherited attributes"
-			fullDefinition="true"
-			replaceIfExists="false"   
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
 	<changeSet id="v_meta_index-view" author="${user}" runOnChange="true">
 		<createView 
 			viewName="v_meta_index" 

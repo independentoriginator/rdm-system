@@ -56,7 +56,7 @@ select
 				select 
 					1
 				from
-					${database.defaultSchemaName}.meta_attribute a
+					${database.defaultSchemaName}.v_meta_attribute a
 				where
 					a.master_id = t.id
 					and a.internal_name = 'data_package_id'
