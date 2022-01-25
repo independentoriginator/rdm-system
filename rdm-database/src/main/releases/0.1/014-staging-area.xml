@@ -1,0 +1,216 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="staging-schema" author="${user}">
+	
+		<preConditions onFail="HALT">
+		    <changeLogPropertyDefined property="stagingSchemaName"/>
+		</preConditions>	
+
+		<sql dbms="postgresql" splitStatements="false">
+			do $$
+			begin
+				if not exists (
+					select 
+						1
+					from 
+						information_schema.schemata target_schema
+					where 
+						target_schema.schema_name = '${stagingSchemaName}'
+				) then
+					execute format(
+						'create schema %I'
+						, '${stagingSchemaName}'
+					);
+				end if;
+			end;
+			$$;
+		</sql>
+	
+	</changeSet>
+	
+	<changeSet id="data_package" author="${user}">
+	
+		<createTable
+			tableName="data_package_state" 
+			remarks="Состояние пакета данных">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="internal_name" type="${type.internal_name}" remarks="Внутреннее наименование">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_data_package_state" 
+			tableName="data_package_state"
+			columnNames="id"/>
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="data_package_state"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'data_package_state')"/>
+			<column name="internal_name" value="internal_name"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="${type.length.internal_name}"/>			
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_unique" value="true"/>			
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'data_package_state')"/>
+			<column name="internal_name" value="name"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="is_localisable" value="true"/>
+		</insert>
+
+		<createTable
+			tableName="data_package" 
+			schemaName="${stagingSchemaName}"
+			remarks="Пакет данных">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="source_id" type="${type.id}" remarks="Идентификатор источника данных">
+				<constraints nullable="false" />
+			</column>
+			<column name="lang_id" type="${type.id}" remarks="Идентификатор языка">
+				<constraints nullable="false" />
+			</column>
+			<column name="is_deletion" type="boolean" remarks="Признак удаления" defaultValueBoolean="false">
+				<constraints nullable="false" />
+			</column>
+			<column name="is_partial" type="boolean" remarks="Признак неполного набора целевых данных" defaultValueBoolean="true">
+				<constraints nullable="false" />
+			</column>
+			<column name="create_date" type="datetime" remarks="Дата создания">
+				<constraints nullable="false" />
+			</column>
+			<column name="state_id" type="${type.id}" remarks="Идентификатор состояния">
+				<constraints nullable="false" />
+			</column>
+			<column name="state_change_date" type="datetime" remarks="Дата смены состояния">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_data_package" 
+			tableName="data_package"
+			schemaName="${stagingSchemaName}"
+			columnNames="id"/>
+			
+		<createIndex 
+			indexName="i_data_package$source_id" 
+			tableName="data_package"
+			schemaName="${stagingSchemaName}">
+			<column name="source_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_data_package$source_id"
+			baseTableSchemaName="${stagingSchemaName}"
+			baseTableName="data_package" 
+			baseColumnNames="source_id" 
+			referencedTableName="source" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_data_package$lang_id" 
+			tableName="data_package"
+			schemaName="${stagingSchemaName}">
+			<column name="lang_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_data_package$lang_id"
+			baseTableSchemaName="${stagingSchemaName}"
+			baseTableName="data_package" 
+			baseColumnNames="lang_id" 
+			referencedTableName="language" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_data_package$state_id" 
+			tableName="data_package"
+			schemaName="${stagingSchemaName}">
+			<column name="state_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_data_package$state_id"
+			baseTableSchemaName="${stagingSchemaName}"
+			baseTableName="data_package" 
+			baseColumnNames="state_id" 
+			referencedTableName="data_package_state" 
+			referencedColumnNames="id" />
+
+	</changeSet>
+	
+	<changeSet id="data_package_id-attribute" author="${user}">
+	
+		<comment>Reference to data_package.id, indexed, but without foreign key constraint</comment>
+	
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="internal_name" value="data_package_id"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'id')"/>
+			<column name="is_non_nullable" value="true"/>
+		</insert>
+		
+		<insert tableName="meta_index">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="tag" value="data_package_id"/>		
+			<column name="is_unique" value="false"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'directory'
+					)
+					and tag = 'data_package_id' 
+			)"/>
+			<column name="meta_attr_name" value="data_package_id"/>
+		</insert>
+		
+	</changeSet>
+
+	<changeSet id="data_package-states" author="${user}">
+	
+		<insert tableName="data_package_state">
+			<column name="internal_name" value="created"/>
+		</insert>
+		
+		<insert tableName="data_package_state">
+			<column name="internal_name" value="applied"/>
+		</insert>
+
+		<insert tableName="data_package_state">
+			<column name="internal_name" value="canceled"/>
+		</insert>
+		
+	</changeSet>
+
+</databaseChangeLog>

@@ -46,12 +46,12 @@ with recursive attr as (
 		on t.id = a_inherited.master_id
 )
 select
-	a.id,
-	t.id as master_id,
-	t.internal_name as meta_type_name,
-	coalesce(s.internal_name, '${database.defaultSchemaName}') as schema_name, 
-	a.internal_name,
-	case attr_type.internal_name
+	a.id
+	, t.id as master_id
+	, t.internal_name as meta_type_name
+	, coalesce(s.internal_name, '${database.defaultSchemaName}') as schema_name 
+	, a.internal_name
+	, case attr_type.internal_name
 		when 's' 
 			then 
 				case when a.length is not null 
@@ -70,11 +70,11 @@ select
 				else 'date'
 			end
 		when 'b' then 'boolean'
-		else 'bigint'
-	end as target_attr_type,
-	a.ordinal_position,
-	case when target_column.column_name is not null then true else false end as is_column_exists,
-	case target_column.data_type
+		else '${type.id}'
+	end as target_attr_type
+	, a.ordinal_position
+	, case when target_column.column_name is not null then true else false end as is_column_exists
+	, case target_column.data_type
 		when 'character varying' 
 			then target_column.data_type ||
 				case when target_column.character_maximum_length is not null
@@ -91,23 +91,26 @@ select
 			then 'timestamp (' || coalesce(target_column.datetime_precision, 6)::text || ') without time zone'
 		else 
 			target_column.data_type
-	end as column_data_type,
-	attr_type.internal_name as attr_type_name,
-	case when attr_type.is_primitive = false then true else false end as is_fk_constraint_added,
-	'fk_' || t.internal_name || '$' || a.internal_name as fk_constraint_name,
-	case when fk_constraint.constraint_name is not null then true else false end as is_fk_constraint_exists,
-	'i_' || t.internal_name || '$' || a.internal_name as index_name,
-	case when fk_index.indexname is not null then true else false end as is_fk_index_exists,
-	attr_type.is_temporal as is_referenced_type_temporal,
-	regexp_replace(a.internal_name, '_id$', '') || '_version' as version_ref_name,
-	a.is_non_nullable,
-	case when target_column.is_nullable = 'NO' then true else false end as is_notnull_constraint_exists,
-	a.is_unique,
-	'uc_' || t.internal_name || '$' || a.internal_name as unique_constraint_name,
-	case when u_constraint.constraint_name is not null then true else false end as is_unique_constraint_exists,
-	'chk_' || t.internal_name || '$' || a.internal_name as check_constraint_name,
-	def_val_expr.expr_text as default_value,
-	target_column.column_default
+	end as column_data_type
+	, attr_type.internal_name as attr_type_name
+	, case when attr_type.is_primitive = false then true else false end as is_fk_constraint_added
+	, 'fk_' || t.internal_name || '$' || a.internal_name as fk_constraint_name
+	, case when fk_constraint.constraint_name is not null then true else false end as is_fk_constraint_exists
+	, 'i_' || t.internal_name || '$' || a.internal_name as index_name
+	, case when fk_index.indexname is not null then true else false end as is_fk_index_exists
+	, attr_type.is_temporal as is_referenced_type_temporal
+	, regexp_replace(a.internal_name, '_id$', '') || '_version' as version_ref_name
+	, a.is_non_nullable
+	, case when target_column.is_nullable = 'NO' then true else false end as is_notnull_constraint_exists
+	, a.is_unique
+	, 'uc_' || t.internal_name || '$' || a.internal_name as unique_constraint_name
+	, case when u_constraint.constraint_name is not null then true else false end as is_unique_constraint_exists
+	, 'chk_' || t.internal_name || '$' || a.internal_name as check_constraint_name
+	, def_val_expr.expr_text as default_value
+	, target_column.column_default
+	, '${stagingSchemaName}' as staging_schema_name
+	, case when target_staging_table_column.column_name is not null then true else false end as is_staging_table_column_exists
+	, a.is_localisable
 from 
 	attr a
 join 
@@ -152,7 +155,11 @@ left join
 		where
 			code = 'postgresql'
 	)
-where 
+left join 
+	information_schema.columns target_staging_table_column
+	on target_staging_table_column.table_schema = '${stagingSchemaName}'
+	and target_staging_table_column.table_name = t.internal_name
+	and target_staging_table_column.column_name = a.internal_name
+where
 	a.id is not null
-	and a.is_localisable = false
 ;

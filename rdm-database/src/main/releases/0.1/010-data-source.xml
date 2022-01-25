@@ -9,6 +9,22 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
 	<changeSet id="data-source" author="${user}">
+	
+		<createTable
+			tableName="source" 
+			remarks="Источник данных">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="internal_name" type="${type.internal_name}" remarks="Внутреннее наименование">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_source" 
+			tableName="source"
+			columnNames="id"/>
 
 		<insert tableName="meta_type">
 			<column name="internal_name" value="source"/>
