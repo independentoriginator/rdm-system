@@ -1,5 +1,6 @@
 create or replace procedure ${stagingSchemaName}.p_apply_data_package(
 	i_data_package_id in ${stagingSchemaName}.data_package.id%type
+	, i_container_name in ${database.defaultSchemaName}.meta_type.internal_name%type
 	, io_check_date inout ${stagingSchemaName}.data_package.state_change_date%type
 )
 language plpgsql
@@ -12,16 +13,7 @@ begin
 					, io_check_date => $2
 				)
 			'
-			, (
-				select 
-					s.internal_name 
-				from 
-					${stagingSchemaName}.data_package p
-				join ${database.defaultSchemaName}.source s 
-					on s.id = p.source_id
-				where
-					p.id = i_data_package_id
-			)
+			, i_container_name
 		)
 		using 
 			i_data_package_id
