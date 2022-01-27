@@ -6,7 +6,7 @@ as $procedure$
 begin
 	if i_type_rec.is_staging_table_generated = true and i_type_rec.is_staging_table_exists = false then
 		execute format('
-			create table %I.%I(
+			create unlogged table %I.%I(
 				data_package_id ${type.id} not null,
 				constraint fk_%I$data_package_id foreign key (data_package_id) references %I.data_package(id)
 			)'
