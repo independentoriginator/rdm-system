@@ -18,6 +18,7 @@
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
 			<column name="internal_name" value="golden_record_id"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="ordinal_position" value="100"/>
 		</insert>
 
 		<insert tableName="meta_attribute">
@@ -26,6 +27,7 @@
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'b')"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'bool.false')"/>
+			<column name="ordinal_position" value="101"/>
 		</insert>
 
 	</changeSet>

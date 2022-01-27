@@ -102,17 +102,17 @@ join lateral (
 				when a.is_localisable = false 
 				then a.internal_name
 			end
-			, ', ' order by a.ordinal_position
+			, ', ' order by a.ordinal_position nulls last
 		) as non_localisable_attributes
 		, string_agg(
 			case 
 				when a.is_localisable = false 
 				then a.internal_name || ' = excluded.' || a.internal_name
 			end
-			, ', ' order by a.ordinal_position
+			, ', ' order by a.ordinal_position nulls last
 		) as insert_expr_on_conflict_update_part		
 	from
-		${database.defaultSchemaName}.meta_attribute a
+		${database.defaultSchemaName}.v_meta_attribute a
 	where
 		a.master_id = t.id
 ) a on true

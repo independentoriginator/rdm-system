@@ -98,6 +98,11 @@
 			</column>
 		</createTable>
 		
+		<addPrimaryKey 
+			constraintName="pk_meta_expr_body" 
+			tableName="meta_expr_body"
+			columnNames="id"/>
+		
 		<createIndex 
 			indexName="i_meta_expr_body$master_id" 
 			tableName="meta_expr_body">

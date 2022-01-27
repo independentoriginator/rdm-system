@@ -21,7 +21,8 @@
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="${type.length.code}"/>			
 			<column name="is_non_nullable" value="true"/>
-			<column name="is_unique" value="true"/>			
+			<column name="is_unique" value="true"/>	
+			<column name="ordinal_position" value="2"/>			
 		</insert>
 
 		<insert tableName="meta_attribute">
@@ -30,6 +31,7 @@
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="is_localisable" value="true"/>
+			<column name="ordinal_position" value="1"/>			
 		</insert>
 
 		<insert tableName="meta_attribute">
@@ -37,6 +39,7 @@
 			<column name="internal_name" value="description"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="is_localisable" value="true"/>
+			<column name="ordinal_position" value="2"/>			
 		</insert>
 
 	</changeSet>

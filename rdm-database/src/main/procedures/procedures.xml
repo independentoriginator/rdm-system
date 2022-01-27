@@ -35,6 +35,15 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="p_build_target_staging_table_column-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_build_target_staging_table_column" 
+			dbms="postgresql" 
+			path="p_build_target_staging_table_column.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 	<changeSet id="p_build_target_staging_table-procedure" author="${user}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_staging_table" 
@@ -70,4 +79,14 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="p_apply_data_package-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_apply_data_package" 
+			dbms="postgresql" 
+			path="p_apply_data_package.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

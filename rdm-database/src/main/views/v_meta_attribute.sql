@@ -74,24 +74,13 @@ select
 	end as target_attr_type
 	, a.ordinal_position
 	, case when target_column.column_name is not null then true else false end as is_column_exists
-	, case target_column.data_type
-		when 'character varying' 
-			then target_column.data_type ||
-				case when target_column.character_maximum_length is not null
-					then '(' || target_column.character_maximum_length || ')'
-					else ''
-				end
-		when 'numeric' 
-			then target_column.data_type ||
-				case when target_column.numeric_precision is not null
-					then '(' || target_column.numeric_precision::text || ', ' || coalesce(target_column.numeric_scale, 0)::text || ')'
-					else ''
-				end
-		when 'timestamp without time zone' 
-			then 'timestamp (' || coalesce(target_column.datetime_precision, 6)::text || ') without time zone'
-		else 
-			target_column.data_type
-	end as column_data_type
+	, ${database.defaultSchemaName}.f_column_type_specification(
+		i_data_type => target_column.data_type
+		, i_character_maximum_length => target_column.character_maximum_length
+		, i_numeric_precision => target_column.numeric_precision
+		, i_numeric_scale => target_column.numeric_scale	
+		, i_datetime_precision => target_column.datetime_precision	
+	) as column_data_type
 	, attr_type.internal_name as attr_type_name
 	, case when attr_type.is_primitive = false then true else false end as is_fk_constraint_added
 	, 'fk_' || t.internal_name || '$' || a.internal_name as fk_constraint_name
@@ -108,9 +97,18 @@ select
 	, 'chk_' || t.internal_name || '$' || a.internal_name as check_constraint_name
 	, def_val_expr.expr_text as default_value
 	, target_column.column_default
+	, a.is_localisable
 	, '${stagingSchemaName}' as staging_schema_name
 	, case when target_staging_table_column.column_name is not null then true else false end as is_staging_table_column_exists
-	, a.is_localisable
+	, ${database.defaultSchemaName}.f_column_type_specification(
+		i_data_type => target_staging_table_column.data_type
+		, i_character_maximum_length => target_staging_table_column.character_maximum_length
+		, i_numeric_precision => target_staging_table_column.numeric_precision
+		, i_numeric_scale => target_staging_table_column.numeric_scale	
+		, i_datetime_precision => target_staging_table_column.datetime_precision	
+	) as staging_table_column_data_type
+	, case when target_staging_table_column.is_nullable = 'NO' then true else false end as is_staging_table_column_notnull_constraint_exists
+	, target_staging_table_column.column_default as staging_table_column_default
 from 
 	attr a
 join 

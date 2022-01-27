@@ -27,4 +27,4 @@ from
 	${database.defaultSchemaName}.meta_type t
 where
 	t.id = i_meta_type_id
-$function$;		
+$function$;	

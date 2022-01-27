@@ -26,4 +26,22 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="f_column_type_specification-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_column_type_specification" 
+			dbms="postgresql" 
+			path="f_column_type_specification.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="f_insert_data_package-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_insert_data_package" 
+			dbms="postgresql" 
+			path="f_insert_data_package.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

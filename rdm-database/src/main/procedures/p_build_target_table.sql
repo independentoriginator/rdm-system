@@ -6,6 +6,7 @@ as $procedure$
 declare 
 	l_attr_rec record;
 	l_index_rec record;
+	l_is_pk_index_exists boolean := i_type_rec.is_pk_index_exists;
 begin
 	if i_type_rec.schema_id is not null and i_type_rec.is_schema_exists = false then
 		execute format('
@@ -89,24 +90,27 @@ begin
 				, i_type_rec.schema_name
 				, i_type_rec.pk_index_name
 			);
+			l_is_pk_index_exists := false;
 		end if;
 		
-		execute format('
-			create unique index %I on %I.%I (
-				id, version
-			)'
-			, i_type_rec.pk_index_name 
-			, i_type_rec.schema_name
-			, i_type_rec.internal_name 
-		);
-		execute format('
-			create unique index ui_%I$id_valid_to on %I.%I (
-				id, valid_to
-			)'
-			, i_type_rec.internal_name 
-			, i_type_rec.schema_name
-			, i_type_rec.internal_name 
-		);
+		if l_is_pk_index_exists = false then
+			execute format('
+				create unique index %I on %I.%I (
+					id, version
+				)'
+				, i_type_rec.pk_index_name 
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name 
+			);
+			execute format('
+				create unique index ui_%I$id_valid_to on %I.%I (
+					id, valid_to
+				)'
+				, i_type_rec.internal_name 
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name 
+			);
+		end if;
 	end if;
 
 	if i_type_rec.is_pk_constraint_exists = false 
@@ -203,6 +207,10 @@ begin
 	) 
 	loop
 		call ${database.defaultSchemaName}.p_build_target_column(
+			i_type_rec => i_type_rec,
+			i_attr_rec => l_attr_rec
+		);
+		call ${database.defaultSchemaName}.p_build_target_staging_table_column(
 			i_type_rec => i_type_rec,
 			i_attr_rec => l_attr_rec
 		);

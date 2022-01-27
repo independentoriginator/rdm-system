@@ -16,6 +16,17 @@ begin
 			, i_type_rec.staging_schema_name
 		);
 		
+		if i_type_rec.is_temporal = false then
+			execute format('
+				alter table %I.%I
+					add column id %s null
+				'
+				, i_type_rec.staging_schema_name
+				, i_type_rec.internal_name
+				, '${type.id}'
+			);
+		end if;			
+		
 		execute format('
 			create index i_%I$data_package_id on %I.%I(data_package_id);
 			'

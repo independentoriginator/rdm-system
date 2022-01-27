@@ -167,6 +167,7 @@
 			<column name="internal_name" value="data_package_id"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'id')"/>
 			<column name="is_non_nullable" value="true"/>
+			<column name="ordinal_position" value="0"/>
 		</insert>
 		
 		<insert tableName="meta_index">

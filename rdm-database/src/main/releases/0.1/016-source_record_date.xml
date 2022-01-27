@@ -1,0 +1,24 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="source_record_date" author="${user}">
+	
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="internal_name" value="source_record_date"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
+			<column name="precision" value="6"/>			
+			<column name="is_non_nullable" value="false"/>
+			<column name="ordinal_position" value="3"/>			
+		</insert>
+
+	</changeSet>
+
+</databaseChangeLog>
