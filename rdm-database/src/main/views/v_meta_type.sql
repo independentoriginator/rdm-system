@@ -67,6 +67,9 @@ select
 	, case when staging_table.table_name is not null then true else false end as is_staging_table_exists
 	, a.non_localisable_attributes
 	, a.insert_expr_on_conflict_update_part
+	, a.localisable_attributes
+	, a.insert_expr_on_conflict_update_part_for_localisable
+	, a.localisable_attr_values_list
 from 
 	${database.defaultSchemaName}.meta_type t
 left join ${database.defaultSchemaName}.meta_schema s
@@ -106,11 +109,32 @@ join lateral (
 		) as non_localisable_attributes
 		, string_agg(
 			case 
+				when a.is_localisable = true
+				then a.internal_name
+			end
+			, ', ' order by a.ordinal_position nulls last
+		) as localisable_attributes
+		, string_agg(
+			case 
 				when a.is_localisable = false 
 				then a.internal_name || ' = excluded.' || a.internal_name
 			end
 			, ', ' order by a.ordinal_position nulls last
 		) as insert_expr_on_conflict_update_part		
+		, string_agg(
+			case 
+				when a.is_localisable = true
+				then a.internal_name || ' = excluded.' || a.internal_name
+			end
+			, ', ' order by a.ordinal_position nulls last
+		) as insert_expr_on_conflict_update_part_for_localisable
+		, string_agg(
+			case 
+				when a.is_localisable = true
+				then '(''' || a.internal_name || ''', t.' || a.internal_name || ')'
+			end
+			, ', ' order by a.ordinal_position nulls last
+		) as localisable_attr_values_list
 	from
 		${database.defaultSchemaName}.v_meta_attribute a
 	where
