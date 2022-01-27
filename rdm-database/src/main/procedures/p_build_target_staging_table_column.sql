@@ -55,7 +55,7 @@ begin
 						alter column %s set not null,
 						alter column %s set not null
 					'
-					, i_attr_rec.schema_name
+					, i_attr_rec.staging_schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 					, i_attr_rec.version_ref_name
@@ -65,7 +65,7 @@ begin
 					alter table %I.%I
 						alter column %s set not null
 					'
-					, i_attr_rec.schema_name
+					, i_attr_rec.staging_schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 				);
@@ -77,7 +77,7 @@ begin
 						alter column %s drop not null,
 						alter column %s drop not null
 					'
-					, i_attr_rec.schema_name
+					, i_attr_rec.staging_schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 					, i_attr_rec.version_ref_name						
@@ -87,7 +87,7 @@ begin
 					alter table %I.%I
 						alter column %s drop not null
 					'
-					, i_attr_rec.schema_name
+					, i_attr_rec.staging_schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 				);
@@ -99,7 +99,7 @@ begin
 				alter table %I.%I
 					alter column %s set default %s
 				'
-				, i_attr_rec.schema_name
+				, i_attr_rec.staging_schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 				, i_attr_rec.default_value
@@ -109,7 +109,7 @@ begin
 				alter table %I.%I
 					alter column %s drop default
 				'
-				, i_attr_rec.schema_name
+				, i_attr_rec.staging_schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.internal_name 
 			);
