@@ -16,20 +16,23 @@ begin
 		language plpgsql
 		as $procedure$
 		declare 
-			l_data_package record := (
-				select
-					s.internal_name as state_name
-					, p.state_change_date
-					, p.is_deletion
-				from 
-					%I.data_package p
-				join %I.data_package_state s on s.id = p.state_id
-				where 
-					p.id = i_data_package_id
-				for update
-			);
+			l_data_package record;
 			l_state_change_date timestamp without time zone := current_timestamp;
 		begin
+			select
+				s.internal_name as state_name
+				, p.state_change_date
+				, p.is_deletion
+			into 
+				l_data_package
+			from 
+				%I.data_package p
+			join %I.data_package_state s on s.id = p.state_id
+			where 
+				p.id = i_data_package_id
+			for update
+			;
+			
 			if io_check_date <> l_data_package.state_change_date then
 				raise exception 'The data package has changed since it was accessed: %%', l_data_package.state_change_date
 					using hint = 'Try to repeat the operation';
@@ -50,7 +53,7 @@ begin
 					%I.%I t
 				where 
 					t.data_package_id = i_data_package_id
-				on conflict (code, source_id) do update set
+				on conflict (id) do update set
 					%s	
 				;
 			else
@@ -64,8 +67,7 @@ begin
 							%I.%I t
 						where 
 							t.data_package_id = i_data_package_id
-							and t.code = target_table.code					
-							and t.source_id = target_table.source_id
+							and t.id = target_table.id
 					)
 				;
 			end if;
