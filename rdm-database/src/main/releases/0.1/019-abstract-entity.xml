@@ -116,4 +116,16 @@
 	
 	</changeSet>
 
+	<changeSet id="index-data_package_id_data_package_rn-make-unique" author="${user}">
+	
+		<update tableName="meta_index">
+			<column name="is_unique" value="true"/>
+			<where>
+				master_id = (select id from meta_type where internal_name = 'entity') 
+				and tag = 'data_package_id_data_package_rn'
+			</where>
+		</update>
+	
+	</changeSet>
+
 </databaseChangeLog>
