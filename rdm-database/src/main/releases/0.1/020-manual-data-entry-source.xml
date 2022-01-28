@@ -1,0 +1,53 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="manual-data-entry-source" author="${user}">
+	
+		<insert tableName="source">
+			<column name="internal_name" value="manual data entry"/>
+		</insert>
+		
+		<insert tableName="source_lc">
+			<column name="master_id" valueComputed="(select id from ng_rdm.source where internal_name = 'manual data entry')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					ng_rdm.meta_type t 
+				join ng_rdm.meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'source'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from ng_rdm.language where tag = 'ru')"/>
+			<column name="lc_string" value="Ручной ввод данных"/>
+		</insert>
+
+		<insert tableName="source_lc">
+			<column name="master_id" valueComputed="(select id from ng_rdm.source where internal_name = 'manual data entry')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					ng_rdm.meta_type t 
+				join ng_rdm.meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'source'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from ng_rdm.language where tag = 'en')"/>
+			<column name="lc_string" value="Manual data entry"/>
+		</insert>
+		
+	</changeSet>
+
+</databaseChangeLog>
