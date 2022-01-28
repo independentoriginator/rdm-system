@@ -15,39 +15,52 @@
 		</insert>
 		
 		<insert tableName="source_lc">
-			<column name="master_id" valueComputed="(select id from ng_rdm.source where internal_name = 'manual data entry')"/>
+			<column name="master_id" valueComputed="(select id from source where internal_name = 'manual data entry')"/>
 			<column name="attr_id" valueComputed="(
 				select 
 					a.id
 				from 
-					ng_rdm.meta_type t 
-				join ng_rdm.meta_attribute a 
+					meta_type t 
+				join meta_attribute a 
 					on a.master_id = t.id 
 				where 
 					t.internal_name = 'source'
 					and a.internal_name = 'name'
 			)"/>
-			<column name="lang_id" valueComputed="(select id from ng_rdm.language where tag = 'ru')"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
 			<column name="lc_string" value="Ручной ввод данных"/>
 		</insert>
 
 		<insert tableName="source_lc">
-			<column name="master_id" valueComputed="(select id from ng_rdm.source where internal_name = 'manual data entry')"/>
+			<column name="master_id" valueComputed="(select id from source where internal_name = 'manual data entry')"/>
 			<column name="attr_id" valueComputed="(
 				select 
 					a.id
 				from 
-					ng_rdm.meta_type t 
-				join ng_rdm.meta_attribute a 
+					meta_type t 
+				join meta_attribute a 
 					on a.master_id = t.id 
 				where 
 					t.internal_name = 'source'
 					and a.internal_name = 'name'
 			)"/>
-			<column name="lang_id" valueComputed="(select id from ng_rdm.language where tag = 'en')"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'en')"/>
 			<column name="lc_string" value="Manual data entry"/>
 		</insert>
 		
 	</changeSet>
+	
+	<changeSet id="data_package_id-nullability" author="${user}">
+	
+		<update tableName="meta_attribute">
+			<column name="is_non_nullable" valueBoolean="false"/>
+			<where>
+				master_id = (select id from meta_type where internal_name = 'entity') 
+				and internal_name in ('data_package_id', 'data_package_rn')
+			</where>
+		</update>
+
+	</changeSet>
+	
 
 </databaseChangeLog>
