@@ -27,7 +27,8 @@ begin
 				where 
 					t.data_package_id = i_data_package_id
 				on conflict (id) do update set
-					%s	
+					record_date = l_state_change_date
+					, %s	
 				;
 				$insert_section$
 				, i_type_rec.internal_name
