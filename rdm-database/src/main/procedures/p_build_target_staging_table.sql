@@ -19,11 +19,19 @@ begin
 		if i_type_rec.is_temporal = false then
 			execute format('
 				alter table %I.%I
-					add column id %s null
+					add column id ${type.id} null
 				'
 				, i_type_rec.staging_schema_name
 				, i_type_rec.internal_name
-				, '${type.id}'
+			);
+		else
+			execute format('
+				alter table %I.%I
+					add column id ${type.id} null
+					, add column version ${type.id} null
+				'
+				, i_type_rec.staging_schema_name
+				, i_type_rec.internal_name
 			);
 		end if;			
 		
