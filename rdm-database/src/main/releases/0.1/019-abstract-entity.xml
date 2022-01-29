@@ -127,5 +127,18 @@
 		</update>
 	
 	</changeSet>
+	
+	<changeSet id="data_package_rn-ordinal_position" author="${user}">
+
+		<update tableName="meta_attribute">
+			<column name="ordinal_position" value="0"/>
+			<where>
+				master_id = (select id from meta_type where internal_name = 'entity') 
+				and internal_name = 'data_package_rn'
+			</where>
+		</update>
+
+	</changeSet>
+	
 
 </databaseChangeLog>
