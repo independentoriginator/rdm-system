@@ -8,6 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
+
 	<changeSet id="f_meta_type_dependency_level-function" author="${user}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_meta_type_dependency_level" 
@@ -31,6 +32,15 @@
 			procedureName="f_column_type_specification" 
 			dbms="postgresql" 
 			path="f_column_type_specification.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="f_undefined_max_date-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_undefined_max_date" 
+			dbms="postgresql" 
+			path="f_undefined_max_date.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
