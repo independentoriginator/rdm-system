@@ -90,11 +90,11 @@
 						</property>
 						<property>
 							<name>type.length.code</name>
-							<value>20</value>
+							<value>63</value>
 						</property>
 						<property>
 							<name>type.code</name>
-							<value>varchar(20)</value>
+							<value>varchar(63)</value>
 						</property>
 					</systemProperties>
 				</configuration>
