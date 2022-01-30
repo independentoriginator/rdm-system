@@ -92,7 +92,7 @@ begin
 					, i_attr_rec.fk_constraint_name
 					, i_attr_rec.internal_name
 					, i_attr_rec.version_ref_name
-					, i_attr_rec.schema_name
+					, i_attr_rec.attr_type_schema
 					, i_attr_rec.attr_type_name 
 					, i_attr_rec.check_constraint_name
 					, i_attr_rec.internal_name
@@ -107,7 +107,7 @@ begin
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.fk_constraint_name
 					, i_attr_rec.internal_name
-					, i_attr_rec.schema_name
+					, i_attr_rec.attr_type_schema
 					, i_attr_rec.attr_type_name 
 				);
 			end if;

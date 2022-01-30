@@ -19,11 +19,11 @@ begin
 			format(
 				$insert_section$
 				insert into 
-					${database.defaultSchemaName}.%I(
+					%I.%I(
 						id, %s
 					)
 				select 
-					coalesce(id, nextval('${database.defaultSchemaName}.%I_id_seq')), %s
+					coalesce(id, nextval('%I.%I_id_seq')), %s
 				from 
 					${stagingSchemaName}.%I t
 				where 
@@ -33,8 +33,10 @@ begin
 					, %s	
 				;
 				$insert_section$
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes		
 				, i_type_rec.internal_name
@@ -46,7 +48,7 @@ begin
 				format(
 					$insert_section$
 					insert into 
-						${database.defaultSchemaName}.%I_lc(
+						%I.%I_lc(
 							id
 							, master_id
 							, attr_id
@@ -55,7 +57,7 @@ begin
 							, is_default_value
 						)
 					select 
-						coalesce(target_rec.id, nextval('${database.defaultSchemaName}.%I_lc_id_seq'))
+						coalesce(target_rec.id, nextval('%I.%I_lc_id_seq'))
 						, master_rec.id as master_id
 						, meta_attr.id as attr_id
 						, p.lang_id
@@ -65,7 +67,7 @@ begin
 						${stagingSchemaName}.%I t
 					join ${stagingSchemaName}.data_package p 
 						on p.id = t.data_package_id
-					join ${database.defaultSchemaName}.%I master_rec
+					join %I.%I master_rec
 						on master_rec.data_package_id = t.data_package_id
 						and master_rec.data_package_rn = t.data_package_rn
 					cross join lateral (
@@ -76,7 +78,7 @@ begin
 					join ${database.defaultSchemaName}.v_meta_attribute meta_attr
 						on meta_attr.master_id = meta_type.id
 						and meta_attr.internal_name = attr.attr_name
-					left join ${database.defaultSchemaName}.%I_lc target_rec
+					left join %I.%I_lc target_rec
 						on target_rec.master_id = master_rec.id
 						and target_rec.attr_id = meta_attr.id
 						and target_rec.lang_id = p.lang_id
@@ -88,12 +90,16 @@ begin
 						lc_string = excluded.lc_string		
 					;
 					$insert_section$
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.internal_name
-					, i_type_rec.internal_name
+					, i_type_rec.schema_name
 					, i_type_rec.internal_name					
 					, i_type_rec.localisable_attr_values_list
 					, i_type_rec.internal_name
+					, i_type_rec.schema_name
 					, i_type_rec.internal_name					
 				);
 		end if;
@@ -102,7 +108,7 @@ begin
 			format(
 				$delete_section$
 				delete from
-					${database.defaultSchemaName}.%I dest
+					%I.%I dest
 				using 
 					${stagingSchemaName}.%I src
 				where 
@@ -110,6 +116,7 @@ begin
 					and dest.id = src.id
 				;
 				$delete_section$
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.internal_name
 			);
@@ -121,7 +128,7 @@ begin
 				
 				<<row_actuality_check>>
 				declare 
-					l_id ${database.defaultSchemaName}.%I.id%%type;
+					l_id %I.%I.id%%type;
 				begin
 					select 
 						src.id
@@ -129,7 +136,7 @@ begin
 						l_id
 					from 
 						${stagingSchemaName}.%I src
-					join ${database.defaultSchemaName}.%I dest
+					join %I.%I dest
 						on dest.id = src.id
 						and dest.version = src.version
 						and dest.valid_to <> ${database.defaultSchemaName}.f_undefined_max_date() 
@@ -145,8 +152,10 @@ begin
 				end row_actuality_check;
 				
 				$check_section$
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.internal_name
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 			);
 			
@@ -154,7 +163,7 @@ begin
 			format(
 				$insert_section$
 				update
-					${database.defaultSchemaName}.%I dest
+					%I.%I dest
 				set 
 					valid_to = l_state_change_date
 				from 
@@ -166,7 +175,7 @@ begin
 				;
 					
 				insert into 
-					${database.defaultSchemaName}.%I(
+					%I.%I(
 						id
 						, version
 						, valid_from
@@ -174,8 +183,8 @@ begin
 						, %s
 					)
 				select 
-					coalesce(id, nextval('${database.defaultSchemaName}.%I_id_seq')) as id
-					, nextval('${database.defaultSchemaName}.%I_version_seq') as version
+					coalesce(id, nextval('%I.%I_id_seq')) as id
+					, nextval('%I.%I_version_seq') as version
 					, l_state_change_date as valid_from
 					, ${database.defaultSchemaName}.f_undefined_max_date() as valid_to
 					, %s
@@ -185,11 +194,15 @@ begin
 					t.data_package_id = i_data_package_id
 				;
 				$insert_section$
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.internal_name
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes		
 				, i_type_rec.internal_name
@@ -200,7 +213,7 @@ begin
 				format(
 					$insert_section$
 					insert into 
-						${database.defaultSchemaName}.%I_lc(
+						%I.%I_lc(
 							master_id
 							, master_version
 							, attr_id
@@ -219,7 +232,7 @@ begin
 						${stagingSchemaName}.%I t
 					join ${stagingSchemaName}.data_package p 
 						on p.id = t.data_package_id
-					join ${database.defaultSchemaName}.%I master_rec
+					join %I.%I master_rec
 						on master_rec.data_package_id = t.data_package_id
 						and master_rec.data_package_rn = t.data_package_rn
 					cross join lateral (
@@ -235,8 +248,10 @@ begin
 						and attr.attr_value is not null
 					;
 					$insert_section$
+					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.internal_name
+					, i_type_rec.schema_name
 					, i_type_rec.internal_name					
 					, i_type_rec.localisable_attr_values_list
 					, i_type_rec.internal_name					
@@ -247,7 +262,7 @@ begin
 			format(
 				$delete_section$
 				update
-					${database.defaultSchemaName}.%I dest
+					%I.%I dest
 				set 
 					valid_to = l_state_change_date
 				from 
@@ -258,6 +273,7 @@ begin
 					and dest.version = src.version
 				;
 				$delete_section$
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.internal_name
 			);
@@ -265,7 +281,7 @@ begin
 		
 	execute format(
 		$target_procedure$
-		create or replace procedure ${database.defaultSchemaName}.p_apply_%I(
+		create or replace procedure %I.p_apply_%I(
 			i_data_package_id in ${stagingSchemaName}.data_package.id%%type
 			, io_check_date in out ${stagingSchemaName}.data_package.state_change_date%%type
 		)
@@ -324,6 +340,7 @@ begin
 		end
 		$procedure$;
 		$target_procedure$			
+		, i_type_rec.schema_name
 		, i_type_rec.internal_name
 		, l_check_section
 		, l_insert_proc_section

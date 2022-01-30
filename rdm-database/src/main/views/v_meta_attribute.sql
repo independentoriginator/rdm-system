@@ -114,6 +114,7 @@ select
 	) as staging_table_column_data_type
 	, case when target_staging_table_column.is_nullable = 'NO' then true else false end as is_staging_table_column_notnull_constraint_exists
 	, target_staging_table_column.column_default as staging_table_column_default
+	, coalesce(attr_type_schema.internal_name, '${database.defaultSchemaName}') as attr_type_schema 
 from 
 	attr a
 join 
@@ -121,7 +122,9 @@ join
 	on t.id = a.descendant_type_id				
 join 
 	${database.defaultSchemaName}.meta_type attr_type
-	on attr_type.id = a.attr_type_id		
+	on attr_type.id = a.attr_type_id
+left join ${database.defaultSchemaName}.meta_schema attr_type_schema
+	on attr_type_schema.id = attr_type.schema_id
 left join ${database.defaultSchemaName}.meta_schema s
 	on s.id = t.schema_id
 left join information_schema.schemata target_schema
