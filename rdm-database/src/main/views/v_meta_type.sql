@@ -103,7 +103,12 @@ join lateral (
 		string_agg(
 			case 
 				when a.is_localisable = false 
-				then a.internal_name
+				then a.internal_name || 
+					case 
+						when a.is_referenced_type_temporal then
+							', ' || a.version_ref_name
+						else ''
+					end					
 			end
 			, ', ' order by a.ordinal_position nulls last
 		) as non_localisable_attributes
