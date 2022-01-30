@@ -13,6 +13,8 @@ begin
 	end if;
 	
 	if i_type_rec.is_temporal = false then
+		l_check_section := '';
+		
 		l_insert_proc_section := 
 			format(
 				$insert_section$
