@@ -115,6 +115,7 @@ select
 	, case when target_staging_table_column.is_nullable = 'NO' then true else false end as is_staging_table_column_notnull_constraint_exists
 	, target_staging_table_column.column_default as staging_table_column_default
 	, coalesce(attr_type_schema.internal_name, '${database.defaultSchemaName}') as attr_type_schema 
+	, a.meta_type_id as ancestor_type_id
 from 
 	attr a
 join 

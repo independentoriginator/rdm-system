@@ -9,7 +9,13 @@ begin
 	if l_is_target_index_exists = true 
 		and (
 			i_index_rec.id is null
-			or (i_index_rec.id is not null and i_index_rec.is_unique <> i_index_rec.is_target_index_unique)
+			or (
+				i_index_rec.id is not null 
+				and (
+					i_index_rec.is_unique <> i_index_rec.is_target_index_unique 
+					or i_index_rec.index_columns <> i_index_rec.target_index_columns
+				)
+			)
 		) 
 	then
 		execute format('
