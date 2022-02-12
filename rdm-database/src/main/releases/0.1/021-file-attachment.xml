@@ -1,0 +1,90 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="file-attachment" author="${user}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="data_package" schemaName="${stagingSchemaName}"/>
+		</preConditions>	
+
+		<createTable
+			tableName="file_attachment" 
+			schemaName="${stagingSchemaName}"
+			remarks="Файловое вложение">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="attachment" type="bytea" remarks="Файловое вложение">
+				<constraints nullable="true" />
+			</column>
+		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_file_attachment" 
+			tableName="file_attachment"
+			schemaName="${stagingSchemaName}"
+			columnNames="id"/>
+
+		<createTable
+			tableName="data_package_attachment" 
+			schemaName="${stagingSchemaName}"
+			remarks="Файловое вложение пакета данных">
+			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
+				<constraints nullable="false" />
+			</column>
+			<column name="data_package_id" type="${type.id}" remarks="Идентификатор пакета данных">
+				<constraints nullable="false" />
+			</column>
+			<column name="attachment_id" type="${type.id}" remarks="Идентификатор вложения">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_data_package_attachment" 
+			tableName="data_package_attachment"
+			schemaName="${stagingSchemaName}"
+			columnNames="id"/>
+
+		<createIndex 
+			indexName="i_data_package_attachment$data_package_id" 
+			tableName="data_package_attachment"
+			schemaName="${stagingSchemaName}">
+			<column name="data_package_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_data_package_attachment$data_package_id"
+			baseTableSchemaName="${stagingSchemaName}"
+			baseTableName="data_package_attachment" 
+			baseColumnNames="data_package_id" 
+			referencedTableSchemaName="${stagingSchemaName}"
+			referencedTableName="data_package" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_data_package_attachment$attachment_id" 
+			tableName="data_package_attachment"
+			schemaName="${stagingSchemaName}">
+			<column name="attachment_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_data_package_attachment$attachment_id"
+			baseTableSchemaName="${stagingSchemaName}"
+			baseTableName="data_package_attachment" 
+			baseColumnNames="attachment_id" 
+			referencedTableSchemaName="${stagingSchemaName}"
+			referencedTableName="file_attachment" 
+			referencedColumnNames="id" />
+		
+	</changeSet>
+	
+</databaseChangeLog>

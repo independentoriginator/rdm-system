@@ -80,11 +80,11 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_apply_data_package-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_process_data_package-procedure" author="${user}" runOnChange="true">
 		<createProcedure 
-			procedureName="p_apply_data_package" 
+			procedureName="p_process_data_package" 
 			dbms="postgresql" 
-			path="p_apply_data_package.sql" 
+			path="p_process_data_package.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>

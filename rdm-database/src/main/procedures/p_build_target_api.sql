@@ -281,7 +281,7 @@ begin
 		
 	execute format(
 		$target_procedure$
-		create or replace procedure %I.p_apply_%I(
+		create or replace procedure %I.p_process_%I(
 			i_data_package_id in ${stagingSchemaName}.data_package.id%%type
 			, io_check_date in out ${stagingSchemaName}.data_package.state_change_date%%type
 		)
@@ -310,7 +310,7 @@ begin
 					using hint = 'Try to repeat the operation';
   			end if;
   			
-  			if l_data_package.state_name <> 'created' then  
+  			if l_data_package.state_name <> 'loaded' then  
 				raise exception 'The data package has unexpected state: %%', l_data_package.state_name;
   			end if;
   			%s
@@ -319,7 +319,7 @@ begin
 			else
 				%s
 			end if;
-				
+			%s				
 			update 
 				${stagingSchemaName}.data_package p
 			set 
@@ -329,7 +329,7 @@ begin
 					from 
 						${database.defaultSchemaName}.data_package_state s 
 					where 
-						s.internal_name = 'applied'
+						s.internal_name = 'processed'
 				)
 				, state_change_date = l_state_change_date
 			where 
@@ -345,6 +345,27 @@ begin
 		, l_check_section
 		, l_insert_proc_section
 		, l_delete_proc_section
+		, case 
+			when exists (
+				select 
+					1 
+				from
+					pg_catalog.pg_proc p
+				where 
+					p.pronamespace = i_type_rec.schema_name::regnamespace
+					and p.proname = 'p_after_processing_' || i_type_rec.internal_name
+					and p.prokind = 'p'::"char"
+					and 'i_data_package_id' = any(p.proargnames)
+			) then format('
+					call %I.p_after_processing_%I(
+						i_data_package_id => i_data_package_id
+					); 
+				'
+				, i_type_rec.schema_name 
+				, i_type_rec.internal_name
+			)
+			else ''
+		end
 	);
 end
 $$;			

@@ -82,16 +82,16 @@
 			<column name="id" type="${type.id}" autoIncrement="true" remarks="Идентификатор">
 				<constraints nullable="false" />
 			</column>
+			<column name="type_id" type="${type.id}" remarks="Идентификатор типа">
+				<constraints nullable="false" />
+			</column>
 			<column name="source_id" type="${type.id}" remarks="Идентификатор источника данных">
 				<constraints nullable="false" />
 			</column>
 			<column name="lang_id" type="${type.id}" remarks="Идентификатор языка">
 				<constraints nullable="false" />
 			</column>
-			<column name="is_deletion" type="boolean" remarks="Признак удаления" defaultValueBoolean="false">
-				<constraints nullable="false" />
-			</column>
-			<column name="is_partial" type="boolean" remarks="Признак неполного набора целевых данных" defaultValueBoolean="true">
+			<column name="is_deletion" type="boolean" remarks="Признак удаления целевых данных" defaultValueBoolean="false">
 				<constraints nullable="false" />
 			</column>
 			<column name="create_date" type="datetime" remarks="Дата создания">
@@ -110,6 +110,21 @@
 			tableName="data_package"
 			schemaName="${stagingSchemaName}"
 			columnNames="id"/>
+
+		<createIndex 
+			indexName="i_data_package$type_id" 
+			tableName="data_package"
+			schemaName="${stagingSchemaName}">
+			<column name="type_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_data_package$type_id"
+			baseTableSchemaName="${stagingSchemaName}"
+			baseTableName="data_package" 
+			baseColumnNames="type_id" 
+			referencedTableName="meta_type" 
+			referencedColumnNames="id" />
 			
 		<createIndex 
 			indexName="i_data_package$source_id" 
@@ -201,15 +216,15 @@
 	<changeSet id="data_package-states" author="${user}">
 	
 		<insert tableName="data_package_state">
-			<column name="internal_name" value="created"/>
+			<column name="internal_name" value="loaded"/>
 		</insert>
 		
 		<insert tableName="data_package_state">
-			<column name="internal_name" value="applied"/>
+			<column name="internal_name" value="processed"/>
 		</insert>
 
 		<insert tableName="data_package_state">
-			<column name="internal_name" value="canceled"/>
+			<column name="internal_name" value="discarded"/>
 		</insert>
 		
 	</changeSet>
