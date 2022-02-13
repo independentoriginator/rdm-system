@@ -28,16 +28,16 @@ begin
 			s.lang_id
 			, (
 				select 
-					id 
+					l.id 
 				from 
-					${database.defaultSchemaName}.language 
+					${database.defaultSchemaName}.language l
 				where 
-					internal_name = 'ru'
+					l.tag = 'ru'
 			)
 		)
 		, i_is_deletion
 		, current_timestamp
-		, (select id from ${database.defaultSchemaName}.data_package_state where internal_name = 'loaded')
+		, (select ps.id from ${database.defaultSchemaName}.data_package_state ps where ps.internal_name = 'loaded')
 		, current_timestamp
 	from 
 		${database.defaultSchemaName}.meta_type t
