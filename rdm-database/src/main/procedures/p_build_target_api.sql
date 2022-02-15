@@ -56,6 +56,11 @@ begin
 							, lc_string
 							, is_default_value
 						)
+					with meta_attribute as (
+						select *
+						from ${database.defaultSchemaName}.v_meta_attribute a 
+						where a.meta_type_name = '%I'
+					)						
 					select 
 						coalesce(target_rec.id, nextval('%I.%I_lc_id_seq'))
 						, master_rec.id as master_id
@@ -73,11 +78,8 @@ begin
 					cross join lateral (
 						values %s
 					) attr(attr_name, attr_value)
-					join ${database.defaultSchemaName}.meta_type meta_type
-						on meta_type.internal_name = '%I'
-					join ${database.defaultSchemaName}.v_meta_attribute meta_attr
-						on meta_attr.master_id = meta_type.id
-						and meta_attr.internal_name = attr.attr_name
+					join meta_attribute meta_attr
+						on meta_attr.internal_name = attr.attr_name
 					left join %I.%I_lc target_rec
 						on target_rec.master_id = master_rec.id
 						and target_rec.attr_id = meta_attr.id
@@ -92,13 +94,13 @@ begin
 					$insert_section$
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
+					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name					
 					, i_type_rec.localisable_attr_values_list
-					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name					
 				);
@@ -221,6 +223,11 @@ begin
 							, lc_string
 							, is_default_value
 						)
+					with meta_attribute as (
+						select *
+						from ${database.defaultSchemaName}.v_meta_attribute a 
+						where a.meta_type_name = '%I'
+					)						
 					select 
 						master_rec.id as master_id
 						, master_rec.version as master_version
@@ -238,11 +245,8 @@ begin
 					cross join lateral (
 						values %s
 					) attr(attr_name, attr_value)
-					join ${database.defaultSchemaName}.meta_type meta_type
-						on meta_type.internal_name = '%I'
-					join ${database.defaultSchemaName}.v_meta_attribute meta_attr
-						on meta_attr.master_id = meta_type.id
-						and meta_attr.internal_name = attr.attr_name
+					join meta_attribute meta_attr
+						on meta_attr.internal_name = attr.attr_name
 					where 
 						t.data_package_id = i_data_package_id
 						and attr.attr_value is not null
@@ -251,10 +255,10 @@ begin
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.internal_name
+					, i_type_rec.internal_name					
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name					
 					, i_type_rec.localisable_attr_values_list
-					, i_type_rec.internal_name					
 				);
 		end if;
 			

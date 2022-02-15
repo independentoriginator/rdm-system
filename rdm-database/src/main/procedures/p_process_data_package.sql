@@ -8,11 +8,12 @@ as $procedure$
 begin
 	execute 
 		format('
-				call ${database.defaultSchemaName}.p_process_%I(
+				call %I.p_process_%I(
 					i_data_package_id => $1
 					, io_check_date => $2
 				)
 			'
+			, (select t.schema_name from ${database.defaultSchemaName}.v_meta_type t where t.internal_name = i_entity_name)
 			, i_entity_name
 		)
 		using 
