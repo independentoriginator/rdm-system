@@ -201,6 +201,7 @@ begin
 			${database.defaultSchemaName}.v_meta_attribute a
 		where 
 			a.master_id = i_type_rec.id
+			and a.internal_name <> 'master_id'
 		order by 
 			ordinal_position asc nulls last, 
 			id asc 

@@ -18,7 +18,27 @@ with recursive attr as (
 		, a.default_value
 	from 
 		${database.defaultSchemaName}.meta_type t
-	left join ${database.defaultSchemaName}.meta_attribute a on a.master_id = t.id 
+	left join ${database.defaultSchemaName}.meta_attribute a on a.master_id = t.id
+	union all
+	select 
+		0 as id
+        , t.id AS descendant_type_id
+        , t.super_type_id
+        , t.id as meta_type_id
+		, 'master_id'::varchar(63) as internal_name
+		, t.master_type_id as attr_type_id 
+		, null as length
+		, null as precision
+		, null as scale
+		, true as is_non_nullable
+		, false as is_unique
+		, false as is_localisable
+		, 0 as ordinal_position
+		, null as default_value
+	from 
+		${database.defaultSchemaName}.meta_type t
+	where 
+		t.master_type_id is not null
 	union all
 	select 
 		a_inherited.id
