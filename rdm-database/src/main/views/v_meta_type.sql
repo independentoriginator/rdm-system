@@ -70,6 +70,20 @@ select
 	, a.localisable_attributes
 	, a.insert_expr_on_conflict_update_part_for_localisable
 	, a.localisable_attr_values_list
+	, case 
+		when exists (
+				select 
+					1
+				from
+					information_schema.columns target_column
+				where
+					target_column.table_schema = '${stagingSchemaName}'
+					and target_column.table_name = t.internal_name
+					and target_column.column_name = 'master_id'
+			)
+		then true
+		else false
+	end as is_ref_to_master_column_in_staging_table_exists
 from 
 	${database.defaultSchemaName}.meta_type t
 left join ${database.defaultSchemaName}.meta_schema s
