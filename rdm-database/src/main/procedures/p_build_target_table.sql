@@ -131,8 +131,8 @@ begin
 		if i_type_rec.is_temporal = true then 
 			execute format('
 				alter table %I.%I
-					add column master_id %s not null,
-					add column master_version %s not null
+					add column master_id %s null,
+					add column master_version %s null
 				'
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name 
@@ -164,7 +164,7 @@ begin
 		else
 			execute format('
 				alter table %I.%I
-					add column master_id %s not null
+					add column master_id %s null
 				'
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name 
