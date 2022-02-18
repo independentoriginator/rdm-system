@@ -56,7 +56,7 @@ begin
 							, lc_string
 							, is_default_value
 						)
-					with meta_attribute as (
+					with meta_attribute as materialized (
 						select *
 						from ${database.defaultSchemaName}.v_meta_attribute a 
 						where a.meta_type_name = '%I'
