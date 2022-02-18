@@ -15,7 +15,7 @@ select
 				from 
 					${database.defaultSchemaName}.meta_attribute a 
 				join ${database.defaultSchemaName}.meta_type referenced_type 
-					on referenced_type.id = a.attr_type_id and referenced_type.is_primitive = false 
+					on referenced_type.id = a.attr_type_id and referenced_type.is_primitive = false
 				where 
 					a.master_id = i_meta_type_id
 				union 
@@ -26,6 +26,7 @@ select
 				where 
 					t.id = i_meta_type_id
 					and t.master_type_id is not null
+					and t.master_type_id <> t.id
 			) t
 		) + 1,
 		0
