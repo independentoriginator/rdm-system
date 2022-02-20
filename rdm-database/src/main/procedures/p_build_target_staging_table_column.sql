@@ -10,28 +10,25 @@ begin
 			if i_attr_rec.is_referenced_type_temporal = true then 
 				execute format('
 					alter table %I.%I
-						add column %I %s %snull,
-						add column %I %s %snull
+						add column %I %s null,
+						add column %I %s null
 					'
 					, i_attr_rec.staging_schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 					, i_attr_rec.target_attr_type				
-					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
 					, i_attr_rec.version_ref_name
 					, i_attr_rec.target_attr_type				
-					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
 				);
 			else
 				execute format('
 					alter table %I.%I
-						add column %I %s %snull
+						add column %I %s null
 					'
 					, i_attr_rec.staging_schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 					, i_attr_rec.target_attr_type				
-					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
 				);
 			end if;
 		else
@@ -48,29 +45,7 @@ begin
 			end if;
 		end if;
 	
-		if i_attr_rec.is_non_nullable = true and i_attr_rec.is_staging_table_column_notnull_constraint_exists = false then
-			if i_attr_rec.is_referenced_type_temporal = true then 
-				execute format('
-					alter table %I.%I
-						alter column %s set not null,
-						alter column %s set not null
-					'
-					, i_attr_rec.staging_schema_name
-					, i_attr_rec.meta_type_name 
-					, i_attr_rec.internal_name 
-					, i_attr_rec.version_ref_name
-				);
-			else
-				execute format('
-					alter table %I.%I
-						alter column %s set not null
-					'
-					, i_attr_rec.staging_schema_name
-					, i_attr_rec.meta_type_name 
-					, i_attr_rec.internal_name 
-				);
-			end if;				
-		elsif i_attr_rec.is_non_nullable = false and i_attr_rec.is_staging_table_column_notnull_constraint_exists = true then
+		if i_attr_rec.is_staging_table_column_notnull_constraint_exists = true then
 			if i_attr_rec.is_referenced_type_temporal = true then
 				execute format('
 					alter table %I.%I
