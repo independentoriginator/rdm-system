@@ -17,8 +17,8 @@ with recursive attr as (
 		, a.ordinal_position
 		, a.default_value
 	from 
-		${database.defaultSchemaName}.meta_type t
-	left join ${database.defaultSchemaName}.meta_attribute a on a.master_id = t.id
+		${mainSchemaName}.meta_type t
+	left join ${mainSchemaName}.meta_attribute a on a.master_id = t.id
 	union all
 	select 
 		0 as id
@@ -36,7 +36,7 @@ with recursive attr as (
 		, 0 as ordinal_position
 		, null as default_value
 	from 
-		${database.defaultSchemaName}.meta_type t
+		${mainSchemaName}.meta_type t
 	where 
 		t.master_type_id is not null
 	union all
@@ -65,16 +65,16 @@ with recursive attr as (
 		from 
 			attr 
 	) a
-	join ${database.defaultSchemaName}.meta_attribute a_inherited
+	join ${mainSchemaName}.meta_attribute a_inherited
 		on a_inherited.master_id = a.super_type_id
-	join ${database.defaultSchemaName}.meta_type t 
+	join ${mainSchemaName}.meta_type t 
 		on t.id = a_inherited.master_id
 )
 select
 	a.id
 	, t.id as master_id
 	, t.internal_name as meta_type_name
-	, coalesce(s.internal_name, '${database.defaultSchemaName}') as schema_name 
+	, coalesce(s.internal_name, '${mainSchemaName}') as schema_name 
 	, a.internal_name
 	, case attr_type.internal_name
 		when 's' 
@@ -99,7 +99,7 @@ select
 	end as target_attr_type
 	, a.ordinal_position
 	, case when target_column.column_name is not null then true else false end as is_column_exists
-	, ${database.defaultSchemaName}.f_column_type_specification(
+	, ${mainSchemaName}.f_column_type_specification(
 		i_data_type => target_column.data_type
 		, i_character_maximum_length => target_column.character_maximum_length
 		, i_numeric_precision => target_column.numeric_precision
@@ -125,7 +125,7 @@ select
 	, a.is_localisable
 	, '${stagingSchemaName}' as staging_schema_name
 	, case when target_staging_table_column.column_name is not null then true else false end as is_staging_table_column_exists
-	, ${database.defaultSchemaName}.f_column_type_specification(
+	, ${mainSchemaName}.f_column_type_specification(
 		i_data_type => target_staging_table_column.data_type
 		, i_character_maximum_length => target_staging_table_column.character_maximum_length
 		, i_numeric_precision => target_staging_table_column.numeric_precision
@@ -134,22 +134,22 @@ select
 	) as staging_table_column_data_type
 	, case when target_staging_table_column.is_nullable = 'NO' then true else false end as is_staging_table_column_notnull_constraint_exists
 	, target_staging_table_column.column_default as staging_table_column_default
-	, coalesce(attr_type_schema.internal_name, '${database.defaultSchemaName}') as attr_type_schema 
+	, coalesce(attr_type_schema.internal_name, '${mainSchemaName}') as attr_type_schema 
 	, a.meta_type_id as ancestor_type_id
 from 
 	attr a
 join 
-	${database.defaultSchemaName}.meta_type t
+	${mainSchemaName}.meta_type t
 	on t.id = a.descendant_type_id				
 join 
-	${database.defaultSchemaName}.meta_type attr_type
+	${mainSchemaName}.meta_type attr_type
 	on attr_type.id = a.attr_type_id
-left join ${database.defaultSchemaName}.meta_schema attr_type_schema
+left join ${mainSchemaName}.meta_schema attr_type_schema
 	on attr_type_schema.id = attr_type.schema_id
-left join ${database.defaultSchemaName}.meta_schema s
+left join ${mainSchemaName}.meta_schema s
 	on s.id = t.schema_id
 left join information_schema.schemata target_schema
-	on target_schema.schema_name = coalesce(s.internal_name, '${database.defaultSchemaName}')
+	on target_schema.schema_name = coalesce(s.internal_name, '${mainSchemaName}')
 left join 
 	information_schema.columns target_column
 	on target_column.table_schema = target_schema.schema_name
@@ -172,13 +172,13 @@ left join
 	and u_constraint.constraint_name = 'uc_' || t.internal_name || '$' || a.internal_name
 	and u_constraint.constraint_type = 'UNIQUE'
 left join
-	${database.defaultSchemaName}.meta_expr_body def_val_expr
+	${mainSchemaName}.meta_expr_body def_val_expr
 	on def_val_expr.master_id = a.default_value
 	and def_val_expr.dbms_type_id = (
 		select 
 			id
 		from
-			${database.defaultSchemaName}.dbms_type
+			${mainSchemaName}.dbms_type
 		where
 			code = 'postgresql'
 	)

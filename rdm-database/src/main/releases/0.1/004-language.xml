@@ -56,10 +56,6 @@
 
 	<changeSet id="initial-languages" author="${user}">
 	
-		<preConditions onFail="CONTINUE">
-			<tableExists tableName="language"/>
-		</preConditions>	
-
 		<insert tableName="language">
 			<column name="tag" value="ru"/>
 		</insert>

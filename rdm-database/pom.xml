@@ -21,8 +21,8 @@
 		<liquibase.version>4.6.2</liquibase.version>
 		<postgresql.jdbcdriver.version>42.3.1</postgresql.jdbcdriver.version>
 		
-		<database.stagingSchemaName>etl_staging</database.stagingSchemaName>
-		<database.stagingTableSpace></database.stagingTableSpace>
+		<databaseStagingSchemaName>etl_staging</databaseStagingSchemaName>
+		<databaseStagingTableSpace></databaseStagingTableSpace>
 	</properties>
 
 	<dependencies>
@@ -46,10 +46,10 @@
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<version>${liquibase.version}</version>
 				<configuration>
-					<propertyFileWillOverride>true</propertyFileWillOverride>
+					<propertyFileWillOverride>false</propertyFileWillOverride>
 					<propertyFile>${profile.propertyFile}</propertyFile>
 					<changeLogFile>${profile.changeLogFile}</changeLogFile>
-					<defaultSchemaName>${database.defaultSchemaName}</defaultSchemaName>
+					<!--<defaultSchemaName>${databaseMainSchemaName}</defaultSchemaName>-->
 					<!-- log  -->
 					<verbose>${profile.verbose}</verbose>
 					<logging>${profile.logging}</logging>
@@ -57,12 +57,16 @@
 					<!-- custom properties  -->
 					<systemProperties>
 						<property>
+							<name>mainSchemaName</name>
+							<value>${databaseMainSchemaName}</value>
+						</property>
+						<property>
 							<name>stagingSchemaName</name>
-							<value>${database.stagingSchemaName}</value>
+							<value>${databaseStagingSchemaName}</value>
 						</property>
 						<property>
 							<name>stagingTableSpace</name>
-							<value>${database.stagingTableSpace}</value>
+							<value>${databaseStagingTableSpace}</value>
 						</property>
 						<property>
 							<name>type.id</name>

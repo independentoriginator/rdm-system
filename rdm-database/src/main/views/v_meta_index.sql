@@ -9,8 +9,8 @@ with recursive type_index as (
 		, i.tag
 		, i.is_unique 
 	from 
-		${database.defaultSchemaName}.meta_type t
-	left join ${database.defaultSchemaName}.meta_index i on i.master_id = t.id 
+		${mainSchemaName}.meta_type t
+	left join ${mainSchemaName}.meta_index i on i.master_id = t.id 
 	union all
 	select 
 		i_inherited.id
@@ -21,9 +21,9 @@ with recursive type_index as (
 		, i_inherited.is_unique 
 	from 
 		type_index i
-	join ${database.defaultSchemaName}.meta_index i_inherited
+	join ${mainSchemaName}.meta_index i_inherited
 		on i_inherited.master_id = i.super_type_id
-	join ${database.defaultSchemaName}.meta_type t 
+	join ${mainSchemaName}.meta_type t 
 		on t.id = i_inherited.master_id
 )
 select
@@ -42,7 +42,7 @@ from (
 		i.id
 		, t.id as master_id
 		, t.internal_name as meta_type_name
-		, coalesce(s.internal_name, '${database.defaultSchemaName}') as schema_name
+		, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
 		, i.is_unique
 		, 'i_' || t.internal_name || '$' || i.tag as index_name
 		, ic.index_columns || 
@@ -54,9 +54,9 @@ from (
 	from 
 		type_index i
 	join 
-		${database.defaultSchemaName}.meta_type t
+		${mainSchemaName}.meta_type t
 		on t.id = i.descendant_type_id	
-	left join ${database.defaultSchemaName}.meta_schema s
+	left join ${mainSchemaName}.meta_schema s
 		on s.id = t.schema_id
 	join lateral (
 		select 
@@ -65,7 +65,7 @@ from (
 				, ', ' order by ic.ordinal_position
 			) as index_columns
 		from
-			${database.defaultSchemaName}.meta_index_column ic
+			${mainSchemaName}.meta_index_column ic
 		where
 			ic.master_id = i.id
 	) ic on true

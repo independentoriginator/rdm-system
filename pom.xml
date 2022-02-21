@@ -14,6 +14,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<database.defaultSchemaName>rdm_system</database.defaultSchemaName>
+		<databaseMainSchemaName>rdm_system</databaseMainSchemaName>
 	</properties>
 </project>

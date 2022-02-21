@@ -8,12 +8,12 @@ begin
 		select
 			t.*
 		from 
-			${database.defaultSchemaName}.v_meta_type t
+			${mainSchemaName}.v_meta_type t
 		order by 
 			dependency_level
 	) 
 	loop
-		call ${database.defaultSchemaName}.p_build_target_table(
+		call ${mainSchemaName}.p_build_target_table(
 			i_type_rec => l_type_rec
 		);
 	end loop;

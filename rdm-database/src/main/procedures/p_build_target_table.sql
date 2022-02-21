@@ -65,7 +65,7 @@ begin
 		end if;
 	end if;
 	
-	call ${database.defaultSchemaName}.p_build_target_staging_table(
+	call ${mainSchemaName}.p_build_target_staging_table(
 		i_type_rec => i_type_rec
 	);
 
@@ -198,7 +198,7 @@ begin
 		select
 			a.*
 		from 
-			${database.defaultSchemaName}.v_meta_attribute a
+			${mainSchemaName}.v_meta_attribute a
 		where 
 			a.master_id = i_type_rec.id
 			and a.internal_name <> 'master_id'
@@ -207,11 +207,11 @@ begin
 			id asc 
 	) 
 	loop
-		call ${database.defaultSchemaName}.p_build_target_column(
+		call ${mainSchemaName}.p_build_target_column(
 			i_type_rec => i_type_rec,
 			i_attr_rec => l_attr_rec
 		);
-		call ${database.defaultSchemaName}.p_build_target_staging_table_column(
+		call ${mainSchemaName}.p_build_target_staging_table_column(
 			i_type_rec => i_type_rec,
 			i_attr_rec => l_attr_rec
 		);
@@ -221,21 +221,21 @@ begin
 		select
 			i.*
 		from 
-			${database.defaultSchemaName}.v_meta_index i
+			${mainSchemaName}.v_meta_index i
 		where 
 			i.master_id = i_type_rec.id
 	) 
 	loop
-		call ${database.defaultSchemaName}.p_build_target_index(
+		call ${mainSchemaName}.p_build_target_index(
 			i_index_rec => l_index_rec
 		);
 	end loop;
 	
-	call ${database.defaultSchemaName}.p_build_target_lc_table(
+	call ${mainSchemaName}.p_build_target_lc_table(
 		i_type_rec => i_type_rec
 	);
 
-	call ${database.defaultSchemaName}.p_build_target_api(
+	call ${mainSchemaName}.p_build_target_api(
 		i_type_rec => i_type_rec
 	);
 end

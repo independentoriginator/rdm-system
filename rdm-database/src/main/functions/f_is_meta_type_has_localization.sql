@@ -1,5 +1,5 @@
 create or replace function f_is_meta_type_has_localization(
-	i_meta_type_id ${database.defaultSchemaName}.meta_type.id%type
+	i_meta_type_id ${mainSchemaName}.meta_type.id%type
 )
 returns boolean
 language sql
@@ -10,13 +10,13 @@ select
 			select 
 				1
 			from 
-				${database.defaultSchemaName}.meta_attribute a
+				${mainSchemaName}.meta_attribute a
 			where
 				a.master_id = t.id
 				and a.is_localisable = true
 		) or (
 			t.super_type_id is not null
-			and ${database.defaultSchemaName}.f_is_meta_type_has_localization(
+			and ${mainSchemaName}.f_is_meta_type_has_localization(
 				i_meta_type_id => t.super_type_id 
 			)
 		)
@@ -24,7 +24,7 @@ select
 		else false
 	end
 from 
-	${database.defaultSchemaName}.meta_type t
+	${mainSchemaName}.meta_type t
 where
 	t.id = i_meta_type_id
 $function$;	

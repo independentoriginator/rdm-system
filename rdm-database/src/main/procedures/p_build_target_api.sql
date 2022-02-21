@@ -58,7 +58,7 @@ begin
 						)
 					with meta_attribute as materialized (
 						select *
-						from ${database.defaultSchemaName}.v_meta_attribute a 
+						from ${mainSchemaName}.v_meta_attribute a 
 						where a.meta_type_name = '%I'
 					)						
 					select 
@@ -141,7 +141,7 @@ begin
 					join %I.%I dest
 						on dest.id = src.id
 						and dest.version = src.version
-						and dest.valid_to <> ${database.defaultSchemaName}.f_undefined_max_date() 
+						and dest.valid_to <> ${mainSchemaName}.f_undefined_max_date() 
 					where 
 						src.data_package_id = i_data_package_id
 					limit 1
@@ -188,7 +188,7 @@ begin
 					coalesce(id, nextval('%I.%I_id_seq')) as id
 					, nextval('%I.%I_version_seq') as version
 					, l_state_change_date as valid_from
-					, ${database.defaultSchemaName}.f_undefined_max_date() as valid_to
+					, ${mainSchemaName}.f_undefined_max_date() as valid_to
 					, %s
 				from 
 					${stagingSchemaName}.%I t
@@ -225,7 +225,7 @@ begin
 						)
 					with meta_attribute as (
 						select *
-						from ${database.defaultSchemaName}.v_meta_attribute a 
+						from ${mainSchemaName}.v_meta_attribute a 
 						where a.meta_type_name = '%I'
 					)						
 					select 
@@ -303,7 +303,7 @@ begin
 				l_data_package
 			from 
 				${stagingSchemaName}.data_package p
-			join ${database.defaultSchemaName}.data_package_state s on s.id = p.state_id
+			join ${mainSchemaName}.data_package_state s on s.id = p.state_id
 			where 
 				p.id = i_data_package_id
 			for update
@@ -331,7 +331,7 @@ begin
 					select 
 						s.id
 					from 
-						${database.defaultSchemaName}.data_package_state s 
+						${mainSchemaName}.data_package_state s 
 					where 
 						s.internal_name = 'processed'
 				)

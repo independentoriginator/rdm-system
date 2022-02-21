@@ -1,9 +1,9 @@
 create or replace function ${stagingSchemaName}.f_insert_data_package(
-	i_type_id ${database.defaultSchemaName}.meta_type.id%type = null
-	, i_type_name ${database.defaultSchemaName}.meta_type.internal_name%type = null
-	, i_source_id ${database.defaultSchemaName}.source.id%type = null
-	, i_source_name ${database.defaultSchemaName}.source.internal_name%type = null
-	, i_lang_id ${database.defaultSchemaName}.language.id%type = null
+	i_type_id ${mainSchemaName}.meta_type.id%type = null
+	, i_type_name ${mainSchemaName}.meta_type.internal_name%type = null
+	, i_source_id ${mainSchemaName}.source.id%type = null
+	, i_source_name ${mainSchemaName}.source.internal_name%type = null
+	, i_lang_id ${mainSchemaName}.language.id%type = null
 	, i_is_deletion bool = false
 	, o_data_package_id out ${stagingSchemaName}.data_package.id%type
 	, o_check_date out ${stagingSchemaName}.data_package.state_change_date%type
@@ -30,18 +30,18 @@ begin
 				select 
 					l.id 
 				from 
-					${database.defaultSchemaName}.language l
+					${mainSchemaName}.language l
 				where 
 					l.tag = 'ru'
 			)
 		)
 		, i_is_deletion
 		, current_timestamp
-		, (select ps.id from ${database.defaultSchemaName}.data_package_state ps where ps.internal_name = 'loaded')
+		, (select ps.id from ${mainSchemaName}.data_package_state ps where ps.internal_name = 'loaded')
 		, current_timestamp
 	from 
-		${database.defaultSchemaName}.meta_type t
-		, ${database.defaultSchemaName}.source s
+		${mainSchemaName}.meta_type t
+		, ${mainSchemaName}.source s
 	where
 		(
 			t.id = i_type_id

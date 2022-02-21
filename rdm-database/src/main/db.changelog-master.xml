@@ -12,6 +12,12 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd" 
 	changeLogId="592d5e24-7501-431d-904b-729a68a979e8">
 
+	<changeSet id="default schema" author="${user}" runAlways="true">
+		<sql dbms="postgresql">
+			SET search_path = ${mainSchemaName}
+		</sql>
+	</changeSet>
+
 	<includeAll path="releases" relativeToChangelogFile="true" />
 	<include file="functions/functions.xml" relativeToChangelogFile="true" />
 	<include file="views/views.xml" relativeToChangelogFile="true" />

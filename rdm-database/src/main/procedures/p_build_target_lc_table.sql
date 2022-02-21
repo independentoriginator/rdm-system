@@ -17,8 +17,8 @@ begin
 					is_default_value boolean not null default true,
 					constraint pk_%I primary key (id),
 					constraint fk_%I$master_id_version foreign key (master_id, master_version) references %I.%I(id, version),
-					constraint fk_%I$attr_id foreign key (attr_id) references ${database.defaultSchemaName}.meta_attribute(id),
-					constraint fk_%I$lang_id foreign key (lang_id) references ${database.defaultSchemaName}.language(id)
+					constraint fk_%I$attr_id foreign key (attr_id) references ${mainSchemaName}.meta_attribute(id),
+					constraint fk_%I$lang_id foreign key (lang_id) references ${mainSchemaName}.language(id)
 				)'
 				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
@@ -67,8 +67,8 @@ begin
 					is_default_value boolean not null default true,
 					constraint pk_%I primary key (id),
 					constraint fk_%I$master_id foreign key (master_id) references %I.%I(id),
-					constraint fk_%I$attr_id foreign key (attr_id) references ${database.defaultSchemaName}.meta_attribute(id),
-					constraint fk_%I$lang_id foreign key (lang_id) references ${database.defaultSchemaName}.language(id)
+					constraint fk_%I$attr_id foreign key (attr_id) references ${mainSchemaName}.meta_attribute(id),
+					constraint fk_%I$lang_id foreign key (lang_id) references ${mainSchemaName}.language(id)
 				)'
 				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
