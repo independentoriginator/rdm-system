@@ -56,25 +56,19 @@
 
 	</changeSet>
 	
-	<changeSet id="directory-source" author="${user}">
-	
-		<preConditions onFail="CONTINUE">
-			<tableExists tableName="meta_index"/>
-			<tableExists tableName="meta_index_column"/>
-		</preConditions>	
+	<changeSet id="entity-source" author="${user}">
 	
 		<insert tableName="meta_attribute">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="internal_name" value="source_id"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'source')"/>
 			<column name="is_non_nullable" value="true"/>
 			<column name="ordinal_position" value="1"/>
 		</insert>
 
-		<update tableName="meta_attribute">
-			<column name="is_unique" valueBoolean="false"/>
-			<where>master_id = (select id from meta_type where internal_name = 'directory') and internal_name = 'code'</where>
-		</update>
+	</changeSet>
+
+	<changeSet id="directory-code-source-uniqueness" author="${user}">
 
 		<insert tableName="meta_index">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>

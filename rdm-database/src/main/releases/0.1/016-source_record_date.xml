@@ -11,7 +11,7 @@
 	<changeSet id="source_record_date" author="${user}">
 	
 		<insert tableName="meta_attribute">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="internal_name" value="source_record_date"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
 			<column name="precision" value="6"/>			

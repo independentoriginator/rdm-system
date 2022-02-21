@@ -8,11 +8,21 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
+	<changeSet id="abstract-entity" author="${user}">
+
+		<insert tableName="meta_type">
+			<column name="internal_name" value="entity"/>
+			<column name="is_abstract" value="true"/>
+		</insert>
+
+	</changeSet>
+
 	<changeSet id="abstract-directory" author="${user}">
 
 		<insert tableName="meta_type">
 			<column name="internal_name" value="directory"/>
 			<column name="is_abstract" value="true"/>
+			<column name="super_type_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 		</insert>
 
 		<insert tableName="meta_attribute">
@@ -20,8 +30,8 @@
 			<column name="internal_name" value="code"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="${type.length.code}"/>			
-			<column name="is_non_nullable" value="true"/>
-			<column name="is_unique" value="true"/>	
+			<column name="is_non_nullable" value="false"/>
+			<column name="is_unique" value="false"/>	
 			<column name="ordinal_position" value="2"/>			
 		</insert>
 

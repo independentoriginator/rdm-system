@@ -178,17 +178,25 @@
 		<comment>Reference to data_package.id, indexed, but without foreign key constraint</comment>
 	
 		<insert tableName="meta_attribute">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="internal_name" value="data_package_id"/>
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'id')"/>
-			<column name="is_non_nullable" value="true"/>
+			<column name="is_non_nullable" value="false"/>
+			<column name="ordinal_position" value="0"/>
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="internal_name" value="data_package_rn"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'id')"/>
+			<column name="is_non_nullable" value="false"/>
 			<column name="ordinal_position" value="0"/>
 		</insert>
 		
 		<insert tableName="meta_index">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'directory')"/>
-			<column name="tag" value="data_package_id"/>		
-			<column name="is_unique" value="false"/>
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="tag" value="data_package_id_data_package_rn"/>		
+			<column name="is_unique" value="true"/>
 		</insert>
 
 		<insert tableName="meta_index_column">
@@ -204,11 +212,33 @@
 						from 
 							meta_type 
 						where 
-							internal_name = 'directory'
+							internal_name = 'entity'
 					)
-					and tag = 'data_package_id' 
+					and tag = 'data_package_id_data_package_rn' 
 			)"/>
 			<column name="meta_attr_name" value="data_package_id"/>
+			<column name="ordinal_position" value="0"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'data_package_id_data_package_rn' 
+			)"/>
+			<column name="meta_attr_name" value="data_package_rn"/>
+			<column name="ordinal_position" value="1"/>			
 		</insert>
 		
 	</changeSet>

@@ -58,17 +58,4 @@
 		
 	</changeSet>
 
-	<changeSet id="data_package_id-nullability" author="${user}">
-	
-		<update tableName="meta_attribute">
-			<column name="is_non_nullable" valueBoolean="false"/>
-			<where>
-				master_id = (select id from meta_type where internal_name = 'entity') 
-				and internal_name in ('data_package_id', 'data_package_rn')
-			</where>
-		</update>
-
-	</changeSet>
-	
-
 </databaseChangeLog>
