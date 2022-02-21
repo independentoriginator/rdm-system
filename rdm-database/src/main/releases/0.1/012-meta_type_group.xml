@@ -44,7 +44,7 @@
 	<changeSet id="meta_type_group-ref" author="${user}">
 	
 		<preConditions onFail="CONTINUE">
-			<tableExists tableName="meta_type_group"/>
+			<tableExists tableName="meta_type_group" schemaName="${mainSchemaName}"/>
 		</preConditions>	
 		
 		<addColumn tableName="meta_type">

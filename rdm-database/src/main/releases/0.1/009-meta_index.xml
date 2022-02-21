@@ -130,8 +130,8 @@
 	<changeSet id="meta_index-tag-uniqueness" author="${user}">
 	
 		<preConditions onFail="CONTINUE">
-			<tableExists tableName="meta_index"/>
-			<tableExists tableName="meta_index_column"/>
+			<tableExists tableName="meta_index" schemaName="${mainSchemaName}"/>
+			<tableExists tableName="meta_index_column" schemaName="${mainSchemaName}"/>
 		</preConditions>	
 		
 		<insert tableName="meta_index">

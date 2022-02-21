@@ -31,8 +31,8 @@
 	<changeSet id="meta_type-localised-names" author="${user}">
 	
 		<preConditions onFail="CONTINUE">
-			<tableExists tableName="meta_type_lc"/>
-			<tableExists tableName="meta_attribute_lc"/>
+			<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>
+			<tableExists tableName="meta_attribute_lc" schemaName="${mainSchemaName}"/>
 		</preConditions>	
 
 		<insert tableName="meta_type_lc">

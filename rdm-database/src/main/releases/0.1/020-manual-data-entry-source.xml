@@ -19,7 +19,7 @@
 	<changeSet id="manual-data-entry-source-lc-attr" author="${user}">
 
 		<preConditions onFail="CONTINUE">
-			<tableExists tableName="source_lc"/>
+			<tableExists tableName="source_lc" schemaName="${mainSchemaName}"/>
 		</preConditions>	
 	
 		<insert tableName="source_lc">

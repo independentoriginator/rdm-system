@@ -69,7 +69,7 @@
 	<changeSet id="initial-languages-names" author="${user}">
 	
 		<preConditions onFail="CONTINUE">
-			<tableExists tableName="language_lc"/>
+			<tableExists tableName="language_lc" schemaName="${mainSchemaName}"/>
 		</preConditions>	
 
 		<insert tableName="language_lc">
