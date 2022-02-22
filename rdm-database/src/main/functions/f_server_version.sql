@@ -1,5 +1,5 @@
 create or replace function f_server_version()
-returns timestamp text
+returns text
 language sql
 immutable
 parallel safe
