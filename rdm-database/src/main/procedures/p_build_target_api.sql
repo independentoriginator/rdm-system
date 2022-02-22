@@ -94,7 +94,7 @@ begin
 					$insert_section$
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
-					, case when trunc(${mainSchemaName}.f_server_version()::numeric, 0) >= 12 then 'materialized ' else '' end
+					, case when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') then 'materialized ' else '' end
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name

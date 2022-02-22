@@ -62,5 +62,14 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
-	
+
+	<changeSet id="f_is_server_feature_available-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_is_server_feature_available" 
+			dbms="postgresql" 
+			path="f_is_server_feature_available.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 </databaseChangeLog>
