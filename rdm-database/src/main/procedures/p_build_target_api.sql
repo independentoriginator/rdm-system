@@ -56,7 +56,7 @@ begin
 							, lc_string
 							, is_default_value
 						)
-					with meta_attribute as materialized (
+					with meta_attribute as %s(
 						select *
 						from ${mainSchemaName}.v_meta_attribute a 
 						where a.meta_type_name = '%I'
@@ -94,6 +94,7 @@ begin
 					$insert_section$
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
+					, case when trunc(${mainSchemaName}.f_server_version()::numeric, 0) >= 12 then 'materialized ' else '' end
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name

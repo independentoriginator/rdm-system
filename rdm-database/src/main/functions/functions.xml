@@ -53,5 +53,14 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+
+	<changeSet id="f_server_version-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_server_version" 
+			dbms="postgresql" 
+			path="f_server_version.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 	
 </databaseChangeLog>
