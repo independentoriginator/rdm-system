@@ -72,4 +72,13 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="f_system_name_max_length-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_system_name_max_length" 
+			dbms="postgresql" 
+			path="f_system_name_max_length.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 </databaseChangeLog>

@@ -44,7 +44,7 @@ from (
 		, t.internal_name as meta_type_name
 		, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
 		, i.is_unique
-		, 'i_' || t.internal_name || '$' || i.tag as index_name
+		, substring('i_' || t.internal_name || '$' || i.tag, 1, ${mainSchemaName}.f_system_name_max_length()) as index_name
 		, ic.index_columns || 
 		case 
 			when t.is_temporal then 
