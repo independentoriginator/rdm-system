@@ -307,7 +307,7 @@ begin
 			join ${mainSchemaName}.data_package_state s on s.id = p.state_id
 			where 
 				p.id = i_data_package_id
-			for update
+			for update of p.id 
 			;
 			
 			if io_check_date <> l_data_package.state_change_date then
