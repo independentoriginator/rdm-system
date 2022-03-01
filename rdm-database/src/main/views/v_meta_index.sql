@@ -19,8 +19,12 @@ with recursive type_index as (
         , t.schema_id
 		, i_inherited.tag
 		, i_inherited.is_unique 
-	from 
-		type_index i
+	from (
+		select distinct 
+			descendant_type_id, super_type_id
+		from 
+			type_index 
+	) i
 	join ${mainSchemaName}.meta_index i_inherited
 		on i_inherited.master_id = i.super_type_id
 	join ${mainSchemaName}.meta_type t 
@@ -90,5 +94,6 @@ left join lateral (
 		a.attrelid = pg_index.indrelid
 		and a.attnum = any(pg_index.indkey)
 ) pg_index_col on true
-
+where 
+	i.id is not null
 ;
