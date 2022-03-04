@@ -1,0 +1,107 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="trf_meta_type_after_update-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="trf_meta_type_after_update" 
+			dbms="postgresql" 
+			path="trf_meta_type_after_update.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="tr_meta_type_invalidate_built_flag-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_type_invalidate_built_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_type_invalidate_built_flag on meta_type;
+		</rollback>
+
+	</changeSet>
+
+	<changeSet id="trf_meta_attribute_after_update-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="trf_meta_attribute_after_update" 
+			dbms="postgresql" 
+			path="trf_meta_attribute_after_update.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="tr_meta_attribute_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_attribute_invalidate_type_built_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_attribute_invalidate_type_built_flag on meta_attribute;
+		</rollback>
+
+	</changeSet>
+
+	<changeSet id="trf_meta_index_after_update-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="trf_meta_index_after_update" 
+			dbms="postgresql" 
+			path="trf_meta_index_after_update.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="tr_meta_index_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_index_invalidate_type_built_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_index_invalidate_type_built_flag on meta_index;
+		</rollback>
+
+	</changeSet>
+
+	<changeSet id="trf_meta_index_column_after_update-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="trf_meta_index_column_after_update" 
+			dbms="postgresql" 
+			path="trf_meta_index_column_after_update.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="tr_meta_index_column_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_index_column_invalidate_type_built_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_index_column_invalidate_type_built_flag on meta_index_column;
+		</rollback>
+
+	</changeSet>
+	
+</databaseChangeLog>

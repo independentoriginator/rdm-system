@@ -238,5 +238,10 @@ begin
 	call ${mainSchemaName}.p_build_target_api(
 		i_type_rec => i_type_rec
 	);
+	
+	update ${mainSchemaName}.meta_type 
+	set is_built = true
+	where id = i_type_rec.id
+	;
 end
 $procedure$;			

@@ -22,7 +22,8 @@
 	<include file="functions/functions.xml" relativeToChangelogFile="true" />
 	<include file="views/views.xml" relativeToChangelogFile="true" />
 	<include file="procedures/procedures.xml" relativeToChangelogFile="true" />
-
+	<include file="triggers/triggers.xml" relativeToChangelogFile="true" />
+	
 	<changeSet id="build target tables" author="${user}" runAlways="true">
 		<sql>
 			call p_build_target_tables();

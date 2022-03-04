@@ -9,6 +9,8 @@ begin
 			t.*
 		from 
 			${mainSchemaName}.v_meta_type t
+		where 
+			coalesce(t.is_built, false) = false
 		order by 
 			dependency_level
 	) 

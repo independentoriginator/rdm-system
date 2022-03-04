@@ -84,6 +84,7 @@ select
 		then true
 		else false
 	end as is_ref_to_master_column_in_staging_table_exists
+	, t.is_built
 from 
 	${mainSchemaName}.meta_type t
 left join ${mainSchemaName}.meta_schema s
