@@ -89,4 +89,13 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="p_invalidate_type_descendants_built_flag-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_invalidate_type_descendants_built_flag" 
+			dbms="postgresql" 
+			path="p_invalidate_type_descendants_built_flag.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 </databaseChangeLog>

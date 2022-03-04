@@ -8,11 +8,11 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="trf_meta_type_after_update-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_meta_type_before_update-function" author="${user}" runOnChange="true">
 		<createProcedure 
-			procedureName="trf_meta_type_after_update" 
+			procedureName="trf_meta_type_before_update" 
 			dbms="postgresql" 
-			path="trf_meta_type_after_update.sql" 
+			path="trf_meta_type_before_update.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
