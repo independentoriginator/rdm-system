@@ -14,7 +14,7 @@ begin
 	join ${mainSchemaName}.meta_type t
 		on t.id = i.master_id
 	where 
-		i.id = old.master_id
+		i.id = coalesce(new.master_id, old.master_id)
 	;
 	
 	if l_type_rec.is_abstract = false then

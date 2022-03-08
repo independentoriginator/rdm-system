@@ -12,7 +12,7 @@ begin
 	from 
 		${mainSchemaName}.meta_type
 	where 
-		id = old.master_id
+		id = coalesce(new.master_id, old.master_id)
 	;
 	
 	if l_type_rec.is_abstract = false then
