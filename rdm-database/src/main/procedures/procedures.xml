@@ -98,4 +98,13 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="p_delete_meta_type-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_delete_meta_type" 
+			dbms="postgresql" 
+			path="p_delete_meta_type.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 </databaseChangeLog>
