@@ -19,4 +19,22 @@
 
 	</changeSet>
 
+	<changeSet id="source_lang_id-column-precreation" author="${user}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="source" schemaName="${mainSchemaName}"/>
+			<not>
+				<columnExists tableName="source" schemaName="${mainSchemaName}" columnName="lang_id" />
+			</not>
+		</preConditions>	
+
+		<addColumn tableName="source">
+			<column 
+				name="lang_id" 
+				type="${type.id}">
+			</column>
+		</addColumn> 
+
+	</changeSet>
+
 </databaseChangeLog>

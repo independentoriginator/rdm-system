@@ -16,7 +16,7 @@ begin
 	);
 	
 	delete from ${mainSchemaName}.meta_attribute_lc 
-	where attr_id in (
+	where master_id in (
 		select 
 			a.id
 		from 

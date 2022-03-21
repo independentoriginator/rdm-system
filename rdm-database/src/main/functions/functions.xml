@@ -90,4 +90,13 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="f_is_meta_type_has_attribute-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_is_meta_type_has_attribute" 
+			dbms="postgresql" 
+			path="f_is_meta_type_has_attribute.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 </databaseChangeLog>

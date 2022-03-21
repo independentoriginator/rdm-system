@@ -116,6 +116,9 @@ select
 	, target_staging_table_column.column_default as staging_table_column_default
 	, a.attr_type_schema 
 	, a.ancestor_type_id
+	, attr_name.lc_string as column_description
+	, target_column_descr.description target_column_description
+	, target_staging_table_column_descr.description staging_column_description
 from (
 	select
 		a.id
@@ -186,32 +189,60 @@ from (
 	where
 		a.id is not null
 ) a	
-left join information_schema.schemata target_schema
-	on target_schema.schema_name = a.schema_name
+left join pg_catalog.pg_namespace target_schema
+	on target_schema.nspname = a.schema_name
+left join pg_catalog.pg_class target_table
+	on target_table.relnamespace = target_schema.oid 
+	and target_table.relname = a.meta_type_name
+	and target_table.relkind in ('r'::"char", 'p'::"char")
+join ${mainSchemaName}.meta_type meta_attribute
+	on meta_attribute.internal_name = 'meta_attribute' 
+left join ${mainSchemaName}.meta_attribute name_attr
+	on name_attr.master_id = meta_attribute.id
+	and name_attr.internal_name = 'name'
+left join ${mainSchemaName}.meta_attribute_lc attr_name
+	on attr_name.master_id = a.id
+	and attr_name.attr_id = name_attr.id
+	and attr_name.lang_id = ${mainSchemaName}.f_default_language_id()
+	and attr_name.is_default_value = true
 left join 
 	information_schema.columns target_column
-	on target_column.table_schema = target_schema.schema_name
+	on target_column.table_schema = target_schema.nspname
 	and target_column.table_name = a.meta_type_name
 	and target_column.column_name = a.internal_name
+left join pg_catalog.pg_description target_column_descr
+	on target_column_descr.objoid = target_table.oid
+	and target_column_descr.classoid = 'pg_class'::regclass
+	and target_column_descr.objsubid = target_column.ordinal_position
 left join 
 	information_schema.table_constraints fk_constraint 
-	on fk_constraint.table_schema = target_schema.schema_name
+	on fk_constraint.table_schema = target_schema.nspname
 	and fk_constraint.table_name = a.meta_type_name
 	and fk_constraint.constraint_name = a.fk_constraint_name
 	and fk_constraint.constraint_type = 'FOREIGN KEY'
 left join pg_catalog.pg_indexes fk_index	
-	on fk_index.schemaname = target_schema.schema_name
+	on fk_index.schemaname = target_schema.nspname
 	and fk_index.tablename = a.meta_type_name
 	and fk_index.indexname = a.index_name
 left join 
 	information_schema.table_constraints u_constraint 
-	on u_constraint.table_schema = target_schema.schema_name
+	on u_constraint.table_schema = target_schema.nspname
 	and u_constraint.table_name = a.meta_type_name
 	and u_constraint.constraint_name = a.unique_constraint_name
 	and u_constraint.constraint_type = 'UNIQUE'
+left join pg_catalog.pg_namespace staging_schema
+	on staging_schema.nspname = a.staging_schema_name
+left join pg_catalog.pg_class staging_table
+	on staging_table.relnamespace = staging_schema.oid 
+	and staging_table.relname = a.meta_type_name
+	and staging_table.relkind in ('r'::"char", 'p'::"char")
 left join 
 	information_schema.columns target_staging_table_column
 	on target_staging_table_column.table_schema = a.staging_schema_name
 	and target_staging_table_column.table_name = a.meta_type_name
 	and target_staging_table_column.column_name = a.internal_name
+left join pg_catalog.pg_description target_staging_table_column_descr
+	on target_staging_table_column_descr.objoid = staging_table.oid
+	and target_staging_table_column_descr.classoid = 'pg_class'::regclass
+	and target_staging_table_column_descr.objsubid = target_staging_table_column.ordinal_position
 ;

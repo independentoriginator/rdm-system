@@ -194,6 +194,16 @@ begin
 
 	end if;
 	
+	if nullif(i_type_rec.table_description, i_type_rec.target_table_description) is not null then
+		execute format($$
+			comment on table %I.%I is '%s'
+			$$
+			, i_type_rec.schema_name
+			, i_type_rec.internal_name
+			, i_type_rec.table_description
+		);
+	end if;	
+	
 	for l_attr_rec in (
 		select
 			a.*

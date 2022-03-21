@@ -68,8 +68,8 @@
 			<column name="lang_id" valueComputed="(select id from language where tag = 'en')"/>
 			<column name="lc_string" value="Meta type"/>
 		</insert>
-		
-		<insert tableName="meta_attribute_lc">
+
+		<insert tableName="meta_type_lc">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
 			<column name="attr_id" valueComputed="(
 				select 
@@ -85,8 +85,8 @@
 			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
 			<column name="lc_string" value="Метаатрибут"/>
 		</insert>
-		
-		<insert tableName="meta_attribute_lc">
+
+		<insert tableName="meta_type_lc">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>
 			<column name="attr_id" valueComputed="(
 				select 

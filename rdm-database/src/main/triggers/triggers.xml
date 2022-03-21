@@ -56,6 +56,36 @@
 
 	</changeSet>
 
+	<changeSet id="tr_meta_attribute_lc_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_attribute_lc_invalidate_type_built_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_attribute_lc_invalidate_type_built_flag on meta_attribute_lc;
+		</rollback>
+
+	</changeSet>
+
+	<changeSet id="tr_meta_type_lc_invalidate_built_flag-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_type_lc_invalidate_built_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_type_lc_invalidate_built_flag on meta_type_lc;
+		</rollback>
+
+	</changeSet>
+
 	<changeSet id="trf_meta_index_after_update-function" author="${user}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_index_after_update" 

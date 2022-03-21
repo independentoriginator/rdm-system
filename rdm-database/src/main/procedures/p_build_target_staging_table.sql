@@ -69,6 +69,16 @@ begin
 				);
 			end if;
 		end if;
+
+		if nullif(i_type_rec.table_description, i_type_rec.staging_table_description) is not null then
+			execute format($$
+				comment on table %I.%I is '%s'
+				$$
+				, i_type_rec.staging_schema_name
+				, i_type_rec.internal_name
+				, i_type_rec.table_description
+			);
+		end if;	
 		
 	elsif i_type_rec.is_staging_table_generated = false and i_type_rec.is_staging_table_exists = true then
 		execute format('

@@ -125,4 +125,59 @@
 
 	</changeSet>
 
+	<changeSet id="meta_type localisation tables" author="${user}">
+	
+		<preConditions onFail="CONTINUE">
+			<not>
+				<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>
+				<tableExists tableName="meta_attribute_lc" schemaName="${mainSchemaName}"/>
+			</not>
+		</preConditions>	
+
+		<createTable
+			tableName="meta_type_lc">
+			<column name="id" type="${type.id}" autoIncrement="true">
+				<constraints nullable="false" />
+			</column>
+			<column name="master_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="attr_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="lang_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="lc_string" type="clob">
+				<constraints nullable="true" />
+			</column>
+			<column name="is_default_value" type="boolean" defaultValueBoolean="true">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		<createTable
+			tableName="meta_attribute_lc">
+			<column name="id" type="${type.id}" autoIncrement="true">
+				<constraints nullable="false" />
+			</column>
+			<column name="master_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="attr_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="lang_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="lc_string" type="clob">
+				<constraints nullable="true" />
+			</column>
+			<column name="is_default_value" type="boolean" defaultValueBoolean="true">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+	</changeSet>       
+
 </databaseChangeLog>
