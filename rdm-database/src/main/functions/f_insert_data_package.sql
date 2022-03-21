@@ -26,14 +26,7 @@ begin
 		, s.id
 		, coalesce(
 			s.lang_id
-			, (
-				select 
-					l.id 
-				from 
-					${mainSchemaName}.language l
-				where 
-					l.tag = 'ru'
-			)
+			, ${mainSchemaName}.f_default_language_id()
 		)
 		, i_is_deletion
 		, current_timestamp
