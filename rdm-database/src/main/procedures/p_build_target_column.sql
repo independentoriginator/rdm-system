@@ -209,10 +209,10 @@ begin
 				, i_attr_rec.internal_name 
 			);
 		end if;
-		
+
 		if nullif(i_attr_rec.column_description, i_attr_rec.target_column_description) is not null then
 			execute format($$
-				comment on column %I.%I.%s is '%s'
+				comment on column %I.%I.%s is $comment$%s$comment$
 				$$
 				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name
