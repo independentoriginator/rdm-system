@@ -155,6 +155,60 @@
 				<constraints nullable="false" />
 			</column>
 		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_meta_type_lc" 
+			tableName="meta_type_lc"
+			columnNames="id"/>
+
+		<createIndex 
+			indexName="i_meta_type_lc$master_id" 
+			tableName="meta_type_lc">
+			<column name="master_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_type_lc$master_id"
+			baseTableName="meta_type_lc" 
+			baseColumnNames="master_id" 
+			referencedTableName="meta_type" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_type_lc$attr_id" 
+			tableName="meta_type_lc">
+			<column name="attr_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_type_lc$attr_id"
+			baseTableName="meta_type_lc" 
+			baseColumnNames="attr_id"
+			referencedTableName="meta_attribute" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_type_lc$lang_id" 
+			tableName="meta_type_lc">
+			<column name="lang_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_type_lc$lang_id"
+			baseTableName="meta_type_lc" 
+			baseColumnNames="lang_id"
+			referencedTableName="language" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="ui_meta_type_lc" 
+			tableName="meta_type_lc"
+			unique="true">
+			<column name="master_id" />
+			<column name="attr_id" />
+			<column name="lang_id" />
+			<column name="is_default_value" />
+		</createIndex>
 		
 		<createTable
 			tableName="meta_attribute_lc">
@@ -177,6 +231,60 @@
 				<constraints nullable="false" />
 			</column>
 		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_meta_attribute_lc" 
+			tableName="meta_attribute_lc"
+			columnNames="id"/>
+
+		<createIndex 
+			indexName="i_meta_attribute_lc$master_id" 
+			tableName="meta_attribute_lc">
+			<column name="master_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_attribute_lc$master_id"
+			baseTableName="meta_attribute_lc" 
+			baseColumnNames="master_id" 
+			referencedTableName="meta_attribute" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_attribute_lc$attr_id" 
+			tableName="meta_attribute_lc">
+			<column name="attr_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_attribute_lc$attr_id"
+			baseTableName="meta_attribute_lc" 
+			baseColumnNames="attr_id"
+			referencedTableName="meta_attribute" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_attribute_lc$lang_id" 
+			tableName="meta_attribute_lc">
+			<column name="lang_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_attribute_lc$lang_id"
+			baseTableName="meta_attribute_lc" 
+			baseColumnNames="lang_id"
+			referencedTableName="language" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="ui_meta_attribute_lc" 
+			tableName="meta_attribute_lc"
+			unique="true">
+			<column name="master_id" />
+			<column name="attr_id" />
+			<column name="lang_id" />
+			<column name="is_default_value" />
+		</createIndex>
 		
 	</changeSet>       
 
