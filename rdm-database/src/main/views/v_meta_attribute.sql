@@ -30,7 +30,10 @@ with recursive attr as (
 		, null as length
 		, null as precision
 		, null as scale
-		, true as is_non_nullable
+		, case 
+			when t.id = t.master_type_id then false
+			else true
+		end as is_non_nullable
 		, false as is_unique
 		, false as is_localisable
 		, 0 as ordinal_position
