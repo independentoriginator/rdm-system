@@ -88,7 +88,7 @@
 				<constraints nullable="false" />
 			</column>
 			<column name="master_id" type="${type.id}" remarks="Идентификатор метавыражения">
-				<constraints nullable="true" />
+				<constraints nullable="false" />
 			</column>
 			<column name="dbms_type_id" type="${type.id}" remarks="Идентификатор типа СУБД">
 				<constraints nullable="true" />
