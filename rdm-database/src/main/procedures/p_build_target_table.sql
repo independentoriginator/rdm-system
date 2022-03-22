@@ -127,73 +127,6 @@ begin
 		);
 	end if;
 	
-	if i_type_rec.master_type_id is not null and i_type_rec.is_ref_to_master_column_exists = false then
-		if i_type_rec.is_temporal = true then 
-			execute format('
-				alter table %I.%I
-					add column master_id %s null,
-					add column master_version %s null
-				'
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name 
-				, '${type.id}'
-				, '${type.id}'
-			);
-			
-			execute format('
-				create index i_%I$master_id_version on %I.%I (
-					master_id, master_version
-				)'
-				, i_type_rec.internal_name 
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name 
-			);
-			
-			execute format('
-				alter table %I.%I
-					add constraint fk_%I$master_id_version foreign key (master_id, master_version) references %I.%I(id, version),
-					add constraint chk_%I$master_id_version check (case when master_id is null then 1 else 0 end = case when master_version is null then 1 else 0 end)
-				'
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name
-				, i_type_rec.internal_name 
-				, i_type_rec.schema_name
-				, i_type_rec.master_type_name
-				, i_type_rec.internal_name 
-			);
-		else
-			execute format('
-				alter table %I.%I
-					add column master_id %s null
-				'
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name 
-				, '${type.id}'
-			);
-			
-			execute format('
-				create index i_%I$master_id on %I.%I (
-					master_id
-				)'
-				, i_type_rec.internal_name 
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name 
-			);
-			
-			execute format('
-				alter table %I.%I
-					add constraint fk_%I$master_id foreign key (master_id) references %I.%I(id)
-				'
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name
-				, i_type_rec.internal_name 
-				, i_type_rec.schema_name
-				, i_type_rec.master_type_name
-			);
-		end if;
-
-	end if;
-	
 	if nullif(i_type_rec.table_description, i_type_rec.target_table_description) is not null then
 		execute format($$
 			comment on table %I.%I is $comment$%s$comment$
@@ -211,7 +144,6 @@ begin
 			${mainSchemaName}.v_meta_attribute a
 		where 
 			a.master_id = i_type_rec.id
-			and a.internal_name <> 'master_id'
 		order by 
 			ordinal_position asc nulls last, 
 			id asc 
