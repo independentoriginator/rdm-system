@@ -30,6 +30,10 @@ begin
 	where master_id = l_type_id
 	;
 
+	delete from ${stagingSchemaName}.data_package
+	where type_id = l_type_id
+	;
+
 	delete from ${mainSchemaName}.meta_type_lc 
 	where master_id = l_type_id
 	;
