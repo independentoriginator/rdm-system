@@ -13,7 +13,16 @@ begin
 					, io_check_date => $2
 				)
 			'
-			, (select t.schema_name from ${mainSchemaName}.v_meta_type t where t.internal_name = i_entity_name)
+			, (
+				select 
+					coalesce(s.internal_name, '${mainSchemaName}')
+				from 
+					${mainSchemaName}.meta_type t
+				left join ${mainSchemaName}.meta_schema s
+					on s.id = t.schema_id
+				where
+					t.internal_name = i_entity_name
+			)
 			, i_entity_name
 		)
 		using 
