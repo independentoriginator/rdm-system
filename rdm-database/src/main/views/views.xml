@@ -40,4 +40,16 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+
+	<changeSet id="v_meta_view-view" author="${user}" runOnChange="true">
+		<createView 
+			viewName="v_meta_view" 
+			path="v_meta_view.sql"
+			remarks="Meta views generation list"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 </databaseChangeLog>

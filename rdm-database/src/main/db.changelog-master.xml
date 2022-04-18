@@ -29,4 +29,10 @@
 			call p_build_target_tables();
 		</sql>
 	</changeSet>
+
+	<changeSet id="build target views" author="${user}" runAlways="true">
+		<sql>
+			call p_build_target_views();
+		</sql>
+	</changeSet>
 </databaseChangeLog>

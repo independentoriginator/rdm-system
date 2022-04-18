@@ -79,6 +79,24 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+
+	<changeSet id="p_build_target_view-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_build_target_view" 
+			dbms="postgresql" 
+			path="p_build_target_view.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="p_build_target_views-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_build_target_views" 
+			dbms="postgresql" 
+			path="p_build_target_views.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 	
 	<changeSet id="p_process_data_package-procedure" author="${user}" runOnChange="true">
 		<createProcedure 

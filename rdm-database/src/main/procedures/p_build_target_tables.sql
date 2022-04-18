@@ -9,10 +9,13 @@ begin
 			t.*
 		from 
 			${mainSchemaName}.v_meta_type t
+		join ${mainSchemaName}.meta_type meta_type 
+			on meta_type.id = t.id
 		where 
 			coalesce(t.is_built, false) = false
 		order by 
 			dependency_level
+		for update of meta_type
 	) 
 	loop
 		call ${mainSchemaName}.p_build_target_table(

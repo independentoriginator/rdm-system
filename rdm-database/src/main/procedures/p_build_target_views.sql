@@ -1,0 +1,26 @@
+create or replace procedure p_build_target_views()
+language plpgsql
+as $procedure$
+declare 
+	l_view_rec record;
+begin
+	for l_view_rec in (
+		select
+			t.*
+		from 
+			${mainSchemaName}.v_meta_view t
+		join ${mainSchemaName}.meta_view meta_view 
+			on meta_view.id = t.id
+		where 
+			coalesce(t.is_created, false) = false
+		order by 
+			dependency_level
+		for update of meta_view
+	) 
+	loop
+		call ${mainSchemaName}.p_build_target_view(
+			i_view_rec => l_view_rec
+		);
+	end loop;
+end
+$procedure$;			

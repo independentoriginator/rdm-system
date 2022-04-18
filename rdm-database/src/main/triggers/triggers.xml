@@ -133,5 +133,29 @@
 		</rollback>
 
 	</changeSet>
+
+	<changeSet id="trf_meta_view_before_update-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="trf_meta_view_before_update" 
+			dbms="postgresql" 
+			path="trf_meta_view_before_update.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="tr_meta_view_invalidate_created_flag-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_view_invalidate_created_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_view_invalidate_created_flag on meta_view;
+		</rollback>
+
+	</changeSet>
 	
 </databaseChangeLog>
