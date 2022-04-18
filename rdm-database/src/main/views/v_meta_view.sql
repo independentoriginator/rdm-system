@@ -4,7 +4,7 @@ select
 	v.id
 	, v.internal_name
 	, ${mainSchemaName}.f_meta_view_dependency_level(
-		i_meta_view_id => v.id
+		i_view_oid => target_view.oid
 	) as dependency_level
 	, v.schema_id
 	, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
@@ -13,7 +13,7 @@ select
 	, case when target_view.relkind = 'm'::"char" then true else false end as is_materialized
 	, type_name.lc_string as view_description
 	, target_view_descr.description target_view_description
-	, v.is_created
+	, case when v.is_created and target_view.oid is not null then true else false end as is_created
 	, v.query	
 from 
 	${mainSchemaName}.meta_view v

@@ -14,9 +14,9 @@ begin
 	
 	if i_view_rec.is_view_exists then
 		execute format('
-			drop %s view %I.%I cascade
+			drop %sview if exists %I.%I cascade
 			'
-			, case when i_view_rec.is_materialized then 'materialized' else '' end
+			, case when i_view_rec.is_materialized then 'materialized ' else '' end
 			, i_view_rec.schema_name
 			, i_view_rec.internal_name
 		);
