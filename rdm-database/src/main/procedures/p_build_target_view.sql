@@ -6,7 +6,7 @@ as $procedure$
 begin
 	if i_view_rec.schema_id is not null and i_view_rec.is_schema_exists = false then
 		execute format('
-			create schema %I
+			create schema if not exists %I
 			'
 			, i_view_rec.schema_name
 		);

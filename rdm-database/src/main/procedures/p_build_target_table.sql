@@ -10,7 +10,7 @@ declare
 begin
 	if i_type_rec.schema_id is not null and i_type_rec.is_schema_exists = false then
 		execute format('
-			create schema %I
+			create schema if not exists %I
 			'
 			, i_type_rec.schema_name
 		);
