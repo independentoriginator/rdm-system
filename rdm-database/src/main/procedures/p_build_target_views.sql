@@ -18,6 +18,8 @@ begin
 		for update of meta_view
 	) 
 	loop
+   		raise notice 'Creating view %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
+	
 		call ${mainSchemaName}.p_build_target_view(
 			i_view_rec => l_view_rec
 		);
