@@ -20,10 +20,10 @@ select
 					on pg_depend.objid = pg_rewrite.oid
 				join pg_catalog.pg_class master_view 
 					on master_view.oid = pg_depend.refobjid
-				where
-					dependent_view.oid = i_view_oid
 					and master_view.relkind = 'm'::char
 					and master_view.oid <> dependent_view.oid					
+				where
+					dependent_view.oid = i_view_oid
 			) t
 		) + 1,
 		0

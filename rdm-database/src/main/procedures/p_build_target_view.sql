@@ -26,6 +26,7 @@ begin
 
 	update ${mainSchemaName}.meta_view 
 	set is_created = true
+		, is_valid = false
 	where id = i_view_rec.id
 	;
 end

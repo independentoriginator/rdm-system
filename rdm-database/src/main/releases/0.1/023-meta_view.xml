@@ -206,6 +206,26 @@
 			referencedTableName="meta_view" 
 			referencedColumnNames="id" />
 		
-	</changeSet>       
+	</changeSet>     
+	
+	<changeSet id="meta_view_creation_order" author="${user}">
+
+		<addColumn tableName="meta_view">
+			<column name="creation_order" type="integer" remarks="Creation_order" defaultValue="0">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+
+	</changeSet>
+		
+	<changeSet id="meta_view_dependency-level" author="${user}">
+
+		<addColumn tableName="meta_view_dependency">
+			<column name="level" type="integer" remarks="Dependency level" defaultValue="0">
+				<constraints nullable="false" />
+			</column>
+		</addColumn>
+
+	</changeSet>
 	
 </databaseChangeLog>

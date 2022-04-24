@@ -13,8 +13,9 @@ begin
 			on meta_view.id = t.id
 		where 
 			coalesce(t.is_created, false) = false
-		order by 
-			dependency_level
+		order by
+			t.dependency_level 
+			, t.creation_order
 		for update of meta_view
 	) 
 	loop
