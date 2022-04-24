@@ -208,14 +208,4 @@
 		
 	</changeSet>       
 	
-	<changeSet id="meta_view_dependency-actuality-flag" author="${user}">
-
-		<addColumn tableName="meta_view_dependency">
-			<column name="is_actual" type="boolean" remarks="Actuality flag" defaultValueBoolean="true">
-				<constraints nullable="false" />
-			</column>
-		</addColumn>
-
-	</changeSet>
-	
 </databaseChangeLog>
