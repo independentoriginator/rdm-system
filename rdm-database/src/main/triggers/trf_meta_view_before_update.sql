@@ -5,9 +5,6 @@ as $$
 begin
 	new.is_created = false;
 
-	-- Dependent views
-	-- TODO
-		
 	return new;
 end
 $$;			

@@ -14,8 +14,8 @@ begin
 		where 
 			coalesce(t.is_created, false) = false
 		order by
-			t.dependency_level 
-			, t.creation_order
+			t.creation_order
+			, t.dependency_level
 		for update of meta_view
 	) 
 	loop
