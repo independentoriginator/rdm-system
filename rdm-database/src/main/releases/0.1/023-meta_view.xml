@@ -217,7 +217,17 @@
 		</addColumn>
 
 	</changeSet>
-		
+
+	<changeSet id="meta_view-is_disabled" author="${user}">
+
+		<addColumn tableName="meta_view">
+			<column name="is_disabled" type="boolean" remarks="Is disabled" defaultValueBoolean="false">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+
+	</changeSet>
+			
 	<changeSet id="meta_view_dependency-level" author="${user}">
 
 		<addColumn tableName="meta_view_dependency">
