@@ -8,14 +8,13 @@ begin
 		is_valid = false
 	from 
 		${mainSchemaName}.v_sys_obj_dependency dep
-	join ${mainSchemaName}.meta_view v
-		on v.internal_name = dep.dependent_cls_name 
 	join ${mainSchemaName}.meta_schema s
-		on s.id = v.schema_id
-		and dep.dependent_cls_schema = coalesce(s.internal_name, '${mainSchemaName}')
+		on coalesce(s.internal_name, '${mainSchemaName}') = dep.dependent_cls_schema
 	where
 		dep.master_cls_name = TG_TABLE_NAME
 		and dep.master_cls_schema = TG_TABLE_SCHEMA
+		and dep.dependent_cls_name = meta_view.internal_name 
+		and s.id = meta_view.schema_id
 		and meta_view.is_valid = true
 	;
 	
