@@ -19,6 +19,7 @@ begin
 		where 
 			(t.is_valid = false or i_refresh_all = true)
 			and (t.schema_name = i_schema_name or i_schema_name is null)
+			and t.is_materialized = true
 			and coalesce(meta_view.is_disabled, false) = false
 		order by 
 			dependency_level
