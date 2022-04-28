@@ -184,9 +184,11 @@ begin
 	
 	for l_table_rec in (
 		select i_type_rec.schema_name, i_type_rec.internal_name
+		where i_type_rec.internal_name not like 'meta\_%'
 		union all
 		select i_type_rec.schema_name, i_type_rec.localization_table_name
 		where i_type_rec.is_localization_table_generated = true
+			and i_type_rec.internal_name not like 'meta\_%'
 	) 
 	loop
 		execute format($$
