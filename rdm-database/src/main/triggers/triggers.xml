@@ -166,5 +166,29 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+
+	<changeSet id="trf_meta_view_after_refresh-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="trf_meta_view_after_refresh" 
+			dbms="postgresql" 
+			path="trf_meta_view_after_refresh.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="tr_meta_view_invalidate_dependent_views-trigger" author="${user}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_view_invalidate_dependent_views.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_view_invalidate_dependent_views on meta_view;
+		</rollback>
+
+	</changeSet>
 		
 </databaseChangeLog>
