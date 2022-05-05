@@ -9,9 +9,12 @@ declare
 	l_start_timestamp timestamp := clock_timestamp();
 	l_timestamp timestamp;
 begin
-	for l_view_rec in (
+	while true
+	loop
 		select
 			t.*
+		into 
+			l_view_rec
 		from 
 			${mainSchemaName}.v_meta_view t
 		join ${mainSchemaName}.meta_view meta_view 
@@ -23,9 +26,14 @@ begin
 			and coalesce(meta_view.is_disabled, false) = false
 		order by 
 			dependency_level
+		limit 1
 		for update of meta_view
-	) 
-	loop
+		;
+		
+		if l_view_rec is null then
+			exit;
+		end if;
+		
    		raise notice 'Refreshing materialized view %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
    		
    		l_timestamp := clock_timestamp();
