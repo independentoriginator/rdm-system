@@ -5,15 +5,56 @@ language plpgsql
 as $procedure$
 declare 
 	l_type_id ${mainSchemaName}.meta_type.id%type;
+	l_schema_name ${mainSchemaName}.meta_schema.internal_name%type;
 begin
-	l_type_id = (
-		select 
-			id
-		from 
-			${mainSchemaName}.meta_type 
-		where 
-			internal_name = i_internal_name
+	select 
+		t.id
+		, coalesce(s.internal_name, '${mainSchemaName}')
+	into
+		l_type_id
+		, l_schema_name
+	from 
+		${mainSchemaName}.meta_type t
+	left join ${mainSchemaName}.meta_schema s
+		on s.id = t.schema_id
+	where
+		t.internal_name = i_internal_name
+	;
+	
+	execute format('
+		drop table if exists ${stagingSchemaName}.%I
+		'
+		, i_internal_name
 	);
+	
+	execute format('
+		drop table if exists %I.%I_lc
+		'
+		, l_schema_name
+		, i_internal_name
+	);
+
+	execute format('
+		drop table if exists %I.%I
+		'
+		, l_schema_name
+		, i_internal_name
+	);
+	
+	delete from ${mainSchemaName}.meta_index_column 
+	where master_id in (
+		select 
+			i.id
+		from 
+			${mainSchemaName}.meta_index i
+		where
+			i.master_id = l_type_id
+	)
+	;
+
+	delete from ${mainSchemaName}.meta_index
+	where master_id = l_type_id
+	;
 	
 	delete from ${mainSchemaName}.meta_attribute_lc 
 	where master_id in (
