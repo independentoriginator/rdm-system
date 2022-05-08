@@ -9,6 +9,12 @@ declare
 	l_start_timestamp timestamp := clock_timestamp();
 	l_timestamp timestamp;
 begin
+	if i_refresh_all then 
+		update ${mainSchemaName}.meta_view
+		set is_valid = false
+		where is_valid = true;
+	end if;
+	
 	while true
 	loop
 		select
@@ -20,7 +26,7 @@ begin
 		join ${mainSchemaName}.meta_view meta_view 
 			on meta_view.id = t.id
 		where 
-			(t.is_valid = false or i_refresh_all = true)
+			t.is_valid = false
 			and (t.schema_name = i_schema_name or i_schema_name is null)
 			and t.is_materialized = true
 			and coalesce(meta_view.is_disabled, false) = false
