@@ -21,6 +21,10 @@ begin
 		t.internal_name = i_internal_name
 	;
 	
+	if l_schema_name is null then
+		l_schema_name := '${mainSchemaName}';
+	end if;
+	
 	execute format('
 		drop table if exists ${stagingSchemaName}.%I
 		'
@@ -41,46 +45,48 @@ begin
 		, i_internal_name
 	);
 	
-	delete from ${mainSchemaName}.meta_index_column 
-	where master_id in (
-		select 
-			i.id
-		from 
-			${mainSchemaName}.meta_index i
-		where
-			i.master_id = l_type_id
-	)
-	;
-
-	delete from ${mainSchemaName}.meta_index
-	where master_id = l_type_id
-	;
+	if l_type_id is not null then
+		delete from ${mainSchemaName}.meta_index_column 
+		where master_id in (
+			select 
+				i.id
+			from 
+				${mainSchemaName}.meta_index i
+			where
+				i.master_id = l_type_id
+		)
+		;
 	
-	delete from ${mainSchemaName}.meta_attribute_lc 
-	where master_id in (
-		select 
-			a.id
-		from 
-			${mainSchemaName}.meta_attribute a
-		where
-			a.master_id = l_type_id
-	)
-	;
+		delete from ${mainSchemaName}.meta_index
+		where master_id = l_type_id
+		;
+		
+		delete from ${mainSchemaName}.meta_attribute_lc 
+		where master_id in (
+			select 
+				a.id
+			from 
+				${mainSchemaName}.meta_attribute a
+			where
+				a.master_id = l_type_id
+		)
+		;
+		
+		delete from ${mainSchemaName}.meta_attribute a
+		where master_id = l_type_id
+		;
 	
-	delete from ${mainSchemaName}.meta_attribute a
-	where master_id = l_type_id
-	;
-
-	delete from ${stagingSchemaName}.data_package
-	where type_id = l_type_id
-	;
-
-	delete from ${mainSchemaName}.meta_type_lc 
-	where master_id = l_type_id
-	;
-
-	delete from ${mainSchemaName}.meta_type 
-	where id = l_type_id
-	;  
+		delete from ${stagingSchemaName}.data_package
+		where type_id = l_type_id
+		;
+	
+		delete from ${mainSchemaName}.meta_type_lc 
+		where master_id = l_type_id
+		;
+	
+		delete from ${mainSchemaName}.meta_type 
+		where id = l_type_id
+		;
+	end if;  
 end
 $procedure$;			
