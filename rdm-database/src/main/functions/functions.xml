@@ -108,4 +108,13 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="f_view_definition-function" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_view_definition" 
+			dbms="postgresql" 
+			path="f_view_definition.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>
