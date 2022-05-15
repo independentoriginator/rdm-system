@@ -132,11 +132,13 @@ begin
 		dependency master_view
 	join dependency dependent_view
 		on dependent_view.dep_level > 0
+	left join ${mainSchemaName}.meta_schema s 
+		on s.internal_name = dependent_view.cls_schema 
 	left join new_external_schema es 
 		on es.internal_name = dependent_view.cls_schema
 	left join new_external_view ev 
 		on ev.internal_name = dependent_view.cls_name
-		and ev.schema_id = es.id
+		and ev.schema_id = coalesce(s.id, es.id)
 	where
 		master_view.dep_level = 0
 	;	
