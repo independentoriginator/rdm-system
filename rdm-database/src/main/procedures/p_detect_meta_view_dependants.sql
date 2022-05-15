@@ -5,6 +5,22 @@ create or replace procedure p_detect_meta_view_dependants(
 language plpgsql
 as $procedure$
 begin
+	delete from 
+		${mainSchemaName}.meta_view_dependency
+	where 
+		master_view_id in (
+			select 
+				v.id
+			from
+				${mainSchemaName}.meta_view v 
+			left join ${mainSchemaName}.meta_schema s 
+				on s.id = v.schema_id 
+			where 
+				v.internal_name = i_view_name
+				and coalesce(s.internal_name, '${mainSchemaName}') = i_schema_name
+		)
+	;
+	
 	with 
 		recursive dependent_view(
 			cls_oid
@@ -43,21 +59,6 @@ begin
 				${mainSchemaName}.meta_view v 
 			left join ${mainSchemaName}.meta_schema s 
 				on s.id = v.schema_id 
-		)
-		, dependency_deleted as (
-			delete from 
-				${mainSchemaName}.meta_view_dependency
-			where 
-				master_view_id in (
-					select 
-						v.view_id
-					from
-						meta_view v 
-					where 
-						v.view_name = i_view_name
-						and v.view_schema = i_schema_name
-				)
-			returning view_id, master_view_id
 		)
 		, dependency as (
 			select
