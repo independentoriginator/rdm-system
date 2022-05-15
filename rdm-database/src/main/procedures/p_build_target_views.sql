@@ -47,6 +47,7 @@ begin
 			set is_disabled = true
 			where id = l_view_rec.id
 			;
+			continue;
 		end if;			
 
    		raise notice 'Creating view %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
