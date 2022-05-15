@@ -16,6 +16,8 @@ select
 	, v.is_valid
 	, v.refresh_time	
 	, v.creation_order
+	, v.is_disabled
+	, v.is_external
 from 
 	${mainSchemaName}.meta_view v
 join ${mainSchemaName}.meta_schema s

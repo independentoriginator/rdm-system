@@ -13,6 +13,12 @@ begin
 	end if;
 	
 	if i_view_rec.is_view_exists then
+		-- Detecting and saving dependants before cascadly dropping
+		call ${mainSchemaName}.p_detect_meta_view_dependants(
+			i_view_name => i_view_rec.internal_name
+			, i_schema_name => i_view_rec.schema_name
+		);
+	
 		execute format('
 			drop %sview if exists %I.%I cascade
 			'
