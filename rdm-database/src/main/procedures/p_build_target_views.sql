@@ -18,8 +18,8 @@ begin
 			coalesce(t.is_created, false) = false
 			and coalesce(t.is_disabled, false) = false
 		order by
-			t.creation_order
-			, t.dependency_level
+			t.previously_defined_dependency_level
+			, t.creation_order
 		limit 1
 		for update of meta_view
 		;
