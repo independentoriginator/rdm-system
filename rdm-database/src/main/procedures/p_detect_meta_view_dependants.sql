@@ -127,7 +127,7 @@ begin
 	select
 		coalesce(dependent_view.view_id, ev.id) as view_id
 		, master_view.view_id as master_view_id
-		, dependent_view.dep_level
+		, min(dependent_view.dep_level) as level
 	from 
 		dependency master_view
 	join dependency dependent_view
@@ -141,6 +141,9 @@ begin
 		and ev.schema_id = coalesce(s.id, es.id)
 	where
 		master_view.dep_level = 0
+	group by
+		coalesce(dependent_view.view_id, ev.id)
+		, master_view.view_id
 	;	
 end
 $procedure$;			
