@@ -18,14 +18,14 @@ select
 	, v.creation_order
 	, v.is_disabled
 	, v.is_external
-	, coalesce((
+	, (
 		select 
 			max(dep.level)
 		from 
 			${mainSchemaName}.meta_view_dependency dep
 		where
 			dep.view_id = v.id
-	), 0) as previously_defined_dependency_level
+	) as previously_defined_dependency_level
 from 
 	${mainSchemaName}.meta_view v
 join ${mainSchemaName}.meta_schema s
