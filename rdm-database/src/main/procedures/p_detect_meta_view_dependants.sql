@@ -29,12 +29,19 @@ begin
 			, cls_type
 			, dep_level
 		) as (
-			select 
-				null::oid as cls_oid
-				, i_view_name::name as cls_name
-				, i_schema_name::name as cls_schema
+			select 				
+				v.oid as cls_oid
+				, v.relname as cls_name
+				, s.nspname as cls_schema
 				, null::"char" as cls_type
 				, 0 as dep_level
+			from 
+				pg_catalog.pg_namespace s
+			join pg_catalog.pg_class v
+				on v.relnamespace = s.oid
+				and v.relname = i_view_name::name
+			where 
+				s.nspname = i_schema_name::name
 			union all
 			select
 				dep.dependent_cls_oid  as cls_oid
@@ -65,6 +72,7 @@ begin
 				dependent_view.*
 				, v.view_id 
 				, coalesce(v.schema_id, s.id) as schema_id  
+				, v.is_external
 				, case 
 					when (v.view_id is null or v.is_external) and dependent_view.cls_oid is not null then
 						${mainSchemaName}.f_view_definition(
@@ -118,6 +126,17 @@ begin
 			where
 				d.view_id is null 
 			returning id, internal_name, schema_id
+		)
+		, actualized_external_view as (
+			update ${mainSchemaName}.meta_view v
+			set 
+				query = d.external_view_def
+			from 
+				dependency d
+			where 
+				v.id = d.view_id
+				and d.is_external = true
+			returning id
 		)
 	insert into ${mainSchemaName}.meta_view_dependency(
 		view_id
