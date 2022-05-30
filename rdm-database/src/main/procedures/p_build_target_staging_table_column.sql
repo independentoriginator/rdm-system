@@ -32,7 +32,7 @@ begin
 				);
 			end if;
 		else
-			if i_attr_rec.target_attr_type <> i_attr_rec.column_data_type then 
+			if i_attr_rec.target_attr_type <> i_attr_rec.staging_table_column_data_type then 
 				execute format('
 					alter table %I.%I
 						alter column %I set data type %s
