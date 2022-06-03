@@ -20,7 +20,7 @@ select
 	, v.is_external
 	, (
 		select 
-			max(dep.level)
+			min(dep.level)
 		from 
 			${mainSchemaName}.meta_view_dependency dep
 		where
