@@ -133,7 +133,16 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
-
+	
+	<changeSet id="p_execute_in_parallel-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_execute_in_parallel" 
+			dbms="postgresql" 
+			path="p_execute_in_parallel.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="p_refresh_materialized_views-procedure" author="${user}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_refresh_materialized_views" 
