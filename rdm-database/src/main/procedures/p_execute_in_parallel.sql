@@ -8,6 +8,7 @@ declare
 	l_connection text;
 	l_connections text[];
 	l_db name := current_database();
+	l_user name := current_user;
 	l_command_index integer;
 	l_command_count integer;
 	l_last_err_msg text;
@@ -20,7 +21,7 @@ begin
 	l_command_index := array_lower(i_commands, 1);
 
 	<<command_loop>>
-	while l_command_index <= l_command_count loop
+	while l_command_index <= l_command_count and l_last_err_msg is null loop
 		l_connections := array[]::text[];	
 	
 		for i in 1..least(array_length(i_commands, 1) - l_command_index + 1, i_thread_max_count) loop
@@ -31,7 +32,7 @@ begin
 					perform dblink_disconnect(l_connection);
 				end if;
 			
-				perform dblink_connect_u(l_connection, 'dbname=' || l_db);
+				perform dblink_connect_u(l_connection, 'dbname=' || l_db || ' user=' || l_user);
 	
 				l_connections := array_append(l_connections, l_connection);
 			exception
@@ -57,20 +58,23 @@ begin
 		foreach l_connection in array l_connections loop
 			if dblink_send_query(l_connection, i_commands[l_command_index]) != 1 then
 				while dblink_is_busy(l_connection) = 1 loop 
+					perform pg_sleep(1.0);
 				end loop;
 				l_last_err_msg := dblink_error_message(l_connection);
-				exit command_loop;
+				exit;
 			end if;		
 		
 			l_command_index := l_command_index + 1;
 		end loop;	
 		
-		foreach l_connection in array l_connections loop
-			select val 
-			into l_result
-			from dblink_get_result(l_connection) as res(val text)
-			;
-		end loop;	
+		if l_last_err_msg is null then
+			foreach l_connection in array l_connections loop
+				select val 
+				into l_result
+				from dblink_get_result(l_connection) as res(val text)
+				;
+			end loop;
+		end if;	
 	
 		foreach l_connection in array l_connections loop
 			perform dblink_disconnect(l_connection);		
