@@ -120,4 +120,29 @@
 
 	</changeSet>
 
+	<changeSet id="directory-code-source-deprecated-uniqueness" author="${user}">
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'directory'
+					)
+					and tag = 'code_source_id' 
+			)"/>
+			<column name="meta_attr_name" value="is_deprecated"/>
+			<column name="ordinal_position" value="2"/>
+		</insert>
+
+	</changeSet>
+		
 </databaseChangeLog>
