@@ -4,14 +4,14 @@ select
 	v.id
 	, v.internal_name
 	, ${mainSchemaName}.f_meta_view_dependency_level(
-		i_view_oid => target_view.oid
+		i_view_oid => coalesce(target_view.oid, target_routine.oid)
 	) as dependency_level
 	, v.schema_id
 	, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
 	, case when target_schema.nspname = s.internal_name then true else false end as is_schema_exists
-	, case when target_view.oid is not null then true else false end as is_view_exists
+	, case when target_view.oid is not null or target_routine.oid is not null then true else false end as is_view_exists
 	, case when target_view.relkind = 'm'::"char" then true else false end as is_materialized
-	, case when v.is_created and target_view.oid is not null then true else false end as is_created
+	, case when v.is_created and (target_view.oid is not null or target_routine.oid is not null) then true else false end as is_created
 	, v.query
 	, v.is_valid
 	, v.refresh_time	
@@ -26,6 +26,7 @@ select
 		where
 			dep.view_id = v.id
 	) as previously_defined_dependency_level
+	, v.is_routine
 from 
 	${mainSchemaName}.meta_view v
 join ${mainSchemaName}.meta_schema s
@@ -36,4 +37,9 @@ left join pg_catalog.pg_class target_view
 	on target_view.relnamespace = target_schema.oid 
 	and target_view.relname = v.internal_name
 	and target_view.relkind in ('v'::"char", 'm'::"char")
+	and v.is_routine = false
+left join pg_catalog.pg_proc target_routine
+	on target_routine.pronamespace = target_schema.oid 
+	and target_routine.proname = v.internal_name
+	and v.is_routine = true
 ;

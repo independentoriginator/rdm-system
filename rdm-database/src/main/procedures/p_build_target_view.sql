@@ -19,13 +19,15 @@ begin
 			, i_schema_name => i_view_rec.schema_name
 		);
 	
-		execute format('
-			drop %sview if exists %I.%I cascade
-			'
-			, case when i_view_rec.is_materialized then 'materialized ' else '' end
-			, i_view_rec.schema_name
-			, i_view_rec.internal_name
-		);
+		if i_view_rec.is_routine = false then
+			execute format('
+				drop %sview if exists %I.%I cascade
+				'
+				, case when i_view_rec.is_materialized then 'materialized ' else '' end
+				, i_view_rec.schema_name
+				, i_view_rec.internal_name
+			);
+		end if;
 	end if;
 	
 	execute i_view_rec.query;
