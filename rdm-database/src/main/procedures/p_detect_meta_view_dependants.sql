@@ -44,16 +44,16 @@ begin
 				s.nspname = i_schema_name::name
 			union all
 			select
-				dep.dependent_cls_oid  as cls_oid
-				, dep.dependent_cls_name as cls_name
-				, dep.dependent_cls_schema as cls_schema
-				, dep.dependent_cls_relkind as cls_type
+				dep.dependent_obj_id  as cls_oid
+				, dep.dependent_obj_name as cls_name
+				, dep.dependent_obj_schema as cls_schema
+				, dep.dependent_obj_type as cls_type
 				, dependent_view.dep_level + 1 as dep_level
 			from 
 				${mainSchemaName}.v_sys_obj_dependency dep
 			join dependent_view 
-				on dependent_view.cls_name = dep.master_cls_name 
-				and dependent_view.cls_schema = dep.master_cls_schema
+				on dependent_view.cls_name = dep.master_obj_name 
+				and dependent_view.cls_schema = dep.master_obj_schema
 		)
 		, meta_view as (
 			select 

@@ -8,11 +8,11 @@ as $function$
 select 
 	coalesce((
 			select 
-				max(${mainSchemaName}.f_meta_view_dependency_level(i_view_oid => t.master_cls_oid))
+				max(${mainSchemaName}.f_meta_view_dependency_level(i_view_oid => t.master_obj_id))
 			from
 				${mainSchemaName}.v_sys_obj_dependency t 
 			where 
-				t.dependent_cls_oid = i_view_oid
+				t.dependent_obj_id = i_view_oid
 		) + 1,
 		0
 	)

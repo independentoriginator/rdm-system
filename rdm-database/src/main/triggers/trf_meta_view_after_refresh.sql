@@ -9,8 +9,8 @@ begin
 	from 
 		${mainSchemaName}.v_sys_obj_dependency dep
 	where
-		dep.master_cls_name = old.internal_name
-		and dep.master_cls_schema = 
+		dep.master_obj_name = old.internal_name
+		and dep.master_obj_schema = 
 			coalesce((
 					select 
 						s.internal_name
@@ -21,8 +21,8 @@ begin
 				)
 				, '${mainSchemaName}'
 			)		
-		and dep.dependent_cls_name = meta_view.internal_name 
-		and dep.dependent_cls_schema = 
+		and dep.dependent_obj_name = meta_view.internal_name 
+		and dep.dependent_obj_schema = 
 			coalesce((
 					select 
 						s.internal_name

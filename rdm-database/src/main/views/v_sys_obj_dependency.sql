@@ -1,14 +1,16 @@
 create or replace view v_sys_obj_dependency
 as
 select distinct
-	dependent_cls.oid as dependent_cls_oid
-	, dependent_cls.relname as dependent_cls_name
-	, dependent_cls_ns.nspname as dependent_cls_schema
-	, dependent_cls.relkind as dependent_cls_relkind
-	, master_cls.oid as master_cls_oid
-	, master_cls.relname as master_cls_name
-	, master_cls_ns.nspname as master_cls_schema
-	, master_cls.relkind as master_cls_relkind
+	dependent_cls.oid as dependent_obj_id
+	, dependent_cls.relname as dependent_obj_name
+	, dependent_cls_ns.nspname as dependent_obj_schema
+	, 'relation'::name as dependent_obj_class
+	, dependent_cls.relkind as dependent_obj_type
+	, master_cls.oid as master_obj_id
+	, master_cls.relname as master_obj_name
+	, master_cls_ns.nspname as master_obj_schema
+	, 'relation'::name as master_obj_class
+	, master_cls.relkind as master_obj_type
 from
 	pg_catalog.pg_class dependent_cls
 join pg_catalog.pg_namespace dependent_cls_ns
@@ -25,4 +27,66 @@ join pg_catalog.pg_namespace master_cls_ns
 where 
 	pg_depend.deptype = 'n' 
 	and pg_depend.classid = 'pg_rewrite'::regclass
+union all
+select distinct
+	p.oid as dependent_obj_id
+	, p.proname as dependent_obj_name
+	, n.nspname as dependent_obj_schema
+	, 'routine'::name as dependent_obj_class
+	, p.prokind as dependent_obj_type
+	, sys_obj.obj_id as master_obj_id
+	, sys_obj.obj_name as master_obj_name
+	, sys_obj.obj_schema as master_obj_schema
+	, sys_obj.obj_class as master_obj_class
+	, sys_obj.obj_type as master_obj_type
+from 
+	pg_catalog.pg_proc p
+join pg_catalog.pg_namespace n
+	on n.oid = p.pronamespace
+	and n.nspname = 'ng_mer'
+join lateral 
+	unnest(
+		string_to_array(
+			regexp_replace(
+				regexp_replace(
+					lower(p.prosrc)
+					, '--.*?\n'
+					, '', 'g'
+				)
+				, '[^[:alnum:]_\.]+'
+				, ' '
+				, 'g'
+			)
+			, ' '
+		)
+	) as obj_candidate(obj_name)
+	on true
+join (
+	select 
+		n.nspname || '.' || c.relname as obj_full_name
+		, c.oid as obj_id
+		, c.relname as obj_name
+		, n.nspname as obj_schema
+		, c.relkind as obj_type
+		, 'relation'::name as obj_class
+	from 
+		pg_catalog.pg_class c
+	join pg_catalog.pg_namespace n
+		on n.oid = c.relnamespace 
+	where 
+		c.relkind in ('r'::"char", 'p'::"char", 'v'::"char", 'm'::"char")
+	union all 
+	select 
+		n.nspname || '.' || p.proname as obj_full_name
+		, p.oid as obj_id
+		, p.proname as obj_name
+		, n.nspname as obj_schema
+		, p.prokind as obj_type
+		, 'routine'::name as obj_class
+	from 
+		pg_catalog.pg_proc p
+	join pg_catalog.pg_namespace n
+		on n.oid = p.pronamespace
+) sys_obj
+	on sys_obj.obj_full_name = obj_candidate.obj_name
 ;
