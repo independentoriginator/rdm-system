@@ -19,14 +19,39 @@ join pg_catalog.pg_rewrite pg_rewrite
 	on pg_rewrite.ev_class = dependent_cls.oid
 join pg_catalog.pg_depend pg_depend
 	on pg_depend.objid = pg_rewrite.oid
+	and pg_depend.deptype = 'n' 
+	and pg_depend.classid = 'pg_rewrite'::regclass
 join pg_catalog.pg_class master_cls 
 	on master_cls.oid = pg_depend.refobjid
 	and master_cls.oid <> dependent_cls.oid					
 join pg_catalog.pg_namespace master_cls_ns
 	on master_cls_ns.oid = master_cls.relnamespace
-where 
-	pg_depend.deptype = 'n' 
+union all
+select distinct
+	dependent_cls.oid as dependent_obj_id
+	, dependent_cls.relname as dependent_obj_name
+	, dependent_cls_ns.nspname as dependent_obj_schema
+	, 'relation'::name as dependent_obj_class
+	, dependent_cls.relkind as dependent_obj_type
+	, master_proc.oid as master_obj_id
+	, master_proc.proname as master_obj_name
+	, master_proc_ns.nspname as master_obj_schema
+	, 'routine'::name as master_obj_class
+	, master_proc.prokind as master_obj_type
+from
+	pg_catalog.pg_class dependent_cls
+join pg_catalog.pg_namespace dependent_cls_ns
+	on dependent_cls_ns.oid = dependent_cls.relnamespace
+join pg_catalog.pg_rewrite pg_rewrite
+	on pg_rewrite.ev_class = dependent_cls.oid
+join pg_catalog.pg_depend pg_depend
+	on pg_depend.objid = pg_rewrite.oid
+	and pg_depend.deptype = 'n' 
 	and pg_depend.classid = 'pg_rewrite'::regclass
+join pg_catalog.pg_proc master_proc 
+	on master_proc.oid = pg_depend.refobjid
+join pg_catalog.pg_namespace master_proc_ns
+	on master_proc_ns.oid = master_proc.pronamespace
 union all
 select distinct
 	p.oid as dependent_obj_id
@@ -43,7 +68,6 @@ from
 	pg_catalog.pg_proc p
 join pg_catalog.pg_namespace n
 	on n.oid = p.pronamespace
-	and n.nspname = 'ng_mer'
 join lateral 
 	unnest(
 		string_to_array(
