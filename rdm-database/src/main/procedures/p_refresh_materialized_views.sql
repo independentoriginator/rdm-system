@@ -65,7 +65,7 @@ begin
    		
    		l_timestamp := clock_timestamp();
    		
-		call ${mainSchemaName}.p_execute_in_parallel(
+		call ${stagingSchemaName}.p_execute_in_parallel(
 			i_commands => l_view_refresh_commands
 			, i_thread_max_count => i_thread_max_count
 		);	

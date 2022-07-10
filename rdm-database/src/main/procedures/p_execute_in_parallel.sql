@@ -1,4 +1,4 @@
-create or replace procedure p_execute_in_parallel(
+create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
 	, i_thread_max_count integer = 10
 )
@@ -25,7 +25,7 @@ begin
 		l_connections := array[]::text[];	
 	
 		for i in 1..least(array_length(i_commands, 1) - l_command_index + 1, i_thread_max_count) loop
-			l_connection := '${mainSchemaName}.p_execute_in_parallel' || i::text;
+			l_connection := '${stagingSchemaName}.p_execute_in_parallel' || i::text;
 			
 			begin
 				if (select coalesce(l_connection = any(dblink_get_connections()), false)) then 			
