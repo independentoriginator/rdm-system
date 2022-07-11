@@ -61,7 +61,8 @@ begin
 				, v.internal_name as view_name
 				, coalesce(s.internal_name, '${mainSchemaName}') as view_schema
 				, v.schema_id
-				, v.is_external 
+				, v.is_external
+				, v.is_routine 
 			from
 				${mainSchemaName}.meta_view v 
 			left join ${mainSchemaName}.meta_schema s 
@@ -75,10 +76,15 @@ begin
 				, v.is_external
 				, case 
 					when (v.view_id is null or v.is_external) and dependent_view.cls_oid is not null then
-						${mainSchemaName}.f_view_definition(
-							i_view_oid => dependent_view.cls_oid
-							, i_enforce_nodata_for_matview => true
-						)
+						case v.is_routine
+							when false then 
+								${mainSchemaName}.f_view_definition(
+									i_view_oid => dependent_view.cls_oid
+									, i_enforce_nodata_for_matview => true
+								)
+							else 
+								pg_catalog.pg_get_functiondef(dependent_view.cls_oid)
+						end
 				end as external_view_def
 			from 
 				dependent_view
@@ -114,7 +120,7 @@ begin
 				, query
 				, is_external
 			)
-			select 
+			select distinct
 				d.cls_name as internal_name
 				, coalesce(d.schema_id, ns.id) as schema_id
 				, d.external_view_def as query
