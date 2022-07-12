@@ -15,7 +15,7 @@ begin
 		join ${mainSchemaName}.meta_view meta_view 
 			on meta_view.id = t.id
 		where 
-			coalesce(t.is_created, false) = false
+			(coalesce(t.is_created, false) = false or meta_view.dependency_level is null)
 			and coalesce(t.is_disabled, false) = false
 		order by
 			t.creation_order

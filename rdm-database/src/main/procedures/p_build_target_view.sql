@@ -35,6 +35,7 @@ begin
 	update ${mainSchemaName}.meta_view 
 	set is_created = true
 		, is_valid = false
+		, dependency_level = i_view_rec.dependency_level
 	where id = i_view_rec.id
 	;
 end

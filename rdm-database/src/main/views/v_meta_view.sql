@@ -3,8 +3,11 @@ as
 select
 	v.id
 	, v.internal_name
-	, ${mainSchemaName}.f_meta_view_dependency_level(
-		i_view_oid => coalesce(target_view.oid, target_routine.oid)
+	, coalesce(
+		v.dependency_level
+		, ${mainSchemaName}.f_meta_view_dependency_level(
+			i_view_oid => coalesce(target_view.oid, target_routine.oid)
+		)
 	) as dependency_level
 	, v.schema_id
 	, coalesce(s.internal_name, '${mainSchemaName}') as schema_name

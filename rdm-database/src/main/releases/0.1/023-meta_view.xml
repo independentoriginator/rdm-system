@@ -238,4 +238,14 @@
 
 	</changeSet>
 	
+	<changeSet id="meta_view-stored-dependency_level" author="${user}">
+
+		<addColumn tableName="meta_view">
+			<column name="dependency_level" type="integer" remarks="Dependency level">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+
+	</changeSet>
+		
 </databaseChangeLog>
