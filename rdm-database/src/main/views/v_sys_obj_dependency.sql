@@ -113,4 +113,5 @@ join (
 		on n.oid = p.pronamespace
 ) sys_obj
 	on sys_obj.obj_full_name = obj_candidate.obj_name
+	and sys_obj.obj_id <> p.oid 
 ;
