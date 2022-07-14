@@ -30,6 +30,7 @@ select
 			dep.view_id = v.id
 	) as previously_defined_dependency_level
 	, v.is_routine
+	, coalesce(target_view.oid, target_routine.oid) as view_oid
 from 
 	${mainSchemaName}.meta_view v
 join ${mainSchemaName}.meta_schema s
@@ -40,9 +41,7 @@ left join pg_catalog.pg_class target_view
 	on target_view.relnamespace = target_schema.oid 
 	and target_view.relname = v.internal_name
 	and target_view.relkind in ('v'::"char", 'm'::"char")
-	and v.is_routine = false
 left join pg_catalog.pg_proc target_routine
 	on target_routine.pronamespace = target_schema.oid 
 	and target_routine.proname = v.internal_name
-	and v.is_routine = true
 ;

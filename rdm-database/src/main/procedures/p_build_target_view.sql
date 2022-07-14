@@ -17,6 +17,7 @@ begin
 		call ${mainSchemaName}.p_detect_meta_view_dependants(
 			i_view_name => i_view_rec.internal_name
 			, i_schema_name => i_view_rec.schema_name
+			, i_is_routine => i_view_rec.is_routine
 		);
 	
 		if i_view_rec.is_routine = false then
@@ -30,13 +31,23 @@ begin
 		end if;
 	end if;
 	
-	execute i_view_rec.query;
+	if i_view_rec.is_external = false or i_view_rec.is_routine = false then
+		execute i_view_rec.query;
+	end if;
 
-	update ${mainSchemaName}.meta_view 
+	update ${mainSchemaName}.meta_view
 	set is_created = true
 		, is_valid = false
-		, dependency_level = i_view_rec.dependency_level
-	where id = i_view_rec.id
+		, dependency_level = (
+			select 
+				${mainSchemaName}.f_meta_view_dependency_level(i_view_oid => v.view_oid)
+			from 
+				${mainSchemaName}.v_meta_view v
+			where 
+				v.id = i_view_rec.id
+		)
+	where 
+		id = i_view_rec.id
 	;
 end
 $procedure$;			
