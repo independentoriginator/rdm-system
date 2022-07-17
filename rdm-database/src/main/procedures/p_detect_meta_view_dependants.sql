@@ -168,6 +168,7 @@ begin
 			update ${mainSchemaName}.meta_view v
 			set 
 				query = d.external_view_def
+				, is_disabled = false
 			from 
 				dependency d
 			where 
