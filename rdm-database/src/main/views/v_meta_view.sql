@@ -43,5 +43,7 @@ left join pg_catalog.pg_class target_view
 	and target_view.relkind in ('v'::"char", 'm'::"char")
 left join pg_catalog.pg_proc target_routine
 	on target_routine.pronamespace = target_schema.oid 
-	and target_routine.proname = v.internal_name
+	and ${mainSchemaName}.f_target_routine_name(
+		i_target_routine_id => target_routine.oid
+	) = v.internal_name
 ;

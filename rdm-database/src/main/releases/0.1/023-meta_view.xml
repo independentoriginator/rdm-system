@@ -247,5 +247,17 @@
 		</addColumn>
 
 	</changeSet>
-		
+
+	<changeSet id="meta_view internal_name size increasing" author="${user}">
+		<modifyDataType
+			tableName="meta_view"  
+            columnName="internal_name"  
+            newDataType="clob"/>  
+			
+		<update tableName="meta_attribute">
+			<column name="length" value="null"/>
+			<where>master_id = (select id from meta_type where internal_name = 'meta_view') and internal_name = 'internal_name'</where>
+		</update>
+	</changeSet>
+            			
 </databaseChangeLog>

@@ -34,7 +34,9 @@ select distinct
 	, 'relation'::name as dependent_obj_class
 	, dependent_cls.relkind as dependent_obj_type
 	, master_proc.oid as master_obj_id
-	, master_proc.proname as master_obj_name
+	, ${mainSchemaName}.f_target_routine_name(
+		i_target_routine_id => master_proc.oid
+	) as master_obj_name
 	, master_proc_ns.nspname as master_obj_schema
 	, 'routine'::name as master_obj_class
 	, master_proc.prokind as master_obj_type
@@ -55,7 +57,9 @@ join pg_catalog.pg_namespace master_proc_ns
 union all
 select distinct
 	p.oid as dependent_obj_id
-	, p.proname as dependent_obj_name
+	, ${mainSchemaName}.f_target_routine_name(
+		i_target_routine_id => p.oid
+	) as dependent_obj_name
 	, n.nspname as dependent_obj_schema
 	, 'routine'::name as dependent_obj_class
 	, p.prokind as dependent_obj_type
@@ -103,7 +107,9 @@ join (
 	select 
 		n.nspname || '.' || p.proname as obj_full_name
 		, p.oid as obj_id
-		, p.proname as obj_name
+		, ${mainSchemaName}.f_target_routine_name(
+			i_target_routine_id => p.oid
+		) as obj_name
 		, n.nspname as obj_schema
 		, p.prokind as obj_type
 		, 'routine'::name as obj_class

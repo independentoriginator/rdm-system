@@ -34,7 +34,7 @@ begin
 		) as (
 			select 				
 				v.oid as obj_oid
-				, v.relname as obj_name
+				, v.relname::text as obj_name
 				, s.nspname as obj_schema
 				, 'relation'::name as obj_class
 				, v.relkind as obj_type
@@ -50,7 +50,7 @@ begin
 			union all
 			select 				
 				p.oid as obj_oid
-				, p.proname as obj_name
+				, i_view_name::text as obj_name
 				, s.nspname as obj_schema
 				, 'routine'::name as obj_class
 				, p.prokind as obj_type
@@ -59,7 +59,9 @@ begin
 				pg_catalog.pg_namespace s
 			join pg_catalog.pg_proc p
 				on p.pronamespace = s.oid
-				and p.proname = i_view_name::name
+				and ${mainSchemaName}.f_target_routine_name(
+					i_target_routine_id => p.oid
+				) = i_view_name::name
 			where 
 				s.nspname = i_schema_name::name
 				and i_is_routine = true
