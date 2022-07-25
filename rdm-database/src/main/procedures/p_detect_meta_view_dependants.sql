@@ -23,8 +23,14 @@ begin
 		)
 	;
 	
-	with 
-		recursive dependent_view(
+	with recursive
+	 	sys_obj_dependency as (
+	 		select 
+	 			*
+	 		from
+	 			${mainSchemaName}.v_sys_obj_dependency 
+	 	)
+		, dependent_view(
 			obj_oid
 			, obj_name
 			, obj_schema
@@ -74,7 +80,7 @@ begin
 				, dep.dependent_obj_type as obj_type
 				, dependent_view.dep_level + 1 as dep_level
 			from 
-				${mainSchemaName}.v_sys_obj_dependency dep
+				sys_obj_dependency dep
 			join dependent_view 
 				on dependent_view.obj_name = dep.master_obj_name 
 				and dependent_view.obj_schema = dep.master_obj_schema
