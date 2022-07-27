@@ -2,12 +2,12 @@ create or replace view v_sys_obj_dependency
 as
 select distinct
 	dependent_cls.oid as dependent_obj_id
-	, dependent_cls.relname as dependent_obj_name
+	, dependent_cls.relname::text as dependent_obj_name
 	, dependent_cls_ns.nspname as dependent_obj_schema
 	, 'relation'::name as dependent_obj_class
 	, dependent_cls.relkind as dependent_obj_type
 	, master_cls.oid as master_obj_id
-	, master_cls.relname as master_obj_name
+	, master_cls.relname::text as master_obj_name
 	, master_cls_ns.nspname as master_obj_schema
 	, 'relation'::name as master_obj_class
 	, master_cls.relkind as master_obj_type

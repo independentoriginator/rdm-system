@@ -67,7 +67,7 @@ begin
 				on p.pronamespace = s.oid
 				and ${mainSchemaName}.f_target_routine_name(
 					i_target_routine_id => p.oid
-				) = i_view_name::name
+				) = i_view_name::text
 			where 
 				s.nspname = i_schema_name::name
 				and i_is_routine = true
