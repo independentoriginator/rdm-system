@@ -3,6 +3,7 @@ language plpgsql
 as $procedure$
 declare 
 	l_view_rec record;
+	l_prev_view_id ${mainSchemaName}.meta_view.id%type;
 begin
 	while true
 	loop
@@ -28,6 +29,14 @@ begin
 		if l_view_rec is null then
 			exit;
 		end if;
+		
+		if l_prev_view_id is not null then
+			if l_view_rec.id = l_prev_view_id then 
+				raise 'The view was not processed for a some unexpected reason: %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
+			end if;
+		end if;
+		
+		l_prev_view_id = l_view_rec.id;
 		
 		if l_view_rec.is_external 
 			and not exists (
