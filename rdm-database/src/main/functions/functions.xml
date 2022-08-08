@@ -17,15 +17,6 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_meta_view_dependency_level-function" author="${user}" runOnChange="true">
-		<createProcedure 
-			procedureName="f_meta_view_dependency_level" 
-			dbms="postgresql" 
-			path="f_meta_view_dependency_level.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
 	<changeSet id="f_is_meta_type_has_localization-function" author="${user}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_is_meta_type_has_localization" 

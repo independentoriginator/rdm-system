@@ -21,6 +21,8 @@
 	<includeAll path="releases" relativeToChangelogFile="true" />
 	<include file="functions/functions.xml" relativeToChangelogFile="true" />
 	<include file="views/views.xml" relativeToChangelogFile="true" />
+	<include file="functions/functions_based_on_views.xml" relativeToChangelogFile="true" />
+	<include file="views/function_dependent_views.xml" relativeToChangelogFile="true" />
 	<include file="procedures/procedures.xml" relativeToChangelogFile="true" />
 	<include file="triggers/triggers.xml" relativeToChangelogFile="true" />
 	
