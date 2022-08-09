@@ -2,6 +2,7 @@ create or replace procedure p_refresh_materialized_views(
 	i_refresh_all boolean = false
 	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type = null
 	, i_thread_max_count integer = 10
+	, i_internal_transaction_control boolean = false
 )
 language plpgsql
 as $procedure$
@@ -79,7 +80,9 @@ begin
 			id = any(l_view_ids)
 		;
 			
-		commit;
+		if i_internal_transaction_control then
+			commit;
+		end if;
 		
         raise notice 'Done in %', clock_timestamp() - l_timestamp;
 	end loop;
