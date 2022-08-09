@@ -56,7 +56,7 @@ begin
 		end loop;
 		
 		if coalesce(array_length(l_connections, 1), 0) = 0 then
-			exit;
+			raise exception 'No dblink connections created';
 		end if;
 	
 		foreach l_connection in array l_connections loop
