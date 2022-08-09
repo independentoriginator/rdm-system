@@ -54,6 +54,10 @@ begin
 				end if;
 			end;
 		end loop;
+		
+		if coalesce(array_length(l_connections, 1), 0) = 0 then
+			exit;
+		end if;
 	
 		foreach l_connection in array l_connections loop
 			if dblink_send_query(l_connection, i_commands[l_command_index]) != 1 then
