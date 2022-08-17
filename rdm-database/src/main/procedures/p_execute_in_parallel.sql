@@ -1,6 +1,9 @@
 create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
 	, i_thread_max_count integer = 10
+	, i_context_name text = null
+	, i_scheduled_task_name text = null
+	, i_iteration_number integer = 0
 )
 language plpgsql
 as $procedure$
@@ -18,6 +21,18 @@ declare
 	l_exception_hint text;
 	l_result text;
 begin
+	if i_context_name is not null 
+		and ${stagingSchemaName}.f_execute_in_parallel_context_specific(
+			i_context_name => i_context_name
+			, i_scheduled_task_name => i_scheduled_task_name
+			, i_commands => i_commands
+			, i_iteration_number => i_iteration_number
+			, i_thread_max_count => i_thread_max_count
+		) 
+	then
+		return;
+	end if;
+	
 	l_command_count := array_upper(i_commands, 1);
 	l_command_index := array_lower(i_commands, 1);
 	
