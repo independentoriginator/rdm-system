@@ -3,6 +3,10 @@ create or replace procedure p_build_target_view(
 )
 language plpgsql
 as $procedure$
+declare
+	l_msg_text text;
+	l_exception_detail text;
+	l_exception_hint text;
 begin
 	if i_view_rec.schema_id is not null and i_view_rec.is_schema_exists = false then
 		execute format('
@@ -31,8 +35,36 @@ begin
 		end if;
 	end if;
 	
-	if i_view_rec.is_external = false or i_view_rec.is_routine = false then
-		execute i_view_rec.query;
+	if i_view_rec.is_routine = false then
+		begin
+			execute i_view_rec.query;
+		exception
+			when others then
+				get stacked diagnostics
+					l_msg_text = MESSAGE_TEXT
+					, l_exception_detail = PG_EXCEPTION_DETAIL
+					, l_exception_hint = PG_EXCEPTION_HINT
+					;
+				if not i_view_rec.is_external then 
+					raise exception 
+						'View creation error: %: % (hint: %)'
+						, l_msg_text
+						, l_exception_detail
+						, l_exception_hint
+						;
+				else 
+					raise notice 
+						'External view creation error: %: % (hint: %). The view will be disabled.'
+						, l_msg_text
+						, l_exception_detail
+						, l_exception_hint
+						;
+					update ${mainSchemaName}.meta_view 
+					set is_disabled = true
+					where id = i_view_rec.id
+					;
+				end if;					
+		end;			
 	end if;
 
 	update ${mainSchemaName}.meta_view
