@@ -1,9 +1,9 @@
 create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
 	, i_thread_max_count integer = 10
-	, i_context_name text = null
 	, i_scheduled_task_name text = null
-	, i_iteration_number integer = 0
+	, i_iteration_number integer = -1
+	, i_wait_for_delay_in_seconds integer = 1
 )
 language plpgsql
 as $procedure$
@@ -21,10 +21,11 @@ declare
 	l_exception_hint text;
 	l_result text;
 begin
-	if i_context_name is not null 
+	if i_scheduled_task_name is not null 
+		and i_thread_max_count > 1
+		and i_iteration_number >= 0
 		and ${stagingSchemaName}.f_execute_in_parallel_context_specific(
-			i_context_name => i_context_name
-			, i_scheduled_task_name => i_scheduled_task_name
+			i_scheduled_task_name => i_scheduled_task_name
 			, i_commands => i_commands
 			, i_iteration_number => i_iteration_number
 			, i_thread_max_count => i_thread_max_count
@@ -32,11 +33,11 @@ begin
 	then
 		return;
 	end if;
-	
+
 	l_command_count := array_upper(i_commands, 1);
 	l_command_index := array_lower(i_commands, 1);
 	
-	if i_thread_max_count > 1 then
+	if i_thread_max_count > 1 and l_command_count > 1 then
 		<<command_loop>>
 		while l_command_index <= l_command_count and l_last_err_msg is null loop
 			l_connections := array[]::text[];	
@@ -79,7 +80,7 @@ begin
 			foreach l_connection in array l_connections loop
 				if dblink_send_query(l_connection, i_commands[l_command_index]) != 1 then
 					while dblink_is_busy(l_connection) = 1 loop 
-						perform pg_sleep(1.0);
+						perform pg_sleep(i_wait_for_delay_in_seconds);
 					end loop;
 					l_last_err_msg := dblink_error_message(l_connection);
 					exit;

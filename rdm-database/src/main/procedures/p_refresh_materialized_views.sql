@@ -2,9 +2,9 @@ create or replace procedure p_refresh_materialized_views(
 	i_refresh_all boolean = false
 	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type = null
 	, i_thread_max_count integer = 10
-	, i_context_name text = null
 	, i_scheduled_task_name text = null
 	, i_async_mode boolean = false
+	, i_wait_for_delay_in_seconds integer = 1
 )
 language plpgsql
 as $procedure$
@@ -71,8 +71,6 @@ begin
 				exit;
 			end if;
 			
-			l_iteration_number := l_iteration_number + 1;
-			
 	   		raise notice 'Refreshing materialized view(s): %...', l_view_names;
 	   		
 	   		l_timestamp := clock_timestamp();
@@ -80,10 +78,12 @@ begin
 			call ${stagingSchemaName}.p_execute_in_parallel(
 				i_commands => l_view_refresh_commands
 				, i_thread_max_count => i_thread_max_count
-				, i_context_name => i_context_name
 				, i_scheduled_task_name => i_scheduled_task_name
 				, i_iteration_number => l_iteration_number
+				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds 
 			);	
+			
+			l_iteration_number := l_iteration_number + 1;
 				
 	        raise notice 'Done in %', clock_timestamp() - l_timestamp;
 		end loop;
@@ -133,15 +133,15 @@ begin
 			for update
 			;
 			
-			l_iteration_number := l_iteration_number + 1;
-			
 			call ${stagingSchemaName}.p_execute_in_parallel(
 				i_commands => l_view_refresh_commands
 				, i_thread_max_count => i_thread_max_count
-				, i_context_name => i_context_name
 				, i_scheduled_task_name => i_scheduled_task_name
 				, i_iteration_number => l_iteration_number
-			);	
+				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds
+			);
+			
+			l_iteration_number := l_iteration_number + 1;
 		end loop;
 	end if;
 end
