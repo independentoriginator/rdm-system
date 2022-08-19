@@ -37,11 +37,6 @@ begin
 						, t.schema_name 
 						, t.internal_name
 					) 
-					|| '; '
-					|| format(
-						'update ${mainSchemaName}.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s'
-						, t.id
-					)
 				)
 			into 
 				l_view_ids
@@ -82,6 +77,15 @@ begin
 				, i_iteration_number => l_iteration_number
 				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds 
 			);	
+			
+			update 
+				${mainSchemaName}.meta_view 
+			set 
+				is_valid = true
+				, refresh_time = current_timestamp
+			where 
+				id = any(l_view_ids)
+			;			
 			
 			l_iteration_number := l_iteration_number + 1;
 				
