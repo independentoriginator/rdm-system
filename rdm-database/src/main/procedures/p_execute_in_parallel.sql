@@ -1,6 +1,7 @@
 create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
 	, i_thread_max_count integer = 10
+	, i_scheduler_type_name text = null
 	, i_scheduled_task_name text = null
 	, i_iteration_number integer = -1
 	, i_wait_for_delay_in_seconds integer = 1
@@ -20,18 +21,45 @@ declare
 	l_exception_detail text;
 	l_exception_hint text;
 	l_result text;
+	l_bool_result boolean;
 begin
-	if i_scheduled_task_name is not null 
+	if i_scheduler_type_name is not null 
+		and i_scheduled_task_name is not null 
 		and i_thread_max_count > 1
 		and i_iteration_number >= 0
-		and ${stagingSchemaName}.f_execute_in_parallel_context_specific(
-			i_scheduled_task_name => i_scheduled_task_name
-			, i_commands => i_commands
-			, i_iteration_number => i_iteration_number
-			, i_thread_max_count => i_thread_max_count
-		) 
+		and exists (
+			select 
+				1
+			from
+				information_schema.routines r
+			where 
+				r.routine_schema = '${stagingSchemaName}'
+				and r.routine_name = 'f_execute_in_parallel_with_' || i_scheduler_type_name
+				and r.routine_type = 'FUNCTION' 
+				and r.data_type = 'boolean'
+		)
 	then
-		return;
+		execute 
+			format('
+					select ${stagingSchemaName}.%I(
+						i_scheduled_task_name => $1
+						, i_commands => $2
+						, i_iteration_number => $3
+						, i_thread_max_count => $4
+					)
+				'
+				, 'f_execute_in_parallel_with_' || i_scheduler_type_name
+			)
+		into l_bool_result
+		using 
+			 i_scheduled_task_name
+			 , i_commands
+			 , i_iteration_number
+			 , i_thread_max_count
+		;
+		if l_bool_result then
+			return;
+		end if;
 	end if;
 
 	l_command_count := array_upper(i_commands, 1);

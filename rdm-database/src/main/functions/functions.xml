@@ -116,13 +116,4 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_execute_in_parallel_context_specific-function" author="${user}" runOnChange="true">
-		<createProcedure 
-			procedureName="f_execute_in_parallel_context_specific" 
-			dbms="postgresql" 
-			path="f_execute_in_parallel_context_specific.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-				
 </databaseChangeLog>

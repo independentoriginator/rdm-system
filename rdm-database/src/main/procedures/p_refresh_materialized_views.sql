@@ -2,6 +2,7 @@ create or replace procedure p_refresh_materialized_views(
 	i_refresh_all boolean = false
 	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type = null
 	, i_thread_max_count integer = 10
+	, i_scheduler_type_name text = null
 	, i_scheduled_task_name text = null
 	, i_async_mode boolean = false
 	, i_wait_for_delay_in_seconds integer = 1
@@ -73,6 +74,7 @@ begin
 			call ${stagingSchemaName}.p_execute_in_parallel(
 				i_commands => l_view_refresh_commands
 				, i_thread_max_count => i_thread_max_count
+				, i_scheduler_type_name => i_scheduler_type_name
 				, i_scheduled_task_name => i_scheduled_task_name
 				, i_iteration_number => l_iteration_number
 				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds 
@@ -140,6 +142,7 @@ begin
 			call ${stagingSchemaName}.p_execute_in_parallel(
 				i_commands => l_view_refresh_commands
 				, i_thread_max_count => i_thread_max_count
+				, i_scheduler_type_name => i_scheduler_type_name
 				, i_scheduled_task_name => i_scheduled_task_name
 				, i_iteration_number => l_iteration_number
 				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds
