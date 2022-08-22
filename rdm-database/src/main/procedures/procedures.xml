@@ -116,6 +116,15 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="p_delete_data_package-procedure" author="${user}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_delete_data_package" 
+			dbms="postgresql" 
+			path="p_delete_data_package.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="p_invalidate_type_descendants_built_flag-procedure" author="${user}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_invalidate_type_descendants_built_flag" 
