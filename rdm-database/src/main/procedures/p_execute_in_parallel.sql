@@ -65,7 +65,7 @@ begin
 	l_command_count := array_upper(i_commands, 1);
 	l_command_index := array_lower(i_commands, 1);
 	
-	if i_thread_max_count > 1 and l_command_count > 1 then
+	if i_thread_max_count > 1 then
 		<<command_loop>>
 		while l_command_index <= l_command_count and l_last_err_msg is null loop
 			l_connections := array[]::text[];	
