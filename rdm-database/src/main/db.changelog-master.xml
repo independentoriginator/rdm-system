@@ -32,9 +32,11 @@
 		</sql>
 	</changeSet>
 
+	<!-- This fragment should be added in a custom module 
 	<changeSet id="build target views" author="${user}" runAlways="true">
 		<sql>
 			call p_build_target_views();
 		</sql>
 	</changeSet>
+	-->
 </databaseChangeLog>
