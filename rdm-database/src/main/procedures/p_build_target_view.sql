@@ -35,7 +35,7 @@ begin
 		end if;
 	end if;
 	
-	if not i_view_rec.is_external or i_view_rec.is_routine = false then
+	if not i_view_rec.is_external or i_view_rec.is_routine = false or not coalesce(i_view_rec.is_created, false) then
 		begin
 			execute i_view_rec.query;
 		exception
