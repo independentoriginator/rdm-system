@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
         
-	<changeSet id="meta_view" author="${user}">
+	<changeSet id="meta_view" author="${default_author}">
 
 		<!-- meta_view_group -->
 		<createTable
@@ -208,7 +208,7 @@
 		
 	</changeSet>     
 	
-	<changeSet id="meta_view_creation_order" author="${user}">
+	<changeSet id="meta_view_creation_order" author="${default_author}">
 
 		<addColumn tableName="meta_view">
 			<column name="creation_order" type="integer" remarks="Creation_order" defaultValue="0">
@@ -218,7 +218,7 @@
 
 	</changeSet>
 
-	<changeSet id="meta_view-is_disabled" author="${user}">
+	<changeSet id="meta_view-is_disabled" author="${default_author}">
 
 		<addColumn tableName="meta_view">
 			<column name="is_disabled" type="boolean" remarks="Is disabled" defaultValueBoolean="false">
@@ -228,7 +228,7 @@
 
 	</changeSet>
 			
-	<changeSet id="meta_view_dependency-level" author="${user}">
+	<changeSet id="meta_view_dependency-level" author="${default_author}">
 
 		<addColumn tableName="meta_view_dependency">
 			<column name="level" type="integer" remarks="Dependency level" defaultValue="0">
@@ -238,7 +238,7 @@
 
 	</changeSet>
 	
-	<changeSet id="meta_view-stored-dependency_level" author="${user}">
+	<changeSet id="meta_view-stored-dependency_level" author="${default_author}">
 
 		<addColumn tableName="meta_view">
 			<column name="dependency_level" type="integer" remarks="Dependency level">
@@ -248,7 +248,7 @@
 
 	</changeSet>
 
-	<changeSet id="meta_view internal_name size increasing" author="${user}">
+	<changeSet id="meta_view internal_name size increasing" author="${default_author}">
 		<modifyDataType
 			tableName="meta_view"  
             columnName="internal_name"  

@@ -57,6 +57,10 @@
 					<!-- custom properties  -->
 					<systemProperties>
 						<property>
+							<name>default_author</name>
+							<value>developer</value>
+						</property>
+						<property>
 							<name>mainSchemaName</name>
 							<value>${databaseMainSchemaName}</value>
 						</property>

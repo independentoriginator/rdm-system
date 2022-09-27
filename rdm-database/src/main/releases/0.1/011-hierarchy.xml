@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="hierarchy" author="${user}">
+	<changeSet id="hierarchy" author="${default_author}">
 
 		<addColumn tableName="meta_type">
 			<column name="is_hierarchical" type="boolean" remarks="Признак иерархического типа" defaultValueBoolean="false">

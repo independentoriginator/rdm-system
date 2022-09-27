@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="trf_meta_type_before_update-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_meta_type_before_update-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_type_before_update" 
 			dbms="postgresql" 
@@ -17,7 +17,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="tr_meta_type_invalidate_built_flag-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_type_invalidate_built_flag-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"
@@ -32,7 +32,7 @@
 
 	</changeSet>
 
-	<changeSet id="trf_meta_attribute_after_update-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_meta_attribute_after_update-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_attribute_after_update" 
 			dbms="postgresql" 
@@ -41,7 +41,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="tr_meta_attribute_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_attribute_invalidate_type_built_flag-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"
@@ -56,7 +56,7 @@
 
 	</changeSet>
 
-	<changeSet id="tr_meta_attribute_lc_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_attribute_lc_invalidate_type_built_flag-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"
@@ -71,7 +71,7 @@
 
 	</changeSet>
 
-	<changeSet id="tr_meta_type_lc_invalidate_built_flag-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_type_lc_invalidate_built_flag-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"
@@ -86,7 +86,7 @@
 
 	</changeSet>
 
-	<changeSet id="trf_meta_index_after_update-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_meta_index_after_update-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_index_after_update" 
 			dbms="postgresql" 
@@ -95,7 +95,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="tr_meta_index_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_index_invalidate_type_built_flag-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"
@@ -110,7 +110,7 @@
 
 	</changeSet>
 
-	<changeSet id="trf_meta_index_column_after_update-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_meta_index_column_after_update-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_index_column_after_update" 
 			dbms="postgresql" 
@@ -119,7 +119,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="tr_meta_index_column_invalidate_type_built_flag-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_index_column_invalidate_type_built_flag-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"
@@ -134,7 +134,7 @@
 
 	</changeSet>
 
-	<changeSet id="trf_meta_view_before_update-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_meta_view_before_update-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_view_before_update" 
 			dbms="postgresql" 
@@ -143,7 +143,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="tr_meta_view_invalidate_created_flag-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_view_invalidate_created_flag-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"
@@ -158,7 +158,7 @@
 
 	</changeSet>
 	
-	<changeSet id="trf_entity_invalidate_dependent_views-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_entity_invalidate_dependent_views-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_entity_invalidate_dependent_views" 
 			dbms="postgresql" 
@@ -167,7 +167,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="trf_meta_view_after_refresh-function" author="${user}" runOnChange="true">
+	<changeSet id="trf_meta_view_after_refresh-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_view_after_refresh" 
 			dbms="postgresql" 
@@ -176,7 +176,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="tr_meta_view_invalidate_dependent_views-trigger" author="${user}" runOnChange="true">
+	<changeSet id="tr_meta_view_invalidate_dependent_views-trigger" author="${default_author}" runOnChange="true">
 
 		<sqlFile 
 			dbms="postgresql"

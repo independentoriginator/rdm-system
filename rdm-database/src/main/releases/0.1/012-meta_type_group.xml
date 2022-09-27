@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="meta_type_group" author="${user}">
+	<changeSet id="meta_type_group" author="${default_author}">
 
 		<insert tableName="meta_type">
 			<column name="internal_name" value="meta_type_group"/>
@@ -41,7 +41,7 @@
 
 	</changeSet>
 	
-	<changeSet id="meta_type_group-ref" author="${user}">
+	<changeSet id="meta_type_group-ref" author="${default_author}">
 	
 		<preConditions onFail="CONTINUE">
 			<tableExists tableName="meta_type_group" schemaName="${mainSchemaName}"/>

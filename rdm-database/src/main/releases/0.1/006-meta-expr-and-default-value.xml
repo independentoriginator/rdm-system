@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
         
-	<changeSet id="dbms_type" author="${user}">
+	<changeSet id="dbms_type" author="${default_author}">
 
 		<createTable
 			tableName="dbms_type" 
@@ -58,7 +58,7 @@
 
 	</changeSet>        
         
-	<changeSet id="meta_expr" author="${user}">
+	<changeSet id="meta_expr" author="${default_author}">
 
 		<createTable
 			tableName="meta_expr" 
@@ -182,7 +182,7 @@
 
 	</changeSet>        
 
-	<changeSet id="attribute-default-value" author="${user}">
+	<changeSet id="attribute-default-value" author="${default_author}">
 
 		<addColumn tableName="meta_attribute">
 			<column 
@@ -206,7 +206,7 @@
 
 	</changeSet>
 
-	<changeSet id="attribute-default-value-reg" author="${user}">
+	<changeSet id="attribute-default-value-reg" author="${default_author}">
 
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_attribute')"/>

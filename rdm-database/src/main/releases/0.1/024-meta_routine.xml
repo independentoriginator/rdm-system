@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
         
-	<changeSet id="meta_view as meta_routine" author="${user}">
+	<changeSet id="meta_view as meta_routine" author="${default_author}">
 
 		<addColumn tableName="meta_view">
 			<column name="is_routine" type="boolean" remarks="Is routine" defaultValueBoolean="false">

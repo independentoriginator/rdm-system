@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="metadata" author="${user}">
+	<changeSet id="metadata" author="${default_author}">
 
 		<createTable
 			tableName="meta_type" 

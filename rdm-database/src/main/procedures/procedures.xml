@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="p_build_target_column-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_column-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_column" 
 			dbms="postgresql" 
@@ -17,7 +17,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_build_target_lc_table-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_lc_table-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_lc_table" 
 			dbms="postgresql" 
@@ -26,7 +26,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_build_target_index-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_index-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_index" 
 			dbms="postgresql" 
@@ -35,7 +35,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_build_target_staging_table_column-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_staging_table_column-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_staging_table_column" 
 			dbms="postgresql" 
@@ -44,7 +44,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_build_target_staging_table-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_staging_table-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_staging_table" 
 			dbms="postgresql" 
@@ -53,7 +53,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_build_target_api-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_api-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_api" 
 			dbms="postgresql" 
@@ -62,7 +62,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_build_target_table-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_table-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_table" 
 			dbms="postgresql" 
@@ -71,7 +71,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_build_target_tables-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_tables-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_tables" 
 			dbms="postgresql" 
@@ -80,7 +80,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_detect_meta_view_dependants-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_detect_meta_view_dependants-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_detect_meta_view_dependants" 
 			dbms="postgresql" 
@@ -89,7 +89,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_build_target_view-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_view-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_view" 
 			dbms="postgresql" 
@@ -98,7 +98,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_build_target_views-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_build_target_views-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_views" 
 			dbms="postgresql" 
@@ -107,7 +107,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_process_data_package-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_process_data_package-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_process_data_package" 
 			dbms="postgresql" 
@@ -116,7 +116,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_delete_data_package-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_delete_data_package-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_delete_data_package" 
 			dbms="postgresql" 
@@ -125,7 +125,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_invalidate_type_descendants_built_flag-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_invalidate_type_descendants_built_flag-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_invalidate_type_descendants_built_flag" 
 			dbms="postgresql" 
@@ -134,7 +134,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="p_delete_meta_type-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_delete_meta_type-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_delete_meta_type" 
 			dbms="postgresql" 
@@ -143,7 +143,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_execute_in_parallel-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_execute_in_parallel-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_execute_in_parallel" 
 			dbms="postgresql" 
@@ -152,7 +152,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_refresh_materialized_views-procedure" author="${user}" runOnChange="true">
+	<changeSet id="p_refresh_materialized_views-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_refresh_materialized_views" 
 			dbms="postgresql" 

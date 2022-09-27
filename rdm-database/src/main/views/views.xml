@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="v_sys_obj_dependency-view" author="${user}" runOnChange="true">
+	<changeSet id="v_sys_obj_dependency-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_sys_obj_dependency" 
 			path="v_sys_obj_dependency.sql"
@@ -18,7 +18,7 @@
 		<rollback/>
 	</changeSet>
         	        	
-	<changeSet id="v_meta_attribute-view" author="${user}" runOnChange="true">
+	<changeSet id="v_meta_attribute-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_meta_attribute" 
 			path="v_meta_attribute.sql"
@@ -29,7 +29,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="v_meta_type-view" author="${user}" runOnChange="true">
+	<changeSet id="v_meta_type-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_meta_type" 
 			path="v_meta_type.sql"
@@ -40,7 +40,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="v_meta_index-view" author="${user}" runOnChange="true">
+	<changeSet id="v_meta_index-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_meta_index" 
 			path="v_meta_index.sql"

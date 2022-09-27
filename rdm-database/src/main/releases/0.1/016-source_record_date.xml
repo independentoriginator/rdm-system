@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="source_record_date" author="${user}">
+	<changeSet id="source_record_date" author="${default_author}">
 	
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>

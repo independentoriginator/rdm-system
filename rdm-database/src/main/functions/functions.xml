@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="f_meta_type_dependency_level-function" author="${user}" runOnChange="true">
+	<changeSet id="f_meta_type_dependency_level-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_meta_type_dependency_level" 
 			dbms="postgresql" 
@@ -17,7 +17,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_is_meta_type_has_localization-function" author="${user}" runOnChange="true">
+	<changeSet id="f_is_meta_type_has_localization-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_is_meta_type_has_localization" 
 			dbms="postgresql" 
@@ -26,7 +26,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="f_column_type_specification-function" author="${user}" runOnChange="true">
+	<changeSet id="f_column_type_specification-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_column_type_specification" 
 			dbms="postgresql" 
@@ -35,7 +35,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_undefined_max_date-function" author="${user}" runOnChange="true">
+	<changeSet id="f_undefined_max_date-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_undefined_max_date" 
 			dbms="postgresql" 
@@ -44,7 +44,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_insert_data_package-function" author="${user}" runOnChange="true">
+	<changeSet id="f_insert_data_package-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_insert_data_package" 
 			dbms="postgresql" 
@@ -53,7 +53,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_server_version-function" author="${user}" runOnChange="true">
+	<changeSet id="f_server_version-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_server_version" 
 			dbms="postgresql" 
@@ -62,7 +62,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_is_server_feature_available-function" author="${user}" runOnChange="true">
+	<changeSet id="f_is_server_feature_available-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_is_server_feature_available" 
 			dbms="postgresql" 
@@ -71,7 +71,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_system_name_max_length-function" author="${user}" runOnChange="true">
+	<changeSet id="f_system_name_max_length-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_system_name_max_length" 
 			dbms="postgresql" 
@@ -80,7 +80,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_default_language_id-function" author="${user}" runOnChange="true">
+	<changeSet id="f_default_language_id-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_default_language_id" 
 			dbms="postgresql" 
@@ -89,7 +89,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_is_meta_type_has_attribute-function" author="${user}" runOnChange="true">
+	<changeSet id="f_is_meta_type_has_attribute-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_is_meta_type_has_attribute" 
 			dbms="postgresql" 
@@ -98,7 +98,7 @@
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_view_definition-function" author="${user}" runOnChange="true">
+	<changeSet id="f_view_definition-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_view_definition" 
 			dbms="postgresql" 
@@ -107,7 +107,7 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="f_target_routine_name-function" author="${user}" runOnChange="true">
+	<changeSet id="f_target_routine_name-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_target_routine_name" 
 			dbms="postgresql" 

@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="abstract-entity" author="${user}">
+	<changeSet id="abstract-entity" author="${default_author}">
 
 		<insert tableName="meta_type">
 			<column name="internal_name" value="entity"/>
@@ -17,7 +17,7 @@
 
 	</changeSet>
 
-	<changeSet id="abstract-directory" author="${user}">
+	<changeSet id="abstract-directory" author="${default_author}">
 
 		<insert tableName="meta_type">
 			<column name="internal_name" value="directory"/>

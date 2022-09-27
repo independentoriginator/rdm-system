@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="manual-data-entry-source" author="${user}">
+	<changeSet id="manual-data-entry-source" author="${default_author}">
 
 		<insert tableName="source">
 			<column name="internal_name" value="manual data entry"/>
@@ -16,7 +16,7 @@
 		
 	</changeSet>
 	
-	<changeSet id="manual-data-entry-source-lc-attr" author="${user}">
+	<changeSet id="manual-data-entry-source-lc-attr" author="${default_author}">
 
 		<preConditions onFail="CONTINUE">
 			<tableExists tableName="source_lc" schemaName="${mainSchemaName}"/>

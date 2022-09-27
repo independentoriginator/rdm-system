@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="meta_type-name" author="${user}">
+	<changeSet id="meta_type-name" author="${default_author}">
 	
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_type')"/>
@@ -28,7 +28,7 @@
 
 	</changeSet>
 
-	<changeSet id="meta_type-localised-names" author="${user}">
+	<changeSet id="meta_type-localised-names" author="${default_author}">
 	
 		<preConditions onFail="CONTINUE">
 			<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>

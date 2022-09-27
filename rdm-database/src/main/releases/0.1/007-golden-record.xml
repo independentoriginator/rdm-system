@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="golden-record" author="${user}">
+	<changeSet id="golden-record" author="${default_author}">
 	
 		<comment>New fields for abstract directory: 
 			- Reference to so-called "Golden record"

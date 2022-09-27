@@ -8,7 +8,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="f_meta_view_dependency_level-function" author="${user}" runOnChange="true">
+	<changeSet id="f_meta_view_dependency_level-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_meta_view_dependency_level" 
 			dbms="postgresql" 
