@@ -85,6 +85,16 @@ begin
 				on dependent_view.obj_name = dep.master_obj_name 
 				and dependent_view.obj_schema = dep.master_obj_schema
 				and dependent_view.obj_class = dep.master_obj_class
+			where 
+				not exists (
+					select 
+						1
+					from
+						sys_obj_dependency cyclic_dep
+					where 	
+						cyclic_dep.dependent_obj_id = dep.master_obj_id 
+						and cyclic_dep.master_obj_id = dep.dependent_obj_id
+				)
 		)
 		, meta_view as (
 			select 
