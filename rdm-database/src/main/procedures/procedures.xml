@@ -160,5 +160,14 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
-
+	
+	<changeSet id="p_alter_table_column_type-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_alter_table_column_type" 
+			dbms="postgresql" 
+			path="p_alter_table_column_type.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

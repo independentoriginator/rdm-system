@@ -23,79 +23,23 @@ begin
 		)
 	;
 	
-	with recursive
-	 	sys_obj_dependency as (
+	with 
+	 	dependent_view as (
 	 		select 
-	 			*
+				obj_oid
+				, obj_name
+				, obj_schema
+				, obj_class
+				, obj_type
+				, dep_level
 	 		from
-	 			${mainSchemaName}.v_sys_obj_dependency 
+				${mainSchemaName}.f_sys_obj_dependency(
+					i_obj_name => i_view_name
+					, i_schema_name => i_schema_name
+					, i_is_routine => i_is_routine
+					, i_exclude_curr_obj => false
+				)	 			
 	 	)
-		, dependent_view(
-			obj_oid
-			, obj_name
-			, obj_schema
-			, obj_class
-			, obj_type
-			, dep_level
-		) as (
-			select 				
-				v.oid as obj_oid
-				, v.relname::text as obj_name
-				, s.nspname as obj_schema
-				, 'relation'::name as obj_class
-				, v.relkind as obj_type
-				, 0 as dep_level
-			from 
-				pg_catalog.pg_namespace s
-			join pg_catalog.pg_class v
-				on v.relnamespace = s.oid
-				and v.relname = i_view_name::name
-			where 
-				s.nspname = i_schema_name::name
-				and i_is_routine = false
-			union all
-			select 				
-				p.oid as obj_oid
-				, i_view_name::text as obj_name
-				, s.nspname as obj_schema
-				, 'routine'::name as obj_class
-				, p.prokind as obj_type
-				, 0 as dep_level
-			from 
-				pg_catalog.pg_namespace s
-			join pg_catalog.pg_proc p
-				on p.pronamespace = s.oid
-				and ${mainSchemaName}.f_target_routine_name(
-					i_target_routine_id => p.oid
-				) = i_view_name::text
-			where 
-				s.nspname = i_schema_name::name
-				and i_is_routine = true
-			union all
-			select
-				dep.dependent_obj_id as obj_oid
-				, dep.dependent_obj_name as obj_name
-				, dep.dependent_obj_schema as obj_schema
-				, dep.dependent_obj_class as obj_class
-				, dep.dependent_obj_type as obj_type
-				, dependent_view.dep_level + 1 as dep_level
-			from 
-				sys_obj_dependency dep
-			join dependent_view 
-				on dependent_view.obj_name = dep.master_obj_name 
-				and dependent_view.obj_schema = dep.master_obj_schema
-				and dependent_view.obj_class = dep.master_obj_class
-			where 
-				not exists (
-					select 
-						1
-					from
-						sys_obj_dependency cyclic_dep
-					where 	
-						cyclic_dep.dependent_obj_id = dep.master_obj_id 
-						and cyclic_dep.master_obj_id = dep.dependent_obj_id
-				)
-		)
 		, meta_view as (
 			select 
 				v.id as view_id
