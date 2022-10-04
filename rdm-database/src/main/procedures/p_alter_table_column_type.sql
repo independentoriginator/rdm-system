@@ -69,17 +69,21 @@ begin
 		dependent_obj.obj_class = 'relation'
 	;	
 	
-	foreach l_dependent_obj slice 1 in array l_dependent_objs_deletion_script loop
-		raise notice 'Dropping the dependent object %...', l_dependent_obj[1]; 
-		execute l_dependent_obj[2];
-	end loop;
-	
+	if l_dependent_objs_deletion_script is not null then
+		foreach l_dependent_obj slice 1 in array l_dependent_objs_deletion_script loop
+			raise notice 'Dropping the dependent object %...', l_dependent_obj[1]; 
+			execute l_dependent_obj[2];
+		end loop;
+	end if;
+		
 	raise notice 'Altering the table column type %.%.%...', i_schema_name, i_table_name, i_column_name;
 	execute l_ddl_expr;
 
-	foreach l_dependent_obj slice 1 in array l_dependent_objs_creation_script loop
-		raise notice 'Recreating the dependent object %...', l_dependent_obj[1]; 
-		execute l_dependent_obj[2];
-	end loop;
+	if l_dependent_objs_deletion_script is not null then
+		foreach l_dependent_obj slice 1 in array l_dependent_objs_creation_script loop
+			raise notice 'Recreating the dependent object %...', l_dependent_obj[1]; 
+			execute l_dependent_obj[2];
+		end loop;
+	end if;
 end
 $procedure$;			
