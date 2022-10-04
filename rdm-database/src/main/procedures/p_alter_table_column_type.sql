@@ -74,10 +74,11 @@ begin
 		execute l_dependent_obj[2];
 	end loop;
 	
+	raise notice 'Altering the table column type %.%.%...', i_schema_name, i_table_name, i_column_name;
 	execute l_ddl_expr;
 
 	foreach l_dependent_obj slice 1 in array l_dependent_objs_creation_script loop
-		raise notice 'Creating the dependent object %...', l_dependent_obj[1]; 
+		raise notice 'Recreating the dependent object %...', l_dependent_obj[1]; 
 		execute l_dependent_obj[2];
 	end loop;
 end
