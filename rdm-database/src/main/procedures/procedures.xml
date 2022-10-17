@@ -170,4 +170,13 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="p_adjust_serial_sequence_value-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_adjust_serial_sequence_value" 
+			dbms="postgresql" 
+			path="p_adjust_serial_sequence_value.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+		
 </databaseChangeLog>
