@@ -21,7 +21,7 @@ begin
 			 
 			 	if l_sequence_name is null then
 			 		raise exception 
-			 			'Cannot find sequence for table column specified: %%.%%.%%'
+			 			'Cannot find sequence for the table column specified: %%.%%.%%'
 						, i_schema_name
 						, i_table_name
 						, i_column_name
