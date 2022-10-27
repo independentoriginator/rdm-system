@@ -188,7 +188,11 @@ begin
 				select 
 					coalesce(id, nextval('%I.%I_id_seq')) as id
 					, nextval('%I.%I_version_seq') as version
-					, l_state_change_date as valid_from
+					, case 
+						when id is null then
+							coalesce(valid_from, ${mainSchemaName}.f_undefined_min_date())
+						else l_state_change_date
+					end as valid_from
 					, ${mainSchemaName}.f_undefined_max_date() as valid_to
 					, %s
 				from 

@@ -44,6 +44,15 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="f_undefined_min_date-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_undefined_min_date" 
+			dbms="postgresql" 
+			path="f_undefined_min_date.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+		
 	<changeSet id="f_insert_data_package-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_insert_data_package" 
