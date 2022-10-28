@@ -142,7 +142,16 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
-	
+
+	<changeSet id="p_delete_meta_view-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_delete_meta_view" 
+			dbms="postgresql" 
+			path="p_delete_meta_view.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+			
 	<changeSet id="p_execute_in_parallel-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_execute_in_parallel" 

@@ -31,6 +31,12 @@ select
 	) as previously_defined_dependency_level
 	, v.is_routine
 	, coalesce(target_view.oid, target_routine.oid) as view_oid
+	, case 
+		when target_view.relkind = 'v'::"char" then 'view'::text
+		when target_view.relkind = 'm'::"char" then 'materialized view'::text
+		when target_routine.prokind = 'p'::"char" then 'procedure'
+		when target_routine.prokind = 'f'::"char" then 'function'
+	end as view_type
 from 
 	${mainSchemaName}.meta_view v
 join ${mainSchemaName}.meta_schema s

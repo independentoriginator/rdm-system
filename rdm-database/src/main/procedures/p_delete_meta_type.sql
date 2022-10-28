@@ -9,21 +9,15 @@ declare
 begin
 	select 
 		t.id
-		, coalesce(s.internal_name, '${mainSchemaName}')
+		, t.schema_name
 	into
 		l_type_id
 		, l_schema_name
 	from 
-		${mainSchemaName}.meta_type t
-	left join ${mainSchemaName}.meta_schema s
-		on s.id = t.schema_id
+		${mainSchemaName}.v_meta_type t
 	where
 		t.internal_name = i_internal_name
 	;
-	
-	if l_schema_name is null then
-		l_schema_name := '${mainSchemaName}';
-	end if;
 	
 	execute format('
 		drop table if exists ${stagingSchemaName}.%I
