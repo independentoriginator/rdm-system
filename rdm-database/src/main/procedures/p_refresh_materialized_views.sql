@@ -53,6 +53,7 @@ begin
 				t.dependency_level
 			order by 
 				t.dependency_level
+			limit 1
 			;
 	
 			perform
