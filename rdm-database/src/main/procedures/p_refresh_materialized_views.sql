@@ -110,11 +110,14 @@ begin
 					)
 					, array_agg(
 						format(
-							'refresh materialized view %I.%I'
+							'perform from ${mainSchemaName}.meta_view where id = %s for update; '
+							, t.id
+						)
+						|| format(
+							'refresh materialized view %I.%I; '
 							, t.schema_name 
 							, t.internal_name
 						) 
-						|| '; '
 						|| format(
 							'update ${mainSchemaName}.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s'
 							, t.id
