@@ -56,6 +56,10 @@ begin
 			limit 1
 			;
 	
+			if l_view_ids is null then
+				exit;
+			end if;
+
 			perform
 			from 
 				${mainSchemaName}.meta_view 
@@ -63,10 +67,6 @@ begin
 				id = any(l_view_ids)
 			for update
 			;
-			
-			if l_view_ids is null then
-				exit;
-			end if;
 			
 	   		raise notice 'Refreshing materialized view(s): %...', l_view_names;
 	   		
