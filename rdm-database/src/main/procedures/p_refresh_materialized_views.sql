@@ -110,7 +110,7 @@ begin
 					)
 					, array_agg(
 						format(
-							'perform from ${mainSchemaName}.meta_view where id = %s for update; '
+							'select id from ${mainSchemaName}.meta_view where id = %s for update; '
 							, t.id
 						)
 						|| format(
