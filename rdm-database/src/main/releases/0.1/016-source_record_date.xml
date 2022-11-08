@@ -20,5 +20,14 @@
 		</insert>
 
 	</changeSet>
+	
+	<changeSet id="source_record_date default_value" author="${default_author}">
+		
+		<update tableName="meta_attribute">
+			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'timestamp.current')"/>
+			<where>master_id = (select id from meta_type where internal_name = 'entity') and internal_name = 'source_record_date'</where>
+		</update>
+
+	</changeSet>        
 
 </databaseChangeLog>

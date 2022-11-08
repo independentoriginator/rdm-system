@@ -216,4 +216,18 @@
 
 	</changeSet>
 
+	<changeSet id="meta_expr current_timestamp" author="${default_author}">
+			
+		<insert tableName="meta_expr">
+			<column name="tag" value="timestamp.current"/>
+		</insert>
+
+		<insert tableName="meta_expr_body">
+			<column name="master_id" valueComputed="(select id from meta_expr where tag = 'timestamp.current')"/>
+			<column name="dbms_type_id" valueComputed="(select id from dbms_type where code = 'postgresql')"/>
+			<column name="expr_text" value="current_timestamp"/>
+		</insert>
+
+	</changeSet>        
+
 </databaseChangeLog>
