@@ -4,7 +4,7 @@ create or replace procedure p_delete_meta_view(
 language plpgsql
 as $procedure$
 declare 
-	l_type_id ${mainSchemaName}.v_meta_view.id%type;
+	l_view_id ${mainSchemaName}.v_meta_view.id%type;
 	l_schema_name ${mainSchemaName}.v_meta_view.schema_name%type;
 	l_view_type ${mainSchemaName}.v_meta_view.view_type%type;
 begin
@@ -13,7 +13,7 @@ begin
 		, t.schema_name
 		, t.view_type
 	into
-		l_type_id
+		l_view_id
 		, l_schema_name
 		, l_view_type
 	from 
@@ -21,6 +21,10 @@ begin
 	where
 		t.internal_name = i_internal_name
 	;
+
+	if l_view_id is null then 
+		raise exception 'The view specified is invalid: %', i_internal_name; 
+	end if;
 	
 	execute format('
 		drop %s if exists %I.%I cascade
@@ -30,14 +34,16 @@ begin
 		, i_internal_name
 	);
 	
-	if l_type_id is not null then
-		delete from ${mainSchemaName}.meta_view_lc 
-		where master_id = l_type_id
-		;
-	
-		delete from ${mainSchemaName}.meta_view 
-		where id = l_type_id
-		;
-	end if;  
+	delete from ${mainSchemaName}.meta_view_dependency 
+	where view_id = l_view_id or master_view_id = l_view_id
+	;
+
+	delete from ${mainSchemaName}.meta_view_lc 
+	where master_id = l_view_id
+	;
+
+	delete from ${mainSchemaName}.meta_view 
+	where id = l_view_id
+	;
 end
 $procedure$;			
