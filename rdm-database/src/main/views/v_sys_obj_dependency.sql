@@ -93,7 +93,7 @@ join (
 	select 
 		n.nspname || '.' || c.relname as obj_full_name
 		, c.oid as obj_id
-		, c.relname as obj_name
+		, c.relname::text as obj_name
 		, n.nspname as obj_schema
 		, c.relkind as obj_type
 		, 'relation'::name as obj_class
