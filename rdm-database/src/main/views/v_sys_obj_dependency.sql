@@ -29,7 +29,7 @@ join pg_catalog.pg_namespace master_cls_ns
 union all
 select distinct
 	dependent_cls.oid as dependent_obj_id
-	, dependent_cls.relname as dependent_obj_name
+	, dependent_cls.relname::text as dependent_obj_name
 	, dependent_cls_ns.nspname as dependent_obj_schema
 	, 'relation'::name as dependent_obj_class
 	, dependent_cls.relkind as dependent_obj_type
