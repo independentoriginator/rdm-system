@@ -183,6 +183,7 @@ begin
 						, version
 						, valid_from
 						, valid_to
+						, record_date
 						, %s
 					)
 				select 
@@ -194,6 +195,7 @@ begin
 						else l_state_change_date
 					end as valid_from
 					, ${mainSchemaName}.f_undefined_max_date() as valid_to
+					, l_state_change_date
 					, %s
 				from 
 					${stagingSchemaName}.%I t
