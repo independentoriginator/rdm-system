@@ -68,7 +68,7 @@ begin
 		execute '
 			select 1
 			from 
-				dblink(
+				${dbms_extension.dblink.schema}.dblink(
 					$1::text
 					, $script$' || l_sql_expr || '$script$
 				) as t(result text)

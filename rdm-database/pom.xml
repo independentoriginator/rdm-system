@@ -104,6 +104,10 @@
 							<name>type.code</name>
 							<value>varchar(63)</value>
 						</property>
+						<property>
+							<name>dbms_extension.dblink.schema</name>
+							<value>${profile.dbms_extension.dblink.schema}</value>
+						</property>
 					</systemProperties>
 				</configuration>
 				<executions>
@@ -133,6 +137,7 @@
 				<profile.changeLogFile>src/main/db.changelog-master.xml</profile.changeLogFile>
 				<profile.verbose>true</profile.verbose>
 				<profile.logging>debug</profile.logging>
+				<profile.dbms_extension.dblink.schema>public</profile.dbms_extension.dblink.schema>
 			</properties>
 		</profile>
 		<!-- Production settings, -Denv=prod -->
@@ -148,6 +153,7 @@
 				<profile.propertyFile>src/main/liquibase-prod.properties</profile.propertyFile>
 				<profile.verbose>false</profile.verbose>
 				<profile.logging>info</profile.logging>
+				<profile.dbms_extension.dblink.schema>public</profile.dbms_extension.dblink.schema>
 			</properties>
 		</profile>
 	</profiles>

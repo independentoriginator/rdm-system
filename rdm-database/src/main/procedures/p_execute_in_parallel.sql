@@ -74,11 +74,11 @@ begin
 				l_connection := '${stagingSchemaName}.p_execute_in_parallel' || i::text;
 				
 				begin
-					if (select coalesce(l_connection = any(dblink_get_connections()), false)) then 			
-						perform dblink_disconnect(l_connection);
+					if (select coalesce(l_connection = any(${dbms_extension.dblink.schema}.dblink_get_connections()), false)) then 			
+						perform ${dbms_extension.dblink.schema}.dblink_disconnect(l_connection);
 					end if;
 				
-					perform dblink_connect_u(l_connection, 'dbname=' || l_db || ' user=' || l_user);
+					perform ${dbms_extension.dblink.schema}.dblink_connect_u(l_connection, 'dbname=' || l_db || ' user=' || l_user);
 		
 					l_connections := array_append(l_connections, l_connection);
 				exception
@@ -106,11 +106,11 @@ begin
 			end if;
 		
 			foreach l_connection in array l_connections loop
-				if dblink_send_query(l_connection, i_commands[l_command_index]) != 1 then
-					while dblink_is_busy(l_connection) = 1 loop 
+				if ${dbms_extension.dblink.schema}.dblink_send_query(l_connection, i_commands[l_command_index]) != 1 then
+					while ${dbms_extension.dblink.schema}.dblink_is_busy(l_connection) = 1 loop 
 						perform pg_sleep(i_wait_for_delay_in_seconds);
 					end loop;
-					l_last_err_msg := dblink_error_message(l_connection);
+					l_last_err_msg := ${dbms_extension.dblink.schema}.dblink_error_message(l_connection);
 					exit;
 				end if;		
 			
@@ -121,13 +121,13 @@ begin
 				foreach l_connection in array l_connections loop
 					select val 
 					into l_result
-					from dblink_get_result(l_connection) as res(val text)
+					from ${dbms_extension.dblink.schema}.dblink_get_result(l_connection) as res(val text)
 					;
 				end loop;
 			end if;	
 		
 			foreach l_connection in array l_connections loop
-				perform dblink_disconnect(l_connection);		
+				perform ${dbms_extension.dblink.schema}.dblink_disconnect(l_connection);		
 			end loop;
 		end loop command_loop;
 	else
