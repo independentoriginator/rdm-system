@@ -1,3 +1,5 @@
+drop procedure if exists ${stagingSchemaName}.p_execute_in_parallel(text[], integer, text, text, integer, integer);
+
 create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
 	, i_thread_max_count integer = 10
@@ -5,6 +7,7 @@ create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	, i_scheduled_task_name text = null
 	, i_iteration_number integer = -1
 	, i_wait_for_delay_in_seconds integer = 1
+	, i_timeout_in_hours integer = 8
 )
 language plpgsql
 as $procedure$
@@ -22,6 +25,7 @@ declare
 	l_exception_hint text;
 	l_result text;
 	l_bool_result boolean;
+	l_start_timestamp timestamp := clock_timestamp();
 begin
 	if i_scheduler_type_name is not null 
 		and i_scheduled_task_name is not null 
@@ -105,13 +109,18 @@ begin
 				raise exception 'No dblink connections created';
 			end if;
 		
+			<<waiting_for_completion>>
 			foreach l_connection in array l_connections loop
 				if ${dbms_extension.dblink.schema}.dblink_send_query(l_connection, i_commands[l_command_index]) != 1 then
 					while ${dbms_extension.dblink.schema}.dblink_is_busy(l_connection) = 1 loop 
+						if extract(hours from clock_timestamp() - l_start_timestamp) >= i_timeout_in_hours then
+							l_last_err_msg := 'Timeout occured while waiting for commands completion';
+							exit waiting_for_completion;
+						end if;
 						perform pg_sleep(i_wait_for_delay_in_seconds);
 					end loop;
 					l_last_err_msg := ${dbms_extension.dblink.schema}.dblink_error_message(l_connection);
-					exit;
+					exit waiting_for_completion;
 				end if;		
 			
 				l_command_index := l_command_index + 1;
