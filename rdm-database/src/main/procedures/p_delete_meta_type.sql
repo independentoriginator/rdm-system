@@ -1,5 +1,10 @@
+drop procedure if exists p_delete_meta_type(
+	${mainSchemaName}.meta_type.internal_name%type
+);
+
 create or replace procedure p_delete_meta_type(
 	i_internal_name ${mainSchemaName}.meta_type.internal_name%type
+	, i_skip_nonexistent boolean = false
 )
 language plpgsql
 as $procedure$
@@ -19,8 +24,12 @@ begin
 		t.internal_name = i_internal_name
 	;
 
-	if l_type_id is null then 
-		raise exception 'The type specified is invalid: %', i_internal_name; 
+	if l_type_id is null then
+		if i_skip_nonexistent then 
+			return;
+		else
+			raise exception 'The type specified is invalid: %', i_internal_name;
+		end if;
 	end if;
 	
 	execute format('
