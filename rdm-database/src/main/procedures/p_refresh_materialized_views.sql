@@ -1,21 +1,33 @@
+drop procedure if exists p_refresh_materialized_views(
+	boolean
+	, ${mainSchemaName}.meta_schema.internal_name%type
+	, integer
+	, text
+	, text
+	, boolean
+	, integer
+);
+
 create or replace procedure p_refresh_materialized_views(
 	i_refresh_all boolean = false
 	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type = null
 	, i_thread_max_count integer = 10
 	, i_scheduler_type_name text = null
 	, i_scheduled_task_name text = null
+	, i_scheduled_task_stage_ord_pos integer = null
 	, i_async_mode boolean = false
 	, i_wait_for_delay_in_seconds integer = 1
 )
 language plpgsql
+security definer
 as $procedure$
 declare 
 	l_view_ids ${type.id}[];
 	l_view_names text;
 	l_view_refresh_commands text[];
-	l_iteration_number integer := 0;
 	l_start_timestamp timestamp := clock_timestamp();
 	l_timestamp timestamp;
+	l_iteration_number integer = 0;
 begin
 	if i_refresh_all then 
 		update ${mainSchemaName}.meta_view
@@ -77,6 +89,7 @@ begin
 				, i_thread_max_count => i_thread_max_count
 				, i_scheduler_type_name => i_scheduler_type_name
 				, i_scheduled_task_name => i_scheduled_task_name
+				, i_scheduled_task_stage_ord_pos => i_scheduled_task_stage_ord_pos
 				, i_iteration_number => l_iteration_number
 				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds 
 			);	
@@ -148,6 +161,7 @@ begin
 				, i_thread_max_count => i_thread_max_count
 				, i_scheduler_type_name => i_scheduler_type_name
 				, i_scheduled_task_name => i_scheduled_task_name
+				, i_scheduled_task_stage_ord_pos => i_scheduled_task_stage_ord_pos
 				, i_iteration_number => l_iteration_number
 				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds
 			);

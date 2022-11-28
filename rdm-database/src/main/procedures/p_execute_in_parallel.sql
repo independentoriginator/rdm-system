@@ -4,7 +4,8 @@ create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
 	, i_thread_max_count integer = 10
 	, i_scheduler_type_name text = null
-	, i_scheduled_task_name text = null
+	, i_scheduled_task_name text = null -- 'project_internal_name.scheduled_task_internal_name'
+	, i_scheduled_task_stage_ord_pos integer = null
 	, i_iteration_number integer = -1
 	, i_wait_for_delay_in_seconds integer = 1
 	, i_timeout_in_hours integer = 8
@@ -27,7 +28,10 @@ declare
 	l_bool_result boolean;
 	l_start_timestamp timestamp := clock_timestamp();
 begin
-	if i_scheduler_type_name is not null 
+	l_command_count := cardinality(i_commands);
+
+	if l_command_count > 1 
+		and i_scheduler_type_name is not null 
 		and i_scheduled_task_name is not null 
 		and i_thread_max_count > 1
 		and i_iteration_number >= 0
@@ -47,9 +51,10 @@ begin
 			format('
 					select ${stagingSchemaName}.%I(
 						i_scheduled_task_name => $1
-						, i_commands => $2
-						, i_iteration_number => $3
-						, i_thread_max_count => $4
+						, i_scheduled_task_stage_ord_pos = $2
+						, i_commands => $3
+						, i_iteration_number => $4
+						, i_thread_max_count => $5
 					)
 				'
 				, 'f_execute_in_parallel_with_' || i_scheduler_type_name
@@ -57,6 +62,7 @@ begin
 		into l_bool_result
 		using 
 			 i_scheduled_task_name
+			 , i_scheduled_task_stage_ord_pos
 			 , i_commands
 			 , i_iteration_number
 			 , i_thread_max_count
@@ -66,10 +72,18 @@ begin
 		end if;
 	end if;
 
-	l_command_count := array_upper(i_commands, 1);
 	l_command_index := array_lower(i_commands, 1);
 	
-	if i_thread_max_count > 1 then
+	if i_thread_max_count > 1 
+		and exists (
+			select 
+				1
+			from
+				pg_catalog.pg_extension e
+			where 
+				e.extname = 'dblink'
+		)
+	then
 		<<command_loop>>
 		while l_command_index <= l_command_count and l_last_err_msg is null loop
 			l_connections := array[]::text[];	
