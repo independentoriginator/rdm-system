@@ -23,6 +23,7 @@
 		
 		<databaseStagingSchemaName>etl_staging</databaseStagingSchemaName>
 		<databaseStagingTableSpace></databaseStagingTableSpace>
+		<databaseMainEndUserRole></databaseMainEndUserRole>
 	</properties>
 
 	<dependencies>
@@ -71,6 +72,10 @@
 						<property>
 							<name>stagingTableSpace</name>
 							<value>${databaseStagingTableSpace}</value>
+						</property>
+						<property>
+							<name>mainEndUserRole</name>
+							<value>${databaseMainEndUserRole}</value>
 						</property>
 						<property>
 							<name>type.id</name>

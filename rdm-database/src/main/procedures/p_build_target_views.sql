@@ -5,6 +5,20 @@ declare
 	l_view_rec record;
 	l_prev_view_id ${mainSchemaName}.meta_view.id%type;
 begin
+	-- Main end user role
+	if length('${mainEndUserRole}') > 0 
+		and not exists (
+			select 
+				1
+			from 
+				pg_catalog.pg_roles
+      		where
+      			rolname = '${mainEndUserRole}'
+      	) 
+  	then
+  		execute 'create role ${mainEndUserRole}';
+	end if;
+	
 	while true
 	loop
 		select
@@ -65,6 +79,20 @@ begin
 		call ${mainSchemaName}.p_build_target_view(
 			i_view_rec => l_view_rec
 		);
+	
+		-- Main end user role
+		if not l_view_rec.is_external 
+			and length('${mainEndUserRole}') > 0 
+		then
+			execute	
+				format(
+					'grant %s %I.%s to ${mainEndUserRole}'
+					, case when l_view_rec.is_routine then 'execute on function ' else 'select on' end
+					, l_view_rec.schema_name
+					, l_view_rec.internal_name 
+				
+				);
+		end if;
 	end loop;
 end
 $procedure$;			

@@ -14,6 +14,15 @@ begin
 			'
 			, i_view_rec.schema_name
 		);
+	
+		if length('${mainEndUserRole}') > 0 
+	  	then
+	  		execute format('
+				grant usage on schema %I to ${mainEndUserRole}
+				'
+				, i_view_rec.schema_name
+			);
+		end if;
 	end if;
 	
 	if i_view_rec.is_view_exists then
