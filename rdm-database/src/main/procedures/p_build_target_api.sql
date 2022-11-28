@@ -297,6 +297,7 @@ begin
 			, io_check_date in out ${stagingSchemaName}.data_package.state_change_date%%type
 		)
 		language plpgsql
+		security definer
 		as $procedure$
 		declare 
 			l_data_package record;
