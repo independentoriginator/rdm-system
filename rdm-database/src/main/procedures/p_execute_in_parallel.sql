@@ -51,7 +51,7 @@ begin
 			format('
 					select ${stagingSchemaName}.%I(
 						i_scheduled_task_name => $1
-						, i_scheduled_task_stage_ord_pos = $2
+						, i_scheduled_task_stage_ord_pos => $2
 						, i_commands => $3
 						, i_iteration_number => $4
 						, i_thread_max_count => $5
