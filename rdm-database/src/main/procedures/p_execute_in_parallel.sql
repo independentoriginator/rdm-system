@@ -1,4 +1,4 @@
-drop procedure if exists ${stagingSchemaName}.p_execute_in_parallel(text[], integer, text, text, integer, integer);
+drop procedure if exists ${stagingSchemaName}.p_execute_in_parallel(text[], integer, text, text, integer, integer, integer);
 
 create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
@@ -28,10 +28,7 @@ declare
 	l_bool_result boolean;
 	l_start_timestamp timestamp := clock_timestamp();
 begin
-	l_command_count := cardinality(i_commands);
-
-	if l_command_count > 1 
-		and i_scheduler_type_name is not null 
+	if i_scheduler_type_name is not null 
 		and i_scheduled_task_name is not null 
 		and i_thread_max_count > 1
 		and i_iteration_number >= 0
@@ -72,6 +69,7 @@ begin
 		end if;
 	end if;
 
+	l_command_count := cardinality(i_commands);
 	l_command_index := array_lower(i_commands, 1);
 	
 	if i_thread_max_count > 1 
