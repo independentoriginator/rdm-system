@@ -83,11 +83,12 @@ begin
 					E'\n' || array_to_string(
 						array_agg(
 							format(
-								'GRANT %s ON %I.%I TO %s;'
+								'GRANT %s ON %I.%I TO %s%s;'
 								, g.privilege_type 
 								, g.table_schema 
 								, g.table_name 
 								, g.grantee 
+								, case when g.is_grantable = 'YES' then ' WITH GRANT OPTION' else '' end
 							)
 						), 
 						E'\n'
