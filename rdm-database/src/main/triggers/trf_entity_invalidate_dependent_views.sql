@@ -31,25 +31,26 @@ begin
 			join v_sys_obj_dependency dep
 				on dep.master_obj_id = dependent.cls_oid
 		)
+		, dependent_view as (
+			select 
+			from 
+				${mainSchemaName}.meta_view v
+			join ${mainSchemaName}.meta_schema s
+				on s.id = v.schema_id
+			join dependent
+				on dependent.cls_name = v.internal_name 
+				and dependent.cls_schema = coalesce(s.internal_name, '${mainSchemaName}')
+			where
+				v.is_valid = true
+			for update of v
+		)
 	update ${mainSchemaName}.meta_view meta_view
 	set 
 		is_valid = false
 	from 
-		dependent
+		dependent_view
 	where
-		dependent.cls_name = meta_view.internal_name 
-		and dependent.cls_schema = 
-			coalesce((
-					select 
-						s.internal_name
-					from 
-						${mainSchemaName}.meta_schema s
-					where
-						s.id = meta_view.schema_id						
-				)
-				, '${mainSchemaName}'
-			)
-		and meta_view.is_valid = true
+		meta_view.id = dependent_view.id
 	;
 	
 	return null;
