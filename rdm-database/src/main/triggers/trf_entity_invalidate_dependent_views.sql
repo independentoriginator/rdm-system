@@ -33,6 +33,7 @@ begin
 		)
 		, dependent_view as (
 			select 
+				v.id
 			from 
 				${mainSchemaName}.meta_view v
 			join ${mainSchemaName}.meta_schema s
