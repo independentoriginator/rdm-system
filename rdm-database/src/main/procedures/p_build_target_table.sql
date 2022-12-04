@@ -195,7 +195,7 @@ begin
 		execute format($$
 			drop trigger if exists tr_invalidate_dependent_views on %I.%I;
 			create trigger tr_invalidate_dependent_views
-			after insert or update or delete 
+			before insert or update or delete 
 			on %I.%I
 			for each statement 
 			execute function ${mainSchemaName}.trf_entity_invalidate_dependent_views();
