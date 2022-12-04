@@ -307,6 +307,7 @@ begin
 				s.internal_name as state_name
 				, p.state_change_date
 				, p.is_deletion
+				, p.type_id
 			into 
 				l_data_package
 			from 
@@ -325,13 +326,27 @@ begin
   			if l_data_package.state_name <> 'loaded' then  
 				raise exception 'The data package has unexpected state: %%', l_data_package.state_name;
   			end if;
-  			%s
-  			if l_data_package.is_deletion = false then
-  				%s
-			else
-				%s
+  		
+  			if exists (
+  				select 
+  					1
+				from 
+					${stagingSchemaName}.%I src
+				where 
+					src.data_package_id = i_data_package_id
+  			) then
+				call ${mainSchemaName}.p_invalidate_entity_dependent_views(
+					i_type_id => l_data_package.type_id 
+				);
+	  			%s
+	  			if l_data_package.is_deletion = false then
+	  				%s
+				else
+					%s
+				end if;
+				%s		
 			end if;
-			%s				
+		
 			update 
 				${stagingSchemaName}.data_package p
 			set 
@@ -353,6 +368,7 @@ begin
 		$procedure$;
 		$target_procedure$			
 		, i_type_rec.schema_name
+		, i_type_rec.internal_name
 		, i_type_rec.internal_name
 		, l_check_section
 		, l_insert_proc_section

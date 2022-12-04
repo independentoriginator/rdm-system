@@ -39,7 +39,7 @@ select
 	end as view_type
 from 
 	${mainSchemaName}.meta_view v
-join ${mainSchemaName}.meta_schema s
+left join ${mainSchemaName}.meta_schema s
 	on s.id = v.schema_id
 left join pg_catalog.pg_namespace target_schema
 	on target_schema.nspname = coalesce(s.internal_name, '${mainSchemaName}')

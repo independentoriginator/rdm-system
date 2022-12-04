@@ -158,15 +158,6 @@
 
 	</changeSet>
 	
-	<changeSet id="trf_entity_invalidate_dependent_views-function" author="${default_author}" runOnChange="true">
-		<createProcedure 
-			procedureName="trf_entity_invalidate_dependent_views" 
-			dbms="postgresql" 
-			path="trf_entity_invalidate_dependent_views.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-
 	<changeSet id="trf_meta_view_after_refresh-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="trf_meta_view_after_refresh" 

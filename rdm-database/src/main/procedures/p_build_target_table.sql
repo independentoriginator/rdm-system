@@ -183,30 +183,6 @@ begin
 		i_type_rec => i_type_rec
 	);
 	
-	for l_table_rec in (
-		select i_type_rec.schema_name, i_type_rec.internal_name
-		where i_type_rec.internal_name not like 'meta\_%'
-		union all
-		select i_type_rec.schema_name, i_type_rec.localization_table_name
-		where i_type_rec.is_localization_table_generated = true
-			and i_type_rec.internal_name not like 'meta\_%'
-	) 
-	loop
-		execute format($$
-			drop trigger if exists tr_invalidate_dependent_views on %I.%I;
-			create trigger tr_invalidate_dependent_views
-			before insert or update or delete 
-			on %I.%I
-			for each statement 
-			execute function ${mainSchemaName}.trf_entity_invalidate_dependent_views();
-			$$
-			, l_table_rec.schema_name
-			, l_table_rec.internal_name
-			, l_table_rec.schema_name
-			, l_table_rec.internal_name
-		);
-	end loop;
-		
 	update ${mainSchemaName}.meta_type 
 	set is_built = true
 	where id = i_type_rec.id
