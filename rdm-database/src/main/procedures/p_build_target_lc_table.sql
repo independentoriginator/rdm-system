@@ -106,7 +106,20 @@ begin
 				, i_type_rec.schema_name
 				, i_type_rec.localization_table_name
 			);
-		end if;			
+		end if;	
+	
+		-- ETL user role read permission
+		if length('${etlUserRole}') > 0 
+		then
+			execute	
+				format(
+					'grant select on %I.%s to ${etlUserRole}'
+					, i_type_rec.schema_name
+					, i_type_rec.localization_table_name 
+				
+				);
+		end if;
+	
 	elsif i_type_rec.is_localization_table_generated = false and i_type_rec.is_localization_table_exists = true then
 		execute format('
 			drop table %I.%I

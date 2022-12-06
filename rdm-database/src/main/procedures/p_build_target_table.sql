@@ -66,6 +66,18 @@ begin
 			);
 		end if;
 	end if;
+
+	-- ETL user role read permission
+	if length('${etlUserRole}') > 0 
+	then
+		execute	
+			format(
+				'grant select on %I.%s to ${etlUserRole}'
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name 
+			
+			);
+	end if;
 	
 	call ${mainSchemaName}.p_build_target_staging_table(
 		i_type_rec => i_type_rec
@@ -182,7 +194,7 @@ begin
 	call ${mainSchemaName}.p_build_target_api(
 		i_type_rec => i_type_rec
 	);
-	
+
 	update ${mainSchemaName}.meta_type 
 	set is_built = true
 	where id = i_type_rec.id
