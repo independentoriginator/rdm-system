@@ -76,15 +76,15 @@ begin
 		end;
 	
 		-- Main end user role
-		if not l_view_rec.is_external 
+		if not i_view_rec.is_external 
 			and length('${mainEndUserRole}') > 0 
 		then
 			execute	
 				format(
 					'grant %s %I.%s to ${mainEndUserRole}'
-					, case when l_view_rec.is_routine then 'execute on function ' else 'select on' end
-					, l_view_rec.schema_name
-					, l_view_rec.internal_name 
+					, case when i_view_rec.is_routine then 'execute on function ' else 'select on' end
+					, i_view_rec.schema_name
+					, i_view_rec.internal_name 
 				
 				);
 		end if;
