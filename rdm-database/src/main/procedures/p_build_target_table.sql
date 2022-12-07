@@ -72,7 +72,7 @@ begin
 	then
 		execute	
 			format(
-				'grant select on %I.%s to ${etlUserRole}'
+				'grant select on %I.%I to ${etlUserRole}'
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name 
 			

@@ -80,6 +80,17 @@ begin
 				, i_type_rec.table_description
 			);
 		end if;	
+	
+		-- ETL user role must have all DML permissions
+		if length('${etlUserRole}') > 0 
+		then
+			execute	
+				format(
+					'grant select, insert, update, delete on %I.%I to ${etlUserRole}'
+					, i_type_rec.staging_schema_name
+					, i_type_rec.internal_name 
+				);
+		end if;
 		
 	elsif i_type_rec.is_staging_table_generated = false and i_type_rec.is_staging_table_exists = true then
 		execute format('
