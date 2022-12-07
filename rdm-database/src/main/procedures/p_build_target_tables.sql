@@ -4,6 +4,8 @@ as $procedure$
 declare 
 	l_type_rec record;
 begin
+	call ${mainSchemaName}.p_build_target_roles();
+
 	for l_type_rec in (
 		select
 			t.*
