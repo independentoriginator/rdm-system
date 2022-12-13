@@ -66,7 +66,8 @@ begin
 				, v.is_external
 				, case 
 					when (v.view_id is null or v.is_external) and dependent_view.obj_oid is not null then
-						case dependent_view.obj_class
+						format(E'set role %s;\n', obj_owner.rolname) 
+						|| case dependent_view.obj_class
 							when 'relation' then 
 								${mainSchemaName}.f_view_definition(
 									i_view_oid => dependent_view.obj_oid
@@ -75,6 +76,7 @@ begin
 							when 'routine' then
 								pg_catalog.pg_get_functiondef(dependent_view.obj_oid)
 						end
+						|| E';\nreset role;'
 				end as external_view_def
 			from 
 				dependent_view
@@ -84,6 +86,14 @@ begin
 				and v.view_class = dependent_view.obj_class
 			left join ${mainSchemaName}.meta_schema s 
 				on s.internal_name = dependent_view.obj_schema 
+			left join pg_catalog.pg_class view_obj
+				on view_obj.oid = dependent_view.obj_oid 
+				and dependent_view.obj_class = 'relation'
+			left join pg_catalog.pg_proc routine_obj
+				on routine_obj.oid = dependent_view.obj_oid
+				and dependent_view.obj_class = 'routine'
+			left join pg_catalog.pg_roles obj_owner 
+				on obj_owner.oid = coalesce(view_obj.relowner, routine_obj.proowner)
 		)
 		, new_external_schema as (
 			insert into ${mainSchemaName}.meta_schema(
