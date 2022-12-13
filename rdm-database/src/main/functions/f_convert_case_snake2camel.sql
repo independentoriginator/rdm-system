@@ -1,4 +1,4 @@
-create or replace function f_convert_case_snake2camel(
+create or replace function ${stagingSchemaName}.f_convert_case_snake2camel(
 	i_str text
 )
 returns text

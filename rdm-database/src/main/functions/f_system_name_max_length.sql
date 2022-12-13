@@ -1,4 +1,4 @@
-create or replace function f_system_name_max_length()
+create or replace function ${stagingSchemaName}.f_system_name_max_length()
 returns integer
 language sql
 immutable

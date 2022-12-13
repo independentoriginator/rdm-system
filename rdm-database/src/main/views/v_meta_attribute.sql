@@ -153,14 +153,14 @@ from (
 		, a.ordinal_position
 		, attr_type.internal_name as attr_type_name
 		, case when attr_type.is_primitive = false then true else false end as is_fk_constraint_added
-		, substring('fk_' || t.internal_name || '$' || a.internal_name, 1, ${mainSchemaName}.f_system_name_max_length()) as fk_constraint_name
-		, substring('i_' || t.internal_name || '$' || a.internal_name, 1, ${mainSchemaName}.f_system_name_max_length()) as index_name
+		, substring('fk_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as fk_constraint_name
+		, substring('i_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as index_name
 		, attr_type.is_temporal as is_referenced_type_temporal
 		, regexp_replace(a.internal_name, '_id$', '') || '_version' as version_ref_name
 		, a.is_non_nullable
 		, a.is_unique
-		, substring('uc_' || t.internal_name || '$' || a.internal_name, 1, ${mainSchemaName}.f_system_name_max_length()) as unique_constraint_name
-		, substring('chk_' || t.internal_name || '$' || a.internal_name, 1, ${mainSchemaName}.f_system_name_max_length()) as check_constraint_name
+		, substring('uc_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as unique_constraint_name
+		, substring('chk_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as check_constraint_name
 		, def_val_expr.expr_text as default_value
 		, a.is_localisable
 		, '${stagingSchemaName}' as staging_schema_name

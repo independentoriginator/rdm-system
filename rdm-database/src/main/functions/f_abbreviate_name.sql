@@ -1,7 +1,7 @@
-create or replace function f_abbreviate_name(
+create or replace function ${stagingSchemaName}.f_abbreviate_name(
 	i_name text
 	, i_adjust_to_max_length boolean = false
-	, i_max_length integer = ${mainSchemaName}.f_system_name_max_length()
+	, i_max_length integer = ${stagingSchemaName}.f_system_name_max_length()
 )
 returns text
 language sql
