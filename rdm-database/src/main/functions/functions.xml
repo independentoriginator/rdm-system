@@ -143,4 +143,13 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="f_convert_case_camel2snake-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_convert_case_camel2snake" 
+			dbms="postgresql" 
+			path="f_convert_case_camel2snake.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

@@ -1,0 +1,18 @@
+create or replace function ${stagingSchemaName}.f_convert_case_camel2snake(
+	i_str text
+)
+returns text
+language sql
+immutable
+parallel safe
+as $function$
+select 
+	lower(
+		regexp_replace(
+			i_str
+			, '([^_]+?)([A-Z]+)(.*)'
+			, '\1_\2\3'
+			, 'g'
+		)
+	)
+$function$;		
