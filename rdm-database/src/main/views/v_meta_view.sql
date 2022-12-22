@@ -37,6 +37,10 @@ select
 		when target_routine.prokind = 'p'::"char" then 'procedure'
 		when target_routine.prokind = 'f'::"char" then 'function'
 	end as view_type
+	, case 
+		when target_view.oid is not null then pg_catalog.obj_description(target_view.oid, 'pg_class') 
+		when target_routine.oid is not null then pg_catalog.obj_description(target_routine.oid, 'pg_proc')
+	end as description
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s
