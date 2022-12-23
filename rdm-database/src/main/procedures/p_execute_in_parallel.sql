@@ -87,7 +87,11 @@ begin
 			l_connections := array[]::text[];	
 		
 			for i in 1..least(array_length(i_commands, 1) - l_command_index + 1, i_thread_max_count) loop
-				l_connection := '${stagingSchemaName}.p_execute_in_parallel' || i::text;
+				l_connection := 
+					'${stagingSchemaName}.p_execute_in_parallel$'
+					|| current_user
+					|| '$' || coalesce(i_scheduled_task_name, '')
+					|| '$N' || i::text;
 				
 				begin
 					if (select coalesce(l_connection = any(${dbms_extension.dblink.schema}.dblink_get_connections()), false)) then 			
@@ -138,14 +142,18 @@ begin
 				l_command_index := l_command_index + 1;
 			end loop;	
 			
-			if l_last_err_msg is null then
+			if l_last_err_msg is not null then
+				foreach l_connection in array l_connections loop
+					perform ${dbms_extension.dblink.schema}.dblink_cancel_query(l_connection);
+				end loop;
+			else
 				foreach l_connection in array l_connections loop
 					select val 
 					into l_result
 					from ${dbms_extension.dblink.schema}.dblink_get_result(l_connection) as res(val text)
 					;
 				end loop;
-			end if;	
+			end if;
 		
 			foreach l_connection in array l_connections loop
 				perform ${dbms_extension.dblink.schema}.dblink_disconnect(l_connection);		
