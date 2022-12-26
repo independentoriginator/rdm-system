@@ -5,7 +5,7 @@ create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	, i_thread_max_count integer = 10
 	, i_scheduler_type_name text = null
 	, i_scheduled_task_name text = null -- 'project_internal_name.scheduled_task_internal_name'
-	, i_scheduled_task_stage_ord_pos integer = null
+	, i_scheduled_task_stage_ord_pos integer = 0
 	, i_iteration_number integer = -1
 	, i_wait_for_delay_in_seconds integer = 1
 	, i_timeout_in_hours integer = 8
@@ -146,14 +146,14 @@ begin
 				foreach l_connection in array l_connections loop
 					perform ${dbms_extension.dblink.schema}.dblink_cancel_query(l_connection);
 				end loop;
-			else
-				foreach l_connection in array l_connections loop
-					select val 
-					into l_result
-					from ${dbms_extension.dblink.schema}.dblink_get_result(l_connection) as res(val text)
-					;
-				end loop;
 			end if;
+		
+			foreach l_connection in array l_connections loop
+				select val 
+				into l_result
+				from ${dbms_extension.dblink.schema}.dblink_get_result(l_connection) as res(val text)
+				;
+			end loop;
 		
 			foreach l_connection in array l_connections loop
 				perform ${dbms_extension.dblink.schema}.dblink_disconnect(l_connection);		

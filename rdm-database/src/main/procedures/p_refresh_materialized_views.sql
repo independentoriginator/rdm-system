@@ -14,7 +14,7 @@ create or replace procedure p_refresh_materialized_views(
 	, i_thread_max_count integer = 10
 	, i_scheduler_type_name text = null
 	, i_scheduled_task_name text = null
-	, i_scheduled_task_stage_ord_pos integer = null
+	, i_scheduled_task_stage_ord_pos integer = 0
 	, i_async_mode boolean = false
 	, i_wait_for_delay_in_seconds integer = 1
 )
