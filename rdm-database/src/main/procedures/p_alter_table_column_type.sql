@@ -87,3 +87,25 @@ begin
 	end if;
 end
 $procedure$;			
+
+create or replace procedure ${stagingSchemaName}.p_alter_table_column_type(
+	i_schema_name name
+	, i_table_name name
+	, i_column_name name
+	, i_column_type varchar
+)
+language plpgsql
+as $procedure$
+begin
+	call ${mainSchemaName}.p_alter_table_column_type(
+		i_schema_name => i_schema_name
+		, i_table_name => i_table_name
+		, i_column_name => i_column_name
+		, i_column_type => i_column_type
+	);
+end
+$procedure$;			
+
+end
+
+
