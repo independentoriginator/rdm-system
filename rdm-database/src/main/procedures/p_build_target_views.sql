@@ -39,17 +39,20 @@ begin
 		l_prev_view_id = l_view_rec.id;
 		
 		if l_view_rec.is_external 
-			and not exists (
-				select 
-					1
-				from 
-					${mainSchemaName}.meta_view_dependency dep
-				join ${mainSchemaName}.meta_view v
-					on v.id = dep.view_id
-					and coalesce(v.is_disabled, false) = false  
-				where 
-					dep.view_id = l_view_rec.id
-			) 
+			and (
+				not exists (
+					select 
+						1
+					from 
+						${mainSchemaName}.meta_view_dependency dep
+					join ${mainSchemaName}.meta_view v
+						on v.id = dep.view_id
+						and coalesce(v.is_disabled, false) = false  
+					where 
+						dep.view_id = l_view_rec.id
+				)
+				or l_view_rec.is_routine -- External routines are not dropped while a view is recreated 
+			)
 		then
 			raise notice 'Disabling non-actual external view %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
 			
