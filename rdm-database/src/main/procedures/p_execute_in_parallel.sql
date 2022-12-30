@@ -88,10 +88,11 @@ begin
 		
 			for i in 1..least(array_length(i_commands, 1) - l_command_index + 1, i_thread_max_count) loop
 				l_connection := 
-					'${stagingSchemaName}.p_execute_in_parallel$'
-					|| current_user
-					|| '$' || coalesce(i_scheduled_task_name, '')
-					|| '$N' || i::text;
+					'ng_staging.parallel'
+					|| '$N' || i::text				
+					|| '$' || coalesce(replace(i_scheduled_task_name, ' ', '_'), '')
+					|| '$' || current_user
+					;
 				
 				begin
 					if (select coalesce(l_connection = any(${dbms_extension.dblink.schema}.dblink_get_connections()), false)) then 			
