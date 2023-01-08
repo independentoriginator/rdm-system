@@ -16,7 +16,7 @@ declare
 	l_connection text;
 	l_connections text[];
 	l_db name := current_database();
-	l_user name := current_user;
+	l_user name := session_user;
 	l_command_index integer;
 	l_command_count integer;
 	l_command text;
@@ -91,7 +91,7 @@ begin
 					'ng_staging.parallel'
 					|| '$N' || i::text				
 					|| '$' || coalesce(replace(i_scheduled_task_name, ' ', '_'), '')
-					|| '$' || current_user
+					|| '$' || l_user
 					;
 				
 				begin
