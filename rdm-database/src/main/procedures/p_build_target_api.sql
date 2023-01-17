@@ -149,7 +149,10 @@ begin
 					;
 				
 					if l_id is not null then
-						raise exception 'The data package (id = %%) includes non-actual record version (id = %%)', i_data_package_id, l_id
+						raise exception 
+							'%I.%I: the data package (id = %%) includes non-actual record version (id = %%)'
+							, i_data_package_id
+							, l_id
 							using hint = 'Try to recompile the data package';
 					end if;
 				end row_actuality_check;
@@ -157,6 +160,8 @@ begin
 				$check_section$
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
+				, i_type_rec.internal_name
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
