@@ -18,6 +18,7 @@
 		</sql>
 	</changeSet>
 
+	<include file="functions/immutable_functions.xml" relativeToChangelogFile="true" />
 	<includeAll path="releases" relativeToChangelogFile="true" />
 	<include file="functions/functions.xml" relativeToChangelogFile="true" />
 	<include file="views/views.xml" relativeToChangelogFile="true" />

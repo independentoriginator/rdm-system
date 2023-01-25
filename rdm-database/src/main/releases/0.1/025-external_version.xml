@@ -8,11 +8,26 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="external_version" author="${default_author}">
+	<changeSet id="attribute: is_owned_by_temporal_type flag" author="${default_author}">
+
+		<addColumn tableName="meta_attribute">
+			<column 
+				name="is_owned_by_temporal_type" 
+				type="boolean"
+				remarks="Is owned by temporal type"
+				defaultValueBoolean="false">
+				<constraints nullable="false" />
+			</column> 
+		</addColumn> 
+		
+	</changeSet>
+
+	<changeSet id="temporal entity external version" author="${default_author}">
 	
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="internal_name" value="external_version"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
 			<column name="length" value="${type.length.code}"/>			
 			<column name="is_non_nullable" value="false"/>
@@ -23,6 +38,7 @@
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="internal_name" value="external_version_ordinal_num"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'n')"/>
 			<column name="precision" value="5"/>			
 			<column name="scale" value="0"/>
@@ -33,18 +49,21 @@
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="internal_name" value="external_version_valid_from"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
 			<column name="precision" value="6"/>			
-			<column name="is_non_nullable" value="false"/>
+			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'undefined_min_date')"/>
 			<column name="ordinal_position" value="2"/>			
 		</insert>
 		
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="internal_name" value="external_version_valid_to"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
 			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
 			<column name="precision" value="6"/>			
-			<column name="is_non_nullable" value="false"/>
+			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'undefined_max_date')"/>
+			<column name="is_non_nullable" value="true"/>
 			<column name="ordinal_position" value="2"/>			
 		</insert>
 
@@ -98,7 +117,7 @@
 
 	</changeSet>
 
-	<changeSet id="meta_version" author="${default_author}">
+	<changeSet id="entity meta id" author="${default_author}">
 
 		<insert tableName="meta_attribute">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
@@ -110,44 +129,6 @@
 			<column name="ordinal_position" value="2"/>			
 		</insert>
 	
-		<insert tableName="meta_attribute">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
-			<column name="internal_name" value="meta_version"/>
-			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
-			<column name="length" value="${type.length.code}"/>			
-			<column name="is_non_nullable" value="false"/>
-			<column name="is_unique" value="false"/>	
-			<column name="ordinal_position" value="2"/>			
-		</insert>
-
-		<insert tableName="meta_attribute">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
-			<column name="internal_name" value="meta_version_ordinal_num"/>
-			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'n')"/>
-			<column name="precision" value="5"/>			
-			<column name="scale" value="0"/>
-			<column name="is_non_nullable" value="false"/>
-			<column name="ordinal_position" value="2"/>			
-		</insert>
-		
-		<insert tableName="meta_attribute">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
-			<column name="internal_name" value="meta_version_valid_from"/>
-			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
-			<column name="precision" value="6"/>			
-			<column name="is_non_nullable" value="false"/>
-			<column name="ordinal_position" value="2"/>			
-		</insert>
-		
-		<insert tableName="meta_attribute">
-			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
-			<column name="internal_name" value="meta_version_valid_to"/>
-			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
-			<column name="precision" value="6"/>			
-			<column name="is_non_nullable" value="false"/>
-			<column name="ordinal_position" value="2"/>			
-		</insert>
-		
 		<insert tableName="meta_index">
 			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
 			<column name="tag" value="meta_id"/>		
@@ -194,6 +175,54 @@
 			)"/>
 			<column name="meta_attr_name" value="source_id"/>
 			<column name="ordinal_position" value="1"/>
+		</insert>
+	
+	</changeSet>
+	
+	<changeSet id="temporal entity meta version" author="${default_author}">
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="internal_name" value="meta_version"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="${type.length.code}"/>			
+			<column name="is_non_nullable" value="false"/>
+			<column name="is_unique" value="false"/>	
+			<column name="ordinal_position" value="2"/>			
+		</insert>
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="internal_name" value="meta_version_ordinal_num"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'n')"/>
+			<column name="precision" value="5"/>			
+			<column name="scale" value="0"/>
+			<column name="is_non_nullable" value="false"/>
+			<column name="ordinal_position" value="2"/>			
+		</insert>
+		
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="internal_name" value="meta_version_valid_from"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
+			<column name="precision" value="6"/>			
+			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'undefined_min_date')"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="ordinal_position" value="2"/>			
+		</insert>
+		
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="internal_name" value="meta_version_valid_to"/>
+			<column name="is_owned_by_temporal_type" value="true"/>	
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 'd')"/>
+			<column name="precision" value="6"/>			
+			<column name="default_value" valueComputed="(select id from meta_expr where tag = 'undefined_max_date')"/>
+			<column name="is_non_nullable" value="true"/>
+			<column name="ordinal_position" value="2"/>			
 		</insert>
 
 		<insert tableName="meta_index">

@@ -230,4 +230,28 @@
 
 	</changeSet>        
 
+	<changeSet id="meta_expr undefined dates" author="${default_author}">
+			
+		<insert tableName="meta_expr">
+			<column name="tag" value="undefined_min_date"/>
+		</insert>
+
+		<insert tableName="meta_expr_body">
+			<column name="master_id" valueComputed="(select id from meta_expr where tag = 'undefined_min_date')"/>
+			<column name="dbms_type_id" valueComputed="(select id from dbms_type where code = 'postgresql')"/>
+			<column name="expr_text" value="${mainSchemaName}.f_undefined_min_date()"/>
+		</insert>
+
+		<insert tableName="meta_expr">
+			<column name="tag" value="undefined_max_date"/>
+		</insert>
+
+		<insert tableName="meta_expr_body">
+			<column name="master_id" valueComputed="(select id from meta_expr where tag = 'undefined_max_date')"/>
+			<column name="dbms_type_id" valueComputed="(select id from dbms_type where code = 'postgresql')"/>
+			<column name="expr_text" value="${mainSchemaName}.f_undefined_max_date()"/>
+		</insert>
+
+	</changeSet>        
+
 </databaseChangeLog>

@@ -6,6 +6,7 @@ with recursive type_index as (
         , t.id AS descendant_type_id
         , t.super_type_id
         , t.schema_id
+        , t.is_temporal
 		, i.tag
 		, i.is_unique 
 	from 
@@ -17,11 +18,14 @@ with recursive type_index as (
         , i.descendant_type_id
         , t.super_type_id
         , t.schema_id
+        , i.is_temporal
 		, i_inherited.tag
 		, i_inherited.is_unique 
 	from (
 		select distinct 
-			descendant_type_id, super_type_id
+			descendant_type_id
+			, super_type_id
+			, is_temporal
 		from 
 			type_index 
 	) i
@@ -29,6 +33,20 @@ with recursive type_index as (
 		on i_inherited.master_id = i.super_type_id
 	join ${mainSchemaName}.meta_type t 
 		on t.id = i_inherited.master_id
+	where 
+		i.is_temporal
+		or not exists (
+			select 
+				1
+			from 
+				${mainSchemaName}.meta_index_column ic
+			join ${mainSchemaName}.meta_attribute a
+				on a.master_id = i_inherited.master_id
+				and a.internal_name = ic.meta_attr_name
+				and a.is_owned_by_temporal_type
+			where
+				ic.master_id = i_inherited.id
+		)
 )
 select
 	i.id

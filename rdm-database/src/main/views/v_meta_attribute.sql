@@ -1,77 +1,85 @@
 create or replace view v_meta_attribute
 as
-with recursive attr as (
-	select 
-		a.id
-        , t.id AS descendant_type_id
-        , t.super_type_id
-        , t.id as meta_type_id
-		, a.internal_name
-		, a.attr_type_id 
-		, a.length
-		, a.precision
-		, a.scale
-		, a.is_non_nullable
-		, a.is_unique
-		, a.is_localisable
-		, a.ordinal_position
-		, a.default_value
-	from 
-		${mainSchemaName}.meta_type t
-	left join ${mainSchemaName}.meta_attribute a on a.master_id = t.id
-	union all
-	select 
-		0 as id
-        , t.id AS descendant_type_id
-        , t.super_type_id
-        , t.id as meta_type_id
-		, 'master_id'::varchar(63) as internal_name
-		, t.master_type_id as attr_type_id 
-		, null as length
-		, null as precision
-		, null as scale
-		, case 
-			when t.id = t.master_type_id then false
-			else true
-		end as is_non_nullable
-		, false as is_unique
-		, false as is_localisable
-		, 0 as ordinal_position
-		, null as default_value
-	from 
-		${mainSchemaName}.meta_type t
-	where 
-		t.master_type_id is not null
-	union all
-	select 
-		a_inherited.id
-        , a.descendant_type_id
-        , t.super_type_id
-		, a_inherited.master_id as meta_type_id
-		, a_inherited.internal_name
-		, case when a_inherited.attr_type_id = a_inherited.master_id 
-			then a.descendant_type_id
-			else a_inherited.attr_type_id 
-		end as attr_type_id
-		, a_inherited.length
-		, a_inherited.precision
-		, a_inherited.scale 
-		, a_inherited.is_non_nullable
-		, a_inherited.is_unique 
-		, a_inherited.is_localisable
-		, a_inherited.ordinal_position
-		, a_inherited.default_value
-	from (
-		select distinct 
-			super_type_id 
-			, descendant_type_id 
+with recursive 
+	attr as (
+		select 
+			a.id
+			, t.id AS descendant_type_id
+			, t.super_type_id
+			, t.id as meta_type_id
+			, t.is_temporal
+			, a.internal_name
+			, a.attr_type_id 
+			, a.length
+			, a.precision
+			, a.scale
+			, a.is_non_nullable
+			, a.is_unique
+			, a.is_localisable
+			, a.ordinal_position
+			, a.default_value
 		from 
-			attr 
+			${mainSchemaName}.meta_type t
+		left join ${mainSchemaName}.meta_attribute a on a.master_id = t.id
+		union all
+		select 
+			0 as id
+			, t.id AS descendant_type_id
+			, t.super_type_id
+			, t.id as meta_type_id
+			, t.is_temporal
+			, 'master_id'::varchar(63) as internal_name
+			, t.master_type_id as attr_type_id 
+			, null as length
+			, null as precision
+			, null as scale
+			, case 
+				when t.id = t.master_type_id then false
+				else true
+			end as is_non_nullable
+			, false as is_unique
+			, false as is_localisable
+			, 0 as ordinal_position
+			, null as default_value
+		from 
+			${mainSchemaName}.meta_type t
+		where 
+			t.master_type_id is not null
+		union all
+		select 
+			a_inherited.id
+			, a.descendant_type_id
+			, t.super_type_id
+			, a_inherited.master_id as meta_type_id
+			, a.is_temporal
+			, a_inherited.internal_name
+			, case when a_inherited.attr_type_id = a_inherited.master_id 
+				then a.descendant_type_id
+				else a_inherited.attr_type_id 
+			end as attr_type_id
+			, a_inherited.length
+			, a_inherited.precision
+			, a_inherited.scale 
+			, a_inherited.is_non_nullable
+			, a_inherited.is_unique 
+			, a_inherited.is_localisable
+			, a_inherited.ordinal_position
+			, a_inherited.default_value
+		from (
+			select distinct 
+				super_type_id 
+				, descendant_type_id
+				, is_temporal
+			from 
+				attr 
 	) a
 	join ${mainSchemaName}.meta_attribute a_inherited
 		on a_inherited.master_id = a.super_type_id
 	join ${mainSchemaName}.meta_type t 
 		on t.id = a_inherited.master_id
+	where 
+		not a_inherited.is_owned_by_temporal_type
+		or a.is_temporal   
 )
 select 
 	a.id
