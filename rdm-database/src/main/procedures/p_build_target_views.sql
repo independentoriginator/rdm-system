@@ -4,6 +4,10 @@ as $procedure$
 declare 
 	l_view_rec record;
 	l_prev_view_id ${mainSchemaName}.meta_view.id%type;
+	l_msg_text text;
+	l_exception_detail text;
+	l_exception_hint text;
+	l_exception_context text;
 begin
 	while true
 	loop
@@ -69,5 +73,22 @@ begin
 			i_view_rec => l_view_rec
 		);
 	end loop;
+exception
+when others then
+	get stacked diagnostics
+		l_msg_text = MESSAGE_TEXT
+		, l_exception_detail = PG_EXCEPTION_DETAIL
+		, l_exception_hint = PG_EXCEPTION_HINT
+		, l_exception_context = PG_EXCEPTION_CONTEXT
+		;
+	raise exception 
+		E'View %.% creation error: %\n%\n(hint: %,\ncontext: %)'
+		, l_view_rec.schema_name
+		, l_view_rec.internal_name		
+		, l_msg_text
+		, l_exception_detail
+		, l_exception_hint
+		, l_exception_context
+		;
 end
 $procedure$;			
