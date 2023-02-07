@@ -55,6 +55,7 @@ select
 				ns.nspname = target_schema.nspname
 				and c.relname = target_view.relname
 				and ui.indisunique
+				and ui.indpred is null
 		) then true
 		else false
 	end as has_unique_index	
