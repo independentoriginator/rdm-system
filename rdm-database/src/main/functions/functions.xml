@@ -134,4 +134,13 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="f_materialized_view_refresh_command-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_materialized_view_refresh_command" 
+			dbms="postgresql" 
+			path="f_materialized_view_refresh_command.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

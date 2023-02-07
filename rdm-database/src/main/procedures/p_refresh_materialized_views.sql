@@ -45,11 +45,12 @@ begin
 					, ', '
 				)
 				, array_agg(
-					format(
-						'refresh materialized view %I.%I'
-						, t.schema_name 
-						, t.internal_name
-					) 
+					${mainSchemaName}.f_materialized_view_refresh_command(
+						i_schema_name => t.schema_name
+						, i_internal_name => t.internal_name
+						, i_has_unique_index => t.has_unique_index
+						, i_is_populated => t.is_populated
+					)
 				)
 			into 
 				l_view_ids

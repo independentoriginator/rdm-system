@@ -41,6 +41,24 @@ select
 		when target_view.oid is not null then pg_catalog.obj_description(target_view.oid, 'pg_class') 
 		when target_routine.oid is not null then pg_catalog.obj_description(target_routine.oid, 'pg_proc')
 	end as description
+	, case 
+		when exists (
+			select
+				1
+			from 
+				pg_catalog.pg_index ui
+			join pg_catalog.pg_class c 
+				on c.oid = ui.indrelid
+			join pg_catalog.pg_namespace ns
+				on ns.oid = c.relnamespace
+			where
+				ns.nspname = target_schema.nspname
+				and c.relname = target_view.relname
+				and ui.indisunique
+		) then true
+		else false
+	end as has_unique_index	
+	, target_view.relispopulated as is_populated
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s

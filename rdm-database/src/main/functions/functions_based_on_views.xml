@@ -25,5 +25,5 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
-		
+	
 </databaseChangeLog>
