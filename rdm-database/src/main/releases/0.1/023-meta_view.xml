@@ -259,5 +259,15 @@
 			<where>master_id = (select id from meta_type where internal_name = 'meta_view') and internal_name = 'internal_name'</where>
 		</update>
 	</changeSet>
+	
+	<changeSet id="meta_view modification_time" author="${default_author}">
+
+		<addColumn tableName="meta_view">
+			<column name="modification_time" type="timestamp" remarks="Modification time" defaultValueDate="current_timestamp" >
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+
+	</changeSet>
             			
 </databaseChangeLog>

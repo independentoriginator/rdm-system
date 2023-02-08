@@ -62,6 +62,7 @@ begin
 			
 			update ${mainSchemaName}.meta_view 
 			set is_disabled = true
+				, modification_time = current_timestamp
 			where id = l_view_rec.id
 			;
 			continue;

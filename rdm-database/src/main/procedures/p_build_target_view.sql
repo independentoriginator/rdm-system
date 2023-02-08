@@ -73,6 +73,7 @@ begin
 						;
 					update ${mainSchemaName}.meta_view 
 					set is_disabled = true
+						, modification_time = current_timestamp
 					where id = i_view_rec.id
 					;
 				end if;					
@@ -104,6 +105,7 @@ begin
 			where 
 				v.id = i_view_rec.id
 		)
+		, modification_time = current_timestamp
 	where 
 		id = i_view_rec.id
 	;

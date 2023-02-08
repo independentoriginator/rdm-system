@@ -141,6 +141,7 @@ begin
 			set 
 				query = d.external_view_def
 				, is_disabled = false
+				, modification_time = current_timestamp
 			from 
 				dependency d
 			where 
