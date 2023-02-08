@@ -169,6 +169,8 @@ begin
 		on ev.internal_name = dependent_view.obj_name
 		and ev.schema_id = coalesce(s.id, es.id)
 		and ev.is_routine = dependent_view.is_routine
+	left join actualized_external_view aev
+		on aev.id = dependent_view.view_id
 	where
 		master_view.dep_level = 0
 	group by
