@@ -54,15 +54,7 @@ begin
 					-- external object must be recreated within current transaction only, during current dependencies recreation
 					-- (if the object is deleted from the outside, then it should not be recreated)
 					i_view_rec.is_external 
-					and exists (
-						select 
-							1
-						from 
-							${mainSchemaName}.meta_view v
-						where 
-							v.id = i_view_rec.id
-							and v.modification_time = current_timestamp
-					)
+					and i_view_rec.modification_time = current_timestamp 
 				)
 			)
 		)
