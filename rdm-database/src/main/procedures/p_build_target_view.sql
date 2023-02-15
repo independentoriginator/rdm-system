@@ -46,7 +46,18 @@ begin
 	
 	if not i_view_rec.is_external 
 		or not i_view_rec.is_routine
-		or not coalesce(i_view_rec.is_created, false)
+		or (
+			not coalesce(i_view_rec.is_created, false) 
+			and (
+				not i_view_rec.is_external 
+				or (
+					-- external object must be recreated within current transaction only, during current dependencies recreation
+					-- (if the object is deleted from the outside, then it should not be recreated)
+					i_view_rec.is_external 
+					and i_view_rec.modification_time = current_timestamp 
+				)
+			)
+		)
 	then
 		begin
 			execute i_view_rec.query;
@@ -86,7 +97,7 @@ begin
 			execute	
 				format(
 					'grant %s %I.%s to ${mainEndUserRole}'
-					, case when i_view_rec.is_routine then 'execute on function ' else 'select on' end
+					, case when i_view_rec.is_routine then 'execute on routine ' else 'select on' end
 					, i_view_rec.schema_name
 					, i_view_rec.internal_name 
 				

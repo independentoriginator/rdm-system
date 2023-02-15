@@ -121,6 +121,8 @@ begin
 				, query
 				, is_external
 				, is_routine
+				, is_created
+				, modification_time
 			)
 			select distinct
 				d.obj_name as internal_name
@@ -128,6 +130,8 @@ begin
 				, d.external_view_def as query
 				, true as is_external
 				, d.is_routine
+				, case when d.is_routine then true else false end
+				, current_timestamp
 			from 
 				dependency d 
 			left join new_external_schema ns 
@@ -141,6 +145,7 @@ begin
 			set 
 				query = d.external_view_def
 				, is_disabled = false
+				, is_created = case when d.is_routine then true else false end
 				, modification_time = current_timestamp
 			from 
 				dependency d

@@ -60,6 +60,7 @@ select
 		else false
 	end as has_unique_index	
 	, target_view.relispopulated as is_populated
+	, v.modification_time
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s
