@@ -24,7 +24,7 @@ begin
 			);
 		end if;
 	end if;
-	
+
 	if i_view_rec.is_view_exists then
 		-- Detecting and saving dependants before cascadly dropping
 		call ${mainSchemaName}.p_detect_meta_view_dependants(
@@ -32,8 +32,8 @@ begin
 			, i_schema_name => i_view_rec.schema_name
 			, i_is_routine => i_view_rec.is_routine
 		);
-	
-		if i_view_rec.is_routine = false then
+
+		if not i_view_rec.is_routine then
 			execute format('
 				drop %sview if exists %I.%I cascade
 				'
@@ -43,7 +43,7 @@ begin
 			);
 		end if;
 	end if;
-	
+
 	if not i_view_rec.is_external 
 		or not i_view_rec.is_routine
 		or (
@@ -87,7 +87,7 @@ begin
 						, modification_time = current_timestamp
 					where id = i_view_rec.id
 					;
-				end if;					
+				end if;	
 		end;
 	
 		-- Main end user role
@@ -103,10 +103,22 @@ begin
 				
 				);
 		end if;
+	elsif i_view_rec.is_external 
+		and (i_view_rec.modification_time <> current_timestamp or i_view_rec.modification_time is null)	
+	then
+		raise notice 'Disabling non-actual external view %.%...', i_view_rec.schema_name, i_view_rec.internal_name;
+		
+		update ${mainSchemaName}.meta_view 
+		set is_disabled = true
+			, modification_time = current_timestamp
+		where id = i_view_rec.id
+		;
+		return;
 	end if;
 
 	update ${mainSchemaName}.meta_view
-	set is_created = true
+	set 
+		is_created = true
 		, is_valid = false
 		, dependency_level = (
 			select 
