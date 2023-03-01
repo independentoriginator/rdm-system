@@ -1,25 +1,53 @@
-create or replace procedure p_detect_meta_view_dependants(
+drop procedure if exists p_detect_meta_view_dependants(
+	${mainSchemaName}.meta_view.internal_name%type
+	, ${mainSchemaName}.meta_schema.internal_name%type
+	, ${mainSchemaName}.meta_view.is_routine%type
+);
+
+create or replace procedure p_specify_meta_view_dependencies(
 	i_view_name ${mainSchemaName}.meta_view.internal_name%type
 	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type
 	, i_is_routine ${mainSchemaName}.meta_view.is_routine%type
+	, i_treat_the_obj_as_dependent bool -- and as master otherwise	
 )
 language plpgsql
 as $procedure$
+declare 
+	l_view_id ${mainSchemaName}.meta_view.id%type;
 begin
+	select 
+		v.id
+	into 
+		l_view_id
+	from
+		${mainSchemaName}.meta_view v 
+	left join ${mainSchemaName}.meta_schema s 
+		on s.id = v.schema_id 
+	where 
+		v.internal_name = i_view_name
+		and coalesce(s.internal_name, '${mainSchemaName}') = i_schema_name
+		and v.is_routine = i_is_routine
+	;
+
+	if l_view_id is null then
+		raise exception 
+			'The % specified is unknown: %.%'
+			, case when i_is_routine then 'routine' else 'view' end
+			, i_schema_name
+			, i_view_name
+		;
+	end if;
+	
 	delete from 
 		${mainSchemaName}.meta_view_dependency
 	where 
-		master_view_id in (
-			select 
-				v.id
-			from
-				${mainSchemaName}.meta_view v 
-			left join ${mainSchemaName}.meta_schema s 
-				on s.id = v.schema_id 
-			where 
-				v.internal_name = i_view_name
-				and coalesce(s.internal_name, '${mainSchemaName}') = i_schema_name
-				and v.is_routine = i_is_routine
+		(
+			i_treat_the_obj_as_dependent = false
+			and master_view_id = l_view_id
+		)
+		or (
+			i_treat_the_obj_as_dependent = true
+			and view_id = l_view_id
 		)
 	;
 	
@@ -37,8 +65,11 @@ begin
 					i_obj_name => i_view_name
 					, i_schema_name => i_schema_name
 					, i_is_routine => i_is_routine
+					, i_treat_the_obj_as_dependent => i_treat_the_obj_as_dependent
 					, i_exclude_curr_obj => false
-				)	 			
+				)	 	
+			where 
+				obj_type in ('v'::"char", 'm'::"char") or obj_class <> 'relation'
 	 	)
 		, meta_view as (
 			select 
@@ -111,7 +142,6 @@ begin
 					from 
 						${mainSchemaName}.meta_schema s
 				)
-				and d.obj_schema <> '${mainSchemaName}'
 			returning id, internal_name
 		)
 		, new_external_view as (
@@ -160,13 +190,19 @@ begin
 		, level
 	)
 	select
-		coalesce(dependent_view.view_id, ev.id) as view_id
-		, master_view.view_id as master_view_id
+		case i_treat_the_obj_as_dependent
+			when true then master_view.view_id
+			else coalesce(dependent_view.view_id, ev.id)
+		end as view_id
+		, case i_treat_the_obj_as_dependent
+			when true then coalesce(dependent_view.view_id, ev.id)
+			else master_view.view_id
+		end as master_view_id
 		, min(dependent_view.dep_level) as level
 	from 
 		dependency master_view
 	join dependency dependent_view
-		on dependent_view.dep_level > 0
+		on dependent_view.dep_level <> 0
 	left join ${mainSchemaName}.meta_schema s 
 		on s.internal_name = dependent_view.obj_schema 
 	left join new_external_schema es 

@@ -64,6 +64,7 @@ begin
 			i_obj_name => i_table_name
 			, i_schema_name => 'dict'
 			, i_is_routine => false
+			, i_treat_the_obj_as_dependent => false
 		) dependent_obj 
 	where 
 		dependent_obj.obj_class = 'relation'

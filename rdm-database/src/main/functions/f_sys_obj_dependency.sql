@@ -1,7 +1,15 @@
+drop function if exists f_sys_obj_dependency(
+	text
+	, name
+	, bool
+	, bool
+);
+
 create or replace function f_sys_obj_dependency(
 	i_obj_name text
 	, i_schema_name name
 	, i_is_routine bool
+	, i_treat_the_obj_as_dependent bool -- and as master otherwise
 	, i_exclude_curr_obj bool = true
 )
 returns table (
@@ -64,16 +72,35 @@ with recursive
 			and i_is_routine = true
 		union all
 		select
-			dep.dependent_obj_id as obj_oid
-			, dep.dependent_obj_name as obj_name
-			, dep.dependent_obj_schema as obj_schema
-			, dep.dependent_obj_class as obj_class
-			, dep.dependent_obj_type as obj_type
-			, dependent_obj.dep_level + 1 as dep_level
+			case i_treat_the_obj_as_dependent 
+				when true then dep.master_obj_id
+				else dep.dependent_obj_id
+			end as obj_oid
+			, case i_treat_the_obj_as_dependent 
+				when true then dep.master_obj_name
+				else dep.dependent_obj_name
+			end as obj_name
+			, case i_treat_the_obj_as_dependent 
+				when true then dep.master_obj_schema
+				else dep.dependent_obj_schema
+			end as obj_schema
+			, case i_treat_the_obj_as_dependent 
+				when true then dep.master_obj_class
+				else dep.dependent_obj_class
+			end as obj_class
+			, case i_treat_the_obj_as_dependent 
+				when true then dep.master_obj_type
+				else dep.dependent_obj_type
+			end as obj_type
+			, case i_treat_the_obj_as_dependent 
+				when true then dependent_obj.dep_level - 1
+				else dependent_obj.dep_level + 1
+			end as dep_level
 		from 
 			sys_obj_dependency dep
 		join dependent_obj 
-			on dependent_obj.obj_oid = dep.master_obj_id
+			on (i_treat_the_obj_as_dependent = true and dependent_obj.obj_oid = dep.dependent_obj_id)
+			or (i_treat_the_obj_as_dependent = false and dependent_obj.obj_oid = dep.master_obj_id)
 		where 
 			not exists (
 				select 
@@ -91,11 +118,31 @@ select
 	, obj_schema
 	, obj_class
 	, obj_type
+	, min(dep_level) as dep_level
+from 
+	dependent_obj
+where 
+	i_treat_the_obj_as_dependent = true
+	and (dep_level < 0 or i_exclude_curr_obj = false)
+group by 
+	obj_oid
+	, obj_name
+	, obj_schema
+	, obj_class
+	, obj_type
+union all
+select 
+	obj_oid
+	, obj_name
+	, obj_schema
+	, obj_class
+	, obj_type
 	, max(dep_level) as dep_level
 from 
 	dependent_obj
 where 
-	dep_level > 0 or i_exclude_curr_obj = false
+	i_treat_the_obj_as_dependent = false
+	and (dep_level > 0 or i_exclude_curr_obj = false)
 group by 
 	obj_oid
 	, obj_name

@@ -7,6 +7,7 @@ declare
 	l_msg_text text;
 	l_exception_detail text;
 	l_exception_hint text;
+	l_exception_context text;
 begin
 	if i_view_rec.schema_id is not null and i_view_rec.is_schema_exists = false then
 		execute format('
@@ -26,11 +27,12 @@ begin
 	end if;
 
 	if i_view_rec.is_view_exists then
-		-- Detecting and saving dependants before cascadly dropping
-		call ${mainSchemaName}.p_detect_meta_view_dependants(
+		-- Detecting and saving dependants before cascadly dropping them
+		call ${mainSchemaName}.p_specify_meta_view_dependencies(
 			i_view_name => i_view_rec.internal_name
 			, i_schema_name => i_view_rec.schema_name
 			, i_is_routine => i_view_rec.is_routine
+			, i_treat_the_obj_as_dependent => false -- treat the object as master 
 		);
 
 		if not i_view_rec.is_routine then
@@ -67,20 +69,23 @@ begin
 					l_msg_text = MESSAGE_TEXT
 					, l_exception_detail = PG_EXCEPTION_DETAIL
 					, l_exception_hint = PG_EXCEPTION_HINT
+					, l_exception_context = PG_EXCEPTION_CONTEXT
 					;
 				if not i_view_rec.is_external then 
 					raise exception 
-						'View creation error: %: % (hint: %)'
+						'View creation error: %: % (hint: %, context: %)'
 						, l_msg_text
 						, l_exception_detail
 						, l_exception_hint
+						, l_exception_context
 						;
 				else 
 					raise notice 
-						'External view creation error: %: % (hint: %). The view will be disabled.'
+						'External view creation error: %: % (hint: %, context: %). The view will be disabled.'
 						, l_msg_text
 						, l_exception_detail
 						, l_exception_hint
+						, l_exception_context
 						;
 					update ${mainSchemaName}.meta_view 
 					set is_disabled = true
@@ -115,6 +120,14 @@ begin
 		;
 		return;
 	end if;
+
+	-- Actualize stored dependencies
+	call ${mainSchemaName}.p_specify_meta_view_dependencies(
+		i_view_name => i_view_rec.internal_name
+		, i_schema_name => i_view_rec.schema_name
+		, i_is_routine => i_view_rec.is_routine
+		, i_treat_the_obj_as_dependent => true 
+	);
 
 	update ${mainSchemaName}.meta_view
 	set 

@@ -89,11 +89,11 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_detect_meta_view_dependants-procedure" author="${default_author}" runOnChange="true">
+	<changeSet id="p_specify_meta_view_dependencies-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
-			procedureName="p_detect_meta_view_dependants" 
+			procedureName="p_specify_meta_view_dependencies" 
 			dbms="postgresql" 
-			path="p_detect_meta_view_dependants.sql" 
+			path="p_specify_meta_view_dependencies.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
