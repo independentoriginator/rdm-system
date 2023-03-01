@@ -9,6 +9,7 @@ create or replace procedure p_specify_meta_view_dependencies(
 	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type
 	, i_is_routine ${mainSchemaName}.meta_view.is_routine%type
 	, i_treat_the_obj_as_dependent bool -- and as master otherwise	
+	, i_consider_registered_objects_only boolean = false
 )
 language plpgsql
 as $procedure$
@@ -69,7 +70,10 @@ begin
 					, i_exclude_curr_obj => false
 				)	 	
 			where 
-				obj_type in ('v'::"char", 'm'::"char") or obj_class <> 'relation'
+				(obj_type in ('v'::"char", 'm'::"char") or obj_class <> 'relation')
+      			and obj_schema not like 'pg\_%'
+				and obj_schema not in ('information_schema', 'public')
+				and (obj_name not like 'v\_meta\_%' or obj_schema <> '${mainSchemaName}')
 	 	)
 		, meta_view as (
 			select 
@@ -142,6 +146,7 @@ begin
 					from 
 						${mainSchemaName}.meta_schema s
 				)
+				and i_consider_registered_objects_only = false
 			returning id, internal_name
 		)
 		, new_external_view as (
@@ -168,6 +173,7 @@ begin
 				on ns.internal_name = d.obj_schema
 			where
 				d.view_id is null 
+				and i_consider_registered_objects_only = false
 			returning id, internal_name, schema_id, is_routine
 		)
 		, actualized_external_view as (
@@ -190,34 +196,43 @@ begin
 		, level
 	)
 	select
-		case i_treat_the_obj_as_dependent
-			when true then master_view.view_id
-			else coalesce(dependent_view.view_id, ev.id)
-		end as view_id
-		, case i_treat_the_obj_as_dependent
-			when true then coalesce(dependent_view.view_id, ev.id)
-			else master_view.view_id
-		end as master_view_id
-		, min(dependent_view.dep_level) as level
-	from 
-		dependency master_view
-	join dependency dependent_view
-		on dependent_view.dep_level <> 0
-	left join ${mainSchemaName}.meta_schema s 
-		on s.internal_name = dependent_view.obj_schema 
-	left join new_external_schema es 
-		on es.internal_name = dependent_view.obj_schema
-	left join new_external_view ev 
-		on ev.internal_name = dependent_view.obj_name
-		and ev.schema_id = coalesce(s.id, es.id)
-		and ev.is_routine = dependent_view.is_routine
-	left join actualized_external_view aev
-		on aev.id = dependent_view.view_id
-	where
-		master_view.dep_level = 0
-	group by
-		coalesce(dependent_view.view_id, ev.id)
-		, master_view.view_id
+		view_id
+		, master_view_id
+		, level
+	from (	
+		select
+			case i_treat_the_obj_as_dependent
+				when true then master_view.view_id
+				else coalesce(dependent_view.view_id, ev.id)
+			end as view_id
+			, case i_treat_the_obj_as_dependent
+				when true then coalesce(dependent_view.view_id, ev.id)
+				else master_view.view_id
+			end as master_view_id
+			, min(dependent_view.dep_level) as level
+		from 
+			dependency master_view
+		join dependency dependent_view
+			on dependent_view.dep_level <> 0
+		left join ${mainSchemaName}.meta_schema s 
+			on s.internal_name = dependent_view.obj_schema 
+		left join new_external_schema es 
+			on es.internal_name = dependent_view.obj_schema
+		left join new_external_view ev 
+			on ev.internal_name = dependent_view.obj_name
+			and ev.schema_id = coalesce(s.id, es.id)
+			and ev.is_routine = dependent_view.is_routine
+		left join actualized_external_view aev
+			on aev.id = dependent_view.view_id
+		where
+			master_view.dep_level = 0
+		group by
+			coalesce(dependent_view.view_id, ev.id)
+			, master_view.view_id
+	) t
+	where 
+		view_id is not null
+		and master_view_id is not null
 	;	
 end
 $procedure$;			

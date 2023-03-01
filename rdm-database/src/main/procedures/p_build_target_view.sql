@@ -127,6 +127,7 @@ begin
 		, i_schema_name => i_view_rec.schema_name
 		, i_is_routine => i_view_rec.is_routine
 		, i_treat_the_obj_as_dependent => true 
+		, i_consider_registered_objects_only => true
 	);
 
 	update ${mainSchemaName}.meta_view

@@ -5,11 +5,20 @@ drop function if exists f_sys_obj_dependency(
 	, bool
 );
 
+drop function if exists f_sys_obj_dependency(
+	text
+	, name
+	, bool
+	, bool
+	, bool
+);
+
 create or replace function f_sys_obj_dependency(
 	i_obj_name text
 	, i_schema_name name
 	, i_is_routine bool
 	, i_treat_the_obj_as_dependent bool -- and as master otherwise
+	, i_dependency_level_limit integer = null
 	, i_exclude_curr_obj bool = true
 )
 returns table (
@@ -99,8 +108,11 @@ with recursive
 		from 
 			sys_obj_dependency dep
 		join dependent_obj 
-			on (i_treat_the_obj_as_dependent = true and dependent_obj.obj_oid = dep.dependent_obj_id)
-			or (i_treat_the_obj_as_dependent = false and dependent_obj.obj_oid = dep.master_obj_id)
+			on (
+				(i_treat_the_obj_as_dependent = true and dependent_obj.obj_oid = dep.dependent_obj_id)
+				or (i_treat_the_obj_as_dependent = false and dependent_obj.obj_oid = dep.master_obj_id)
+			)
+			and (abs(dependent_obj.dep_level) <= i_dependency_level_limit or i_dependency_level_limit is null)
 		where 
 			not exists (
 				select 
