@@ -23,8 +23,7 @@ begin
 			(coalesce(t.is_created, false) = false or meta_view.dependency_level is null)
 			and coalesce(t.is_disabled, false) = false
 		order by
-			t.is_external
-			, t.creation_order
+			case when t.is_external then null else t.creation_order end
 			, t.previously_defined_dependency_level
 		limit 1
 		for update of meta_view
@@ -34,10 +33,8 @@ begin
 			exit;
 		end if;
 		
-		if l_prev_view_id is not null then
-			if l_view_rec.id = l_prev_view_id then 
-				raise 'The view was not processed for a some unexpected reason: %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
-			end if;
+		if l_prev_view_id is not null and l_view_rec.id = l_prev_view_id then
+			raise exception 'The view was not processed for a some unexpected reason: %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
 		end if;
 		
 		l_prev_view_id = l_view_rec.id;

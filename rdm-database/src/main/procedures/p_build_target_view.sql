@@ -53,7 +53,7 @@ begin
 			and (
 				not i_view_rec.is_external 
 				or (
-					-- external object must be recreated within current transaction only, during current dependencies recreation
+					-- an external object must be recreated within the current transaction only, during current dependencies recreation
 					-- (if the object is deleted from the outside, then it should not be recreated)
 					i_view_rec.is_external 
 					and i_view_rec.modification_time = current_timestamp 
@@ -109,6 +109,7 @@ begin
 				);
 		end if;
 	elsif i_view_rec.is_external 
+		and not i_view_rec.is_view_exists
 		and (i_view_rec.modification_time <> current_timestamp or i_view_rec.modification_time is null)	
 	then
 		raise notice 'Disabling non-actual external view %.%...', i_view_rec.schema_name, i_view_rec.internal_name;

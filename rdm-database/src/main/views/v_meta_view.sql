@@ -3,12 +3,7 @@ as
 select
 	v.id
 	, v.internal_name
-	, coalesce(
-		v.dependency_level
-		, ${mainSchemaName}.f_meta_view_dependency_level(
-			i_view_oid => coalesce(target_view.oid, target_routine.oid)
-		)
-	) as dependency_level
+	, v.dependency_level
 	, v.schema_id
 	, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
 	, case when target_schema.nspname = s.internal_name then true else false end as is_schema_exists

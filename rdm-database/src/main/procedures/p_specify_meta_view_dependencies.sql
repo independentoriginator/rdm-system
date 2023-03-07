@@ -181,7 +181,6 @@ begin
 			set 
 				query = d.external_view_def
 				, is_disabled = false
-				, is_created = case when d.is_routine then true else false end
 				, modification_time = current_timestamp
 			from 
 				dependency d
@@ -195,11 +194,11 @@ begin
 		, master_view_id
 		, level
 	)
-	select
+	select 
 		view_id
 		, master_view_id
 		, level
-	from (	
+	from (
 		select
 			case i_treat_the_obj_as_dependent
 				when true then master_view.view_id
@@ -209,7 +208,7 @@ begin
 				when true then coalesce(dependent_view.view_id, ev.id)
 				else master_view.view_id
 			end as master_view_id
-			, min(dependent_view.dep_level) as level
+			, min(abs(dependent_view.dep_level)) as level
 		from 
 			dependency master_view
 		join dependency dependent_view
@@ -229,10 +228,10 @@ begin
 		group by
 			coalesce(dependent_view.view_id, ev.id)
 			, master_view.view_id
-	) t
+	) t 
 	where 
-		view_id is not null
-		and master_view_id is not null
+		view_id is not null 
+		and master_view_id is not null		
 	;	
 end
 $procedure$;			
