@@ -34,12 +34,12 @@ begin
 		end if;
 		
 		if l_prev_view_id is not null and l_view_rec.id = l_prev_view_id then
-			raise exception 'The view was not processed for a some unexpected reason: %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
+			raise exception 'The % was not processed for a some unexpected reason: %.%...', l_view_rec.view_type, l_view_rec.schema_name, l_view_rec.internal_name;
 		end if;
 		
 		l_prev_view_id = l_view_rec.id;
 		
-   		raise notice 'Creating view %.%...', l_view_rec.schema_name, l_view_rec.internal_name;
+   		raise notice 'Creating % %.%...', l_view_rec.view_type, l_view_rec.schema_name, l_view_rec.internal_name;
 	
 		call ${mainSchemaName}.p_build_target_view(
 			i_view_rec => l_view_rec
