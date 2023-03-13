@@ -29,8 +29,10 @@ select
 	, case 
 		when target_view.relkind = 'v'::"char" then 'view'::text
 		when target_view.relkind = 'm'::"char" then 'materialized view'::text
-		when target_routine.prokind = 'p'::"char" then 'procedure'
-		when target_routine.prokind = 'f'::"char" then 'function'
+		when target_routine.prokind = 'p'::"char" then 'procedure'::text
+		when target_routine.prokind = 'f'::"char" then 'function'::text
+		when v.is_routine then 'routine'::text
+		else 'view'::text
 	end as view_type
 	, case 
 		when target_view.oid is not null then pg_catalog.obj_description(target_view.oid, 'pg_class') 
