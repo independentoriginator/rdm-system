@@ -53,6 +53,7 @@ with recursive
 			, 'relation'::name as obj_class
 			, v.relkind as obj_type
 			, 0 as dep_level
+			, array[v.oid] as dep_seq 
 		from 
 			pg_catalog.pg_namespace s
 		join pg_catalog.pg_class v
@@ -69,6 +70,7 @@ with recursive
 			, 'routine'::name as obj_class
 			, p.prokind as obj_type
 			, 0 as dep_level
+			, array[p.oid] as dep_seq
 		from 
 			pg_catalog.pg_namespace s
 		join pg_catalog.pg_proc p
@@ -80,49 +82,52 @@ with recursive
 			s.nspname = i_schema_name::name
 			and i_is_routine = true
 		union all
-		select
-			case i_treat_the_obj_as_dependent 
-				when true then dep.master_obj_id
-				else dep.dependent_obj_id
-			end as obj_oid
-			, case i_treat_the_obj_as_dependent 
-				when true then dep.master_obj_name
-				else dep.dependent_obj_name
-			end as obj_name
-			, case i_treat_the_obj_as_dependent 
-				when true then dep.master_obj_schema
-				else dep.dependent_obj_schema
-			end as obj_schema
-			, case i_treat_the_obj_as_dependent 
-				when true then dep.master_obj_class
-				else dep.dependent_obj_class
-			end as obj_class
-			, case i_treat_the_obj_as_dependent 
-				when true then dep.master_obj_type
-				else dep.dependent_obj_type
-			end as obj_type
-			, case i_treat_the_obj_as_dependent 
-				when true then dependent_obj.dep_level - 1
-				else dependent_obj.dep_level + 1
-			end as dep_level
-		from 
-			sys_obj_dependency dep
-		join dependent_obj 
-			on (
-				(i_treat_the_obj_as_dependent = true and dependent_obj.obj_oid = dep.dependent_obj_id)
-				or (i_treat_the_obj_as_dependent = false and dependent_obj.obj_oid = dep.master_obj_id)
-			)
-			and (abs(dependent_obj.dep_level) <= i_dependency_level_limit or i_dependency_level_limit is null)
+		select 
+			d.obj_oid
+			, d.obj_name
+			, d.obj_schema
+			, d.obj_class
+			, d.obj_type
+			, d.dep_level
+			, d.dep_seq || d.obj_oid as dep_seq
+		from (
+			select
+				case i_treat_the_obj_as_dependent 
+					when true then dep.master_obj_id
+					else dep.dependent_obj_id
+				end as obj_oid
+				, case i_treat_the_obj_as_dependent 
+					when true then dep.master_obj_name
+					else dep.dependent_obj_name
+				end as obj_name
+				, case i_treat_the_obj_as_dependent 
+					when true then dep.master_obj_schema
+					else dep.dependent_obj_schema
+				end as obj_schema
+				, case i_treat_the_obj_as_dependent 
+					when true then dep.master_obj_class
+					else dep.dependent_obj_class
+				end as obj_class
+				, case i_treat_the_obj_as_dependent 
+					when true then dep.master_obj_type
+					else dep.dependent_obj_type
+				end as obj_type
+				, case i_treat_the_obj_as_dependent 
+					when true then dependent_obj.dep_level - 1
+					else dependent_obj.dep_level + 1
+				end as dep_level
+				, dependent_obj.dep_seq
+			from 
+				sys_obj_dependency dep
+			join dependent_obj 
+				on (
+					(i_treat_the_obj_as_dependent = true and dependent_obj.obj_oid = dep.dependent_obj_id)
+					or (i_treat_the_obj_as_dependent = false and dependent_obj.obj_oid = dep.master_obj_id)
+				)
+				and (abs(dependent_obj.dep_level) <= i_dependency_level_limit or i_dependency_level_limit is null)
+		) d
 		where 
-			not exists (
-				select 
-					1
-				from
-					sys_obj_dependency cyclic_dep
-				where 	
-					cyclic_dep.dependent_obj_id = dep.master_obj_id 
-					and cyclic_dep.master_obj_id = dep.dependent_obj_id
-			)
+			d.obj_oid <> all(d.dep_seq)
 	)
 select 
 	obj_oid

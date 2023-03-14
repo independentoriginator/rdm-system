@@ -95,15 +95,6 @@ begin
 				end if;	
 		end;
 	
-		-- Actualize stored dependencies
-		call ${mainSchemaName}.p_specify_meta_view_dependencies(
-			i_view_name => i_view_rec.internal_name
-			, i_schema_name => i_view_rec.schema_name
-			, i_is_routine => i_view_rec.is_routine
-			, i_treat_the_obj_as_dependent => true 
-			, i_consider_registered_objects_only => true
-		);
-	
 		-- Main end user role
 		if not i_view_rec.is_external 
 			and length('${mainEndUserRole}') > 0 
@@ -131,13 +122,22 @@ begin
 		return;
 	end if;
 
+	-- Actualize stored dependencies
+	call ${mainSchemaName}.p_specify_meta_view_dependencies(
+		i_view_name => i_view_rec.internal_name
+		, i_schema_name => i_view_rec.schema_name
+		, i_is_routine => i_view_rec.is_routine
+		, i_treat_the_obj_as_dependent => true 
+		, i_consider_registered_objects_only => true
+	);
+
 	update ${mainSchemaName}.meta_view
 	set 
 		is_created = true
 		, is_valid = false
 		, dependency_level = (
 			select 
-				${mainSchemaName}.f_meta_view_dependency_level(i_view_oid => v.view_oid)
+				v.previously_defined_dependency_level
 			from 
 				${mainSchemaName}.v_meta_view v
 			where 
