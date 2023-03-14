@@ -137,7 +137,7 @@ begin
 		, is_valid = false
 		, dependency_level = (
 			select 
-				v.previously_defined_dependency_level
+				coalesce(v.previously_defined_dependency_level, 0)
 			from 
 				${mainSchemaName}.v_meta_view v
 			where 
