@@ -3,15 +3,26 @@ returns trigger
 language plpgsql
 as $$
 begin
+	with 
+		dependent_view as (
+			select 
+				v.id
+			from 
+				${mainSchemaName}.meta_view_dependency dep
+			join ${mainSchemaName}.meta_view v 
+				on v.id = dep.view_id
+				and v.is_valid = true
+			where 
+				dep.master_view_id = old.id
+			for update of v
+		)
 	update ${mainSchemaName}.meta_view meta_view
 	set 
 		is_valid = false
 	from 
-		${mainSchemaName}.meta_view_dependency dep
+		dependent_view
 	where
-		dep.master_view_id = old.id
-		and dep.view_id = meta_view.id 
-		and meta_view.is_valid = true
+		dependent_view.id = meta_view.id
 	;
 
 	return null;
