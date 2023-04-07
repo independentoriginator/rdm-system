@@ -274,5 +274,81 @@
 		</insert>
 
 	</changeSet>
+	
+	<changeSet id="modification of the meta_id index" author="${default_author}">
+
+		<!-- delete extra meta_version index -->
+		<delete tableName="meta_index_column">
+			<where>
+				master_id = (
+					select 
+						id 
+					from 
+						meta_index 
+					where 
+						master_id = (
+							select 
+								id 
+							from 
+								meta_type 
+							where 
+								internal_name = 'entity'
+						)
+						and tag = 'meta_version' 				
+				)
+			</where>
+		</delete>
+			
+		<delete tableName="meta_index">
+			<where>
+				master_id = (select id from meta_type where internal_name = 'entity')
+				and tag = 'meta_version'
+			</where>
+		</delete>
+		
+		<!-- extend the meta_id index with meta_version column -->
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'meta_id' 
+			)"/>
+			<column name="meta_attr_name" value="meta_version"/>
+			<column name="ordinal_position" value="2"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'meta_id' 
+			)"/>
+			<column name="meta_attr_name" value="meta_version_ordinal_num"/>
+			<column name="ordinal_position" value="3"/>
+		</insert>
+	
+	</changeSet>
 
 </databaseChangeLog>
