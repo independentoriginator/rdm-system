@@ -144,5 +144,37 @@
 		</insert>
 
 	</changeSet>
+	
+	<changeSet id="deprecation of the unique code index" author="${default_author}">
+
+		<delete tableName="meta_index_column">
+			<where>
+				master_id = (
+					select 
+						id 
+					from 
+						meta_index 
+					where 
+						master_id = (
+							select 
+								id 
+							from 
+								meta_type 
+							where 
+								internal_name = 'directory'
+						)
+						and tag = 'code_source_id' 				
+				)
+			</where>
+		</delete>
+			
+		<delete tableName="meta_index">
+			<where>
+				master_id = (select id from meta_type where internal_name = 'directory')
+				and tag = 'code_source_id'
+			</where>
+		</delete>
+	
+	</changeSet>
 		
 </databaseChangeLog>
