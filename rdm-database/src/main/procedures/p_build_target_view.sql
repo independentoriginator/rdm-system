@@ -34,6 +34,29 @@ begin
 			, i_is_routine => i_view_rec.is_routine
 			, i_treat_the_obj_as_dependent => false -- treat the object as master 
 		);
+	
+		-- Invalidating of the creation flag for dependent views (matters for functions, that are not cascadly dropped)
+		with 
+			dependent_view as (
+				select 
+					v.id
+				from 
+					${mainSchemaName}.meta_view_dependency dep
+				join ${mainSchemaName}.meta_view v 
+					on v.id = dep.view_id
+				where 
+					dep.master_view_id = i_view_rec.id
+				for update of v
+			)
+		update 
+			${mainSchemaName}.meta_view meta_view
+		set 
+			is_created = false
+		from 
+			dependent_view
+		where
+			dependent_view.id = meta_view.id
+		;	
 
 		if not i_view_rec.is_routine then
 			execute format('
