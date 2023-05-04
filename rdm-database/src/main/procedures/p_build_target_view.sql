@@ -44,6 +44,8 @@ begin
 					${mainSchemaName}.meta_view_dependency dep
 				join ${mainSchemaName}.meta_view v 
 					on v.id = dep.view_id
+					and v.is_created = true
+					and v.is_external = false
 				where 
 					dep.master_view_id = i_view_rec.id
 				for update of v
