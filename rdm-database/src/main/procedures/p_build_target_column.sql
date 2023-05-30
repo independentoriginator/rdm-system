@@ -85,7 +85,7 @@ begin
 				execute format('
 					alter table %I.%I
 						add constraint %I foreign key (%s, %s) references %I.%I(id, version),
-						add constraint %I check (case when %s is null then 1 else 0 end = case when %s is null then 1 else 0 end)
+						add constraint %I check (%s is null = %s is null)
 					'
 					, i_attr_rec.schema_name
 					, i_attr_rec.meta_type_name 
