@@ -6,6 +6,7 @@ create or replace procedure p_adjust_serial_sequence_value(
 	, i_foreign_server name = null
 )
 language plpgsql
+security definer
 as $procedure$
 declare 
 	l_sql_expr text;
