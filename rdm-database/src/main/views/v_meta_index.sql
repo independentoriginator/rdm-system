@@ -66,7 +66,15 @@ from (
 		, t.internal_name as meta_type_name
 		, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
 		, i.is_unique
-		, substring('i_' || t.internal_name || '$' || i.tag, 1, ${stagingSchemaName}.f_system_name_max_length()) as index_name
+		, substring(
+			case when i.is_unique then 'u' else '' end
+			|| 'i_' 
+			|| t.internal_name 
+			|| '$' 
+			|| i.tag
+			, 1
+			, ${stagingSchemaName}.f_system_name_max_length()
+		) as index_name
 		, ic.index_columns || 
 		case 
 			when t.is_temporal then 
@@ -75,8 +83,7 @@ from (
 		end as index_columns
 	from 
 		type_index i
-	join 
-		${mainSchemaName}.meta_type t
+	join ${mainSchemaName}.meta_type t
 		on t.id = i.descendant_type_id	
 	left join ${mainSchemaName}.meta_schema s
 		on s.id = t.schema_id
