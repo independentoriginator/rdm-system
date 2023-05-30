@@ -351,4 +351,128 @@
 	
 	</changeSet>
 
+	<changeSet id="external_id index modification" author="${default_author}">
+
+		<!-- delete extra external_version index and old external_id_source_id index -->
+		<delete tableName="meta_index_column">
+			<where>
+				master_id in (
+					select 
+						id 
+					from 
+						meta_index 
+					where 
+						master_id = (
+							select 
+								id 
+							from 
+								meta_type 
+							where 
+								internal_name = 'entity'
+						)
+						and tag in ('external_version', 'external_id_source_id') 				
+				)
+			</where>
+		</delete>
+			
+		<delete tableName="meta_index">
+			<where>
+				master_id = (select id from meta_type where internal_name = 'entity')
+				and tag in ('external_version', 'external_id_source_id')
+			</where>
+		</delete>
+		
+		<!-- declare new external_id index -->
+		<insert tableName="meta_index">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="tag" value="external_id"/>		
+			<column name="is_unique" value="true"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'external_id' 
+			)"/>
+			<column name="meta_attr_name" value="external_id"/>
+			<column name="ordinal_position" value="0"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'external_id' 
+			)"/>
+			<column name="meta_attr_name" value="source_id"/>
+			<column name="ordinal_position" value="1"/>
+		</insert>
+		
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'external_id' 
+			)"/>
+			<column name="meta_attr_name" value="external_version"/>
+			<column name="ordinal_position" value="2"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'external_id' 
+			)"/>
+			<column name="meta_attr_name" value="external_version_ordinal_num"/>
+			<column name="ordinal_position" value="3"/>
+		</insert>
+	
+	</changeSet>
+
 </databaseChangeLog>
