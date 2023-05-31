@@ -84,8 +84,7 @@ begin
 			if i_attr_rec.is_referenced_type_temporal = true then 
 				execute format('
 					alter table %I.%I
-						add constraint %I foreign key (%s, %s) references %I.%I(id, version),
-						add constraint %I check (%s is null = %s is null)
+						add constraint %I foreign key (%s, %s) references %I.%I(id, version)
 					'
 					, i_attr_rec.schema_name
 					, i_attr_rec.meta_type_name 
@@ -94,9 +93,6 @@ begin
 					, i_attr_rec.version_ref_name
 					, i_attr_rec.attr_type_schema
 					, i_attr_rec.attr_type_name 
-					, i_attr_rec.check_constraint_name
-					, i_attr_rec.internal_name
-					, i_attr_rec.version_ref_name
 				);
 			else				
 				execute format('
@@ -119,6 +115,40 @@ begin
 				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.fk_constraint_name
+			);
+		end if;
+	
+		if (
+			i_attr_rec.is_chk_constraint_added = false 
+			and i_attr_rec.is_check_constraint_exists = true
+		) or (
+			i_attr_rec.is_chk_constraint_added = true
+			and i_attr_rec.is_check_constraint_exists = true
+			and lower(i_attr_rec.check_constraint_expr) <> coalesce(lower(i_attr_rec.target_check_constraint_expr), '')
+		)
+		then
+			execute format('
+				alter table %I.%I
+					drop constraint %I
+				'
+				, i_attr_rec.schema_name
+				, i_attr_rec.meta_type_name 
+				, i_attr_rec.check_constraint_name
+			);
+			i_attr_rec.is_check_constraint_exists = false;
+		end if;
+
+		if i_attr_rec.is_chk_constraint_added = true 
+			and i_attr_rec.is_check_constraint_exists = false
+		then
+			execute format('
+				alter table %I.%I
+					add constraint %I check (%s)
+				'
+				, i_attr_rec.schema_name
+				, i_attr_rec.meta_type_name 
+				, i_attr_rec.check_constraint_name
+				, i_attr_rec.check_constraint_expr
 			);
 		end if;
 		
@@ -189,7 +219,9 @@ begin
 			);
 		end if;
 		
-		if i_attr_rec.default_value is not null and i_attr_rec.default_value <> coalesce(i_attr_rec.column_default, '') then
+		if i_attr_rec.default_value is not null 
+			and lower(i_attr_rec.default_value) <> coalesce(lower(i_attr_rec.column_default), '') 
+		then
 			execute format('
 				alter table %I.%I
 					alter column %s set default %s

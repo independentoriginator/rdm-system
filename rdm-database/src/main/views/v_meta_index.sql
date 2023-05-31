@@ -133,6 +133,15 @@ with recursive
 		where 
 			a.is_fk_constraint_added			
 	)
+	, uc_index as (
+		select 
+			a.master_id
+			, a.unique_constraint_name as index_name
+		from 
+			${mainSchemaName}.v_meta_attribute a
+		where 
+			a.is_unique			
+	)
 select 
 	i.id
 	, i.master_id
@@ -187,7 +196,8 @@ left join lateral (
 		and a.attnum = any(pg_index.indkey)
 ) pg_index_col on true
 where 
-	not exists (
+	(t.internal_name not like 'meta\_%' or n.nspname <> '${mainSchemaName}') 
+	and not exists (
 		select 
 			1
 		from 
@@ -204,5 +214,14 @@ where
 		where 
 			fk_index.master_id = t.id
 			and fk_index.index_name = target_index.relname
+	)
+	and not exists (
+		select 
+			1
+		from 
+			uc_index
+		where 
+			uc_index.master_id = t.id
+			and uc_index.index_name = target_index.relname
 	)
 ;

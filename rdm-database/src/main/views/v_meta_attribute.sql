@@ -89,7 +89,7 @@ select
 	, a.internal_name
 	, a.target_attr_type
 	, a.ordinal_position
-	, case when target_column.column_name is not null then true else false end as is_column_exists
+	, (target_column.column_name is not null) as is_column_exists
 	, ${mainSchemaName}.f_column_type_specification(
 		i_data_type => target_column.data_type
 		, i_character_maximum_length => target_column.character_maximum_length
@@ -100,22 +100,30 @@ select
 	, a.attr_type_name
 	, a.is_fk_constraint_added
 	, a.fk_constraint_name
-	, case when fk_constraint.constraint_name is not null then true else false end as is_fk_constraint_exists
+	, (fk_constraint.constraint_name is not null) as is_fk_constraint_exists
 	, a.index_name
-	, case when fk_index.indexname is not null then true else false end as is_fk_index_exists
+	, (fk_index.indexname is not null) as is_fk_index_exists
 	, a.is_referenced_type_temporal
 	, a.version_ref_name
+	, (a.is_fk_constraint_added and a.is_referenced_type_temporal) as is_chk_constraint_added
+	, a.check_constraint_name
+	, format(
+		'(%s is null) = (%s is null)'
+		, a.internal_name
+		, a.version_ref_name
+	) as check_constraint_expr
+	, (chk_constraint.conname is not null) as is_check_constraint_exists
+	, chk_constraint.consrc as target_check_constraint_expr
 	, a.is_non_nullable
-	, case when target_column.is_nullable = 'NO' then true else false end as is_notnull_constraint_exists
+	, (target_column.is_nullable = 'NO') as is_notnull_constraint_exists
 	, a.is_unique
 	, a.unique_constraint_name
-	, case when u_constraint.constraint_name is not null then true else false end as is_unique_constraint_exists
-	, a.check_constraint_name
+	, (u_constraint.constraint_name is not null) as is_unique_constraint_exists
 	, a.default_value
 	, target_column.column_default
 	, a.is_localisable
 	, a.staging_schema_name
-	, case when target_staging_table_column.column_name is not null then true else false end as is_staging_table_column_exists
+	, (target_staging_table_column.column_name is not null) as is_staging_table_column_exists
 	, ${mainSchemaName}.f_column_type_specification(
 		i_data_type => target_staging_table_column.data_type
 		, i_character_maximum_length => target_staging_table_column.character_maximum_length
@@ -123,7 +131,7 @@ select
 		, i_numeric_scale => target_staging_table_column.numeric_scale	
 		, i_datetime_precision => target_staging_table_column.datetime_precision	
 	) as staging_table_column_data_type
-	, case when target_staging_table_column.is_nullable = 'NO' then true else false end as is_staging_table_column_notnull_constraint_exists
+	, (target_staging_table_column.is_nullable = 'NO') as is_staging_table_column_notnull_constraint_exists
 	, target_staging_table_column.column_default as staging_table_column_default
 	, a.attr_type_schema 
 	, a.ancestor_type_id
@@ -165,10 +173,10 @@ from (
 		, substring('i_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as index_name
 		, attr_type.is_temporal as is_referenced_type_temporal
 		, regexp_replace(a.internal_name, '_id$', '') || '_version' as version_ref_name
+		, substring('chk_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as check_constraint_name
 		, a.is_non_nullable
 		, a.is_unique
 		, substring('uc_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as unique_constraint_name
-		, substring('chk_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as check_constraint_name
 		, def_val_expr.expr_text as default_value
 		, a.is_localisable
 		, '${stagingSchemaName}' as staging_schema_name
@@ -216,8 +224,7 @@ left join ${mainSchemaName}.meta_attribute_lc attr_name
 	and attr_name.attr_id = name_attr.id
 	and attr_name.lang_id = ${mainSchemaName}.f_default_language_id()
 	and attr_name.is_default_value = true
-left join 
-	information_schema.columns target_column
+left join information_schema.columns target_column
 	on target_column.table_schema = target_schema.nspname
 	and target_column.table_name = a.meta_type_name
 	and target_column.column_name = a.internal_name
@@ -225,8 +232,7 @@ left join pg_catalog.pg_description target_column_descr
 	on target_column_descr.objoid = target_table.oid
 	and target_column_descr.classoid = 'pg_class'::regclass
 	and target_column_descr.objsubid = target_column.ordinal_position
-left join 
-	information_schema.table_constraints fk_constraint 
+left join information_schema.table_constraints fk_constraint 
 	on fk_constraint.table_schema = target_schema.nspname
 	and fk_constraint.table_name = a.meta_type_name
 	and fk_constraint.constraint_name = a.fk_constraint_name
@@ -235,20 +241,22 @@ left join pg_catalog.pg_indexes fk_index
 	on fk_index.schemaname = target_schema.nspname
 	and fk_index.tablename = a.meta_type_name
 	and fk_index.indexname = a.index_name
-left join 
-	information_schema.table_constraints u_constraint 
+left join information_schema.table_constraints u_constraint 
 	on u_constraint.table_schema = target_schema.nspname
 	and u_constraint.table_name = a.meta_type_name
 	and u_constraint.constraint_name = a.unique_constraint_name
 	and u_constraint.constraint_type = 'UNIQUE'
+left join pg_catalog.pg_constraint chk_constraint
+	on chk_constraint.conrelid = target_table.oid
+	and chk_constraint.conname = a.check_constraint_name
+	and chk_constraint.contype = 'c'::"char" 
 left join pg_catalog.pg_namespace staging_schema
 	on staging_schema.nspname = a.staging_schema_name
 left join pg_catalog.pg_class staging_table
 	on staging_table.relnamespace = staging_schema.oid 
 	and staging_table.relname = a.meta_type_name
 	and staging_table.relkind in ('r'::"char", 'p'::"char")
-left join 
-	information_schema.columns target_staging_table_column
+left join information_schema.columns target_staging_table_column
 	on target_staging_table_column.table_schema = a.staging_schema_name
 	and target_staging_table_column.table_name = a.meta_type_name
 	and target_staging_table_column.column_name = a.internal_name

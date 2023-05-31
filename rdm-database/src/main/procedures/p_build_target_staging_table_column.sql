@@ -69,7 +69,9 @@ begin
 			end if;					
 		end if;
 		
-		if i_attr_rec.default_value is not null and i_attr_rec.default_value <> coalesce(i_attr_rec.staging_table_column_default, '') then
+		if i_attr_rec.default_value is not null 
+			and lower(i_attr_rec.default_value) <> coalesce(lower(i_attr_rec.staging_table_column_default), '') 
+		then
 			execute format('
 				alter table %I.%I
 					alter column %s set default %s

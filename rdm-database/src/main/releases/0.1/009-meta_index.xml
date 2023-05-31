@@ -46,7 +46,7 @@
 			referencedColumnNames="id" />
 			
 		<createIndex 
-			indexName="i_meta_index$master_id_tag" 
+			indexName="ui_meta_index$master_id_tag" 
 			tableName="meta_index"
 			unique="true">
 			<column name="master_id" />
