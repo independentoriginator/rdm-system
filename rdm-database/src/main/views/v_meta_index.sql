@@ -30,10 +30,10 @@ with recursive
 			from 
 				type_index 
 		) i
-		join ${mainSchemaName}.meta_index i_inherited
-			on i_inherited.master_id = i.super_type_id
 		join ${mainSchemaName}.meta_type t 
-			on t.id = i_inherited.master_id
+			on t.id = i.super_type_id
+		left join ${mainSchemaName}.meta_index i_inherited
+			on i_inherited.master_id = t.id 
 		where 
 			i.is_temporal
 			or not exists (
