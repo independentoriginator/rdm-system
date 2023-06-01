@@ -50,7 +50,7 @@ begin
 	  			and g.privilege_type = 'EXECUTE'
 		)
 	then
-		execute 'grant execute on procedure p_refresh_materialized_view to %s';
+		execute format('grant execute on procedure p_refresh_materialized_view to %s', '${etlUserRole}');
 	end if;
 end 
 $$;
