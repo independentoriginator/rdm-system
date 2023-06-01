@@ -32,4 +32,25 @@ begin
 
 	execute l_command;	
 end
-$procedure$;			
+$procedure$;		
+
+-- Execute persmission for the ETL user role
+do $$
+begin
+	if length('${etlUserRole}') > 0
+		and not exists (
+			select 
+				1
+			from 
+				information_schema.role_routine_grants g
+	  		where
+	  			g.grantee = '${etlUserRole}'
+	  			and g.routine_schema = '${mainSchemaName}'
+	  			and g.routine_name = 'p_refresh_materialized_view'
+	  			and g.privilege_type = 'EXECUTE'
+		)
+	then
+		execute 'grant execute on procedure p_refresh_materialized_view to %s';
+	end if;
+end 
+$$;
