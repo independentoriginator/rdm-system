@@ -108,7 +108,7 @@ select
 	, (a.is_fk_constraint_added and a.is_referenced_type_temporal) as is_chk_constraint_added
 	, a.check_constraint_name
 	, format(
-		'(%s is null) = (%s is null)'
+		'((%s is null) = (%s is null))'
 		, a.internal_name
 		, a.version_ref_name
 	) as check_constraint_expr
