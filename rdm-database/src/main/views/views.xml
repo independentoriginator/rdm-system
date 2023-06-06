@@ -50,5 +50,27 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="v_sys_table_size-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_sys_table_size" 
+			path="v_sys_table_size.sql"
+			remarks="Table size"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="v_sys_schema_size-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_sys_schema_size" 
+			path="v_sys_schema_size.sql"
+			remarks="Schema size"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 
 </databaseChangeLog>
