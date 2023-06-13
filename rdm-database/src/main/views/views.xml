@@ -73,4 +73,15 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="v_sys_blocked_activity-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_sys_blocked_activity" 
+			path="v_sys_blocked_activity.sql"
+			remarks="Blocked activity"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>
