@@ -4,6 +4,7 @@ drop procedure if exists p_refresh_materialized_views(
 	, integer
 	, text
 	, text
+	, integer
 	, boolean
 	, integer
 );
@@ -17,6 +18,7 @@ create or replace procedure p_refresh_materialized_views(
 	, i_scheduled_task_stage_ord_pos integer = 0
 	, i_async_mode boolean = false
 	, i_wait_for_delay_in_seconds integer = 1
+	, i_unpopulated_only boolean = false
 )
 language plpgsql
 security definer
@@ -59,7 +61,8 @@ begin
 			from 
 				${mainSchemaName}.v_meta_view t
 			where 
-				t.is_valid = false
+				t.is_valid = false 
+				and (t.is_populated = false or i_unpopulated_only = false)
 				and t.is_materialized = true
 				and coalesce(t.is_disabled, false) = false
 			group by 
@@ -132,6 +135,7 @@ begin
 					${mainSchemaName}.v_meta_view t
 				where 
 					t.is_valid = false
+					and (t.is_populated = false or i_unpopulated_only = false)
 					and t.is_materialized = true
 					and coalesce(t.is_disabled, false) = false
 				group by 
