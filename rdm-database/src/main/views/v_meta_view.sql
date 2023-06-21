@@ -23,6 +23,7 @@ select
 			${mainSchemaName}.meta_view_dependency dep
 		where
 			dep.view_id = v.id
+			and dep.master_view_id is not null
 	) as previously_defined_dependency_level
 	, v.is_routine
 	, coalesce(target_view.oid, target_routine.oid) as view_oid

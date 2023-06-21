@@ -53,7 +53,7 @@ begin
 	;
 	
 	with 
-	 	dependent_view as (
+	 	dependent_obj as (
 	 		select 
 				obj_oid
 				, obj_name
@@ -61,6 +61,7 @@ begin
 				, obj_class
 				, obj_type
 				, dep_level
+				, (obj_type in ('v'::"char", 'm'::"char")) as is_view
 	 		from
 				${mainSchemaName}.f_sys_obj_dependency(
 					i_obj_name => i_view_name
@@ -70,8 +71,7 @@ begin
 					, i_exclude_curr_obj => false
 				)	 	
 			where 
-				(obj_type in ('v'::"char", 'm'::"char") or obj_class <> 'relation')
-      			and obj_schema not like 'pg\_%'
+				obj_schema not like 'pg\_%'
 				and obj_schema not in ('information_schema', 'public')
 				and (obj_name not like 'v\_meta\_%' or obj_schema <> '${mainSchemaName}')
 	 	)
@@ -89,44 +89,62 @@ begin
 			left join ${mainSchemaName}.meta_schema s 
 				on s.id = v.schema_id 
 		)
+		, meta_type as (
+			select 
+				t.id
+				, t.internal_name
+				, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
+				, 'relation'::name as obj_class
+			from 
+				${mainSchemaName}.meta_type t
+			left join ${mainSchemaName}.meta_schema s 
+				on s.id = t.schema_id
+			where 
+				not t.is_abstract
+		)
 		, dependency as (
 			select
-				dependent_view.*
-				, case dependent_view.obj_class 
+				dependent_obj.*
+				, case dependent_obj.obj_class 
 					when 'routine'::name then true 
 					else false  
 				end as is_routine
 				, v.view_id 
+				, t.id as type_id
 				, coalesce(v.schema_id, s.id) as schema_id  
 				, v.is_external
 				, case 
-					when (v.view_id is null or v.is_external) and dependent_view.obj_oid is not null then
+					when (v.view_id is null or v.is_external) and dependent_obj.obj_oid is not null then
 						format(E'set role %s;\n', obj_owner.rolname) 
-						|| case dependent_view.obj_class
+						|| case dependent_obj.obj_class
 							when 'relation' then 
 								${mainSchemaName}.f_view_definition(
-									i_view_oid => dependent_view.obj_oid
+									i_view_oid => dependent_obj.obj_oid
 									, i_enforce_nodata_for_matview => true
 								)
 							when 'routine' then
-								pg_catalog.pg_get_functiondef(dependent_view.obj_oid)
+								pg_catalog.pg_get_functiondef(dependent_obj.obj_oid)
 						end
 						|| E';\nreset role;'
 				end as external_view_def
 			from 
-				dependent_view
+				dependent_obj
 			left join meta_view v 
-				on v.view_name = dependent_view.obj_name 
-				and v.view_schema = dependent_view.obj_schema
-				and v.view_class = dependent_view.obj_class
+				on v.view_name = dependent_obj.obj_name 
+				and v.view_schema = dependent_obj.obj_schema
+				and v.view_class = dependent_obj.obj_class
+			left join meta_type t 
+				on t.internal_name = dependent_obj.obj_name 
+				and t.schema_name = dependent_obj.obj_schema
+				and t.obj_class = dependent_obj.obj_class
 			left join ${mainSchemaName}.meta_schema s 
-				on s.internal_name = dependent_view.obj_schema 
+				on s.internal_name = dependent_obj.obj_schema 
 			left join pg_catalog.pg_class view_obj
-				on view_obj.oid = dependent_view.obj_oid 
-				and dependent_view.obj_class = 'relation'
+				on view_obj.oid = dependent_obj.obj_oid 
+				and dependent_obj.obj_class = 'relation'
 			left join pg_catalog.pg_proc routine_obj
-				on routine_obj.oid = dependent_view.obj_oid
-				and dependent_view.obj_class = 'routine'
+				on routine_obj.oid = dependent_obj.obj_oid
+				and dependent_obj.obj_class = 'routine'
 			left join pg_catalog.pg_roles obj_owner 
 				on obj_owner.oid = coalesce(view_obj.relowner, routine_obj.proowner)
 		)
@@ -165,7 +183,7 @@ begin
 				, d.external_view_def as query
 				, true as is_external
 				, d.is_routine
-				, case when d.is_routine then true else false end
+				, d.is_routine
 				, current_timestamp
 			from 
 				dependency d 
@@ -192,46 +210,68 @@ begin
 	insert into ${mainSchemaName}.meta_view_dependency(
 		view_id
 		, master_view_id
+		, master_type_id
 		, level
 	)
 	select 
 		view_id
 		, master_view_id
+		, master_type_id
 		, level
 	from (
 		select
 			case i_treat_the_obj_as_dependent
 				when true then master_view.view_id
-				else coalesce(dependent_view.view_id, ev.id)
+				else coalesce(dependent_obj.view_id, ev.id)
 			end as view_id
 			, case i_treat_the_obj_as_dependent
-				when true then coalesce(dependent_view.view_id, ev.id)
+				when true then coalesce(dependent_obj.view_id, ev.id)
 				else master_view.view_id
 			end as master_view_id
-			, min(abs(dependent_view.dep_level)) as level
+			, null::${type.id} as master_type_id
+			, min(abs(dependent_obj.dep_level)) as level
 		from 
 			dependency master_view
-		join dependency dependent_view
-			on dependent_view.dep_level <> 0
+		join dependency dependent_obj
+			on dependent_obj.dep_level <> 0
 		left join ${mainSchemaName}.meta_schema s 
-			on s.internal_name = dependent_view.obj_schema 
+			on s.internal_name = dependent_obj.obj_schema 
 		left join new_external_schema es 
-			on es.internal_name = dependent_view.obj_schema
+			on es.internal_name = dependent_obj.obj_schema
 		left join new_external_view ev 
-			on ev.internal_name = dependent_view.obj_name
+			on ev.internal_name = dependent_obj.obj_name
 			and ev.schema_id = coalesce(s.id, es.id)
-			and ev.is_routine = dependent_view.is_routine
+			and ev.is_routine = dependent_obj.is_routine
 		left join actualized_external_view aev
-			on aev.id = dependent_view.view_id
+			on aev.id = dependent_obj.view_id
 		where
 			master_view.dep_level = 0
+			and master_view.is_view
 		group by
-			coalesce(dependent_view.view_id, ev.id)
+			coalesce(dependent_obj.view_id, ev.id)
 			, master_view.view_id
+		union all
+		select
+			master_view.view_id
+			, null::${type.id} as master_view_id
+			, dependent_obj.type_id as master_type_id
+			, min(abs(dependent_obj.dep_level)) as level
+		from 
+			dependency master_view
+		join dependency dependent_obj
+			on dependent_obj.dep_level <> 0
+		where
+			master_view.dep_level = 0
+			and master_view.is_view
+			and dependent_obj.type_id is not null
+			and i_treat_the_obj_as_dependent
+		group by
+			master_view.view_id
+			, dependent_obj.type_id
 	) t 
 	where 
 		view_id is not null 
-		and master_view_id is not null		
+		and coalesce(master_view_id, master_type_id) is not null		
 	;	
 end
 $procedure$;			

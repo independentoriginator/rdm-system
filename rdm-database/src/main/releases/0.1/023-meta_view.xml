@@ -269,5 +269,133 @@
 		</addColumn>
 
 	</changeSet>
+	
+	<changeSet id="meta_view_dependency on meta_type" author="${default_author}">
+
+		<addColumn tableName="meta_view_dependency">
+			<column name="master_type_id" type="${type.id}" remarks="Master type identifier">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+		
+		<createIndex 
+			indexName="i_meta_view_dependency$master_type_id" 
+			tableName="meta_view_dependency">
+			<column name="master_type_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_view_dependency$master_type_id"
+			baseTableName="meta_view_dependency" 
+			baseColumnNames="master_type_id" 
+			referencedTableName="meta_view" 
+			referencedColumnNames="id" />
+			
+		<dropPrimaryKey 
+			constraintName="pk_meta_view_dependency" 
+			tableName="meta_view_dependency" />
+			
+		<dropNotNullConstraint
+			tableName="meta_view_dependency"
+			columnName="master_view_id" />		
+			
+		<!-- Check constraint -->
+		<sql dbms="postgresql">
+			alter table meta_view_dependency
+				add constraint chk_meta_view_dependency$master_view_type check (((master_view_id is null) = (master_type_id is not null)))		
+		</sql>
+		
+		<addUniqueConstraint 
+			constraintName="uc_meta_view_dependency" 
+			tableName="meta_view_dependency"
+			columnNames="view_id, master_view_id, master_type_id"/>
+
+	</changeSet>
+	
+	<changeSet id="meta_view_dependency on meta_type initial filling" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<viewExists viewName="v_sys_obj_dependency" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<sql dbms="postgresql">
+			with recursive 
+				meta_type as (
+					select 
+						t.id
+						, t.internal_name
+						, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
+					from 
+						${mainSchemaName}.meta_type t
+					left join ${mainSchemaName}.meta_schema s 
+						on s.id = t.schema_id
+					where 
+						not t.is_abstract
+				)
+				, v_sys_obj_dependency as (
+					select 
+						*
+					from 
+						${mainSchemaName}.v_sys_obj_dependency
+				)
+				, dependent as (
+					select distinct
+						t.id as type_id
+						, dep.dependent_obj_id as cls_oid
+						, dep.dependent_obj_name as cls_name
+						, dep.dependent_obj_schema as cls_schema
+						, 0 as dep_level
+					from 
+						v_sys_obj_dependency dep
+					join meta_type t 
+						on t.internal_name = dep.master_obj_name
+						and t.schema_name = dep.master_obj_schema
+					where
+						dep.master_obj_class = 'relation'
+					union
+					select distinct
+						dependent.type_id
+						, dep.dependent_obj_id as cls_oid
+						, dep.dependent_obj_name as cls_name
+						, dep.dependent_obj_schema as cls_schema
+						, dependent.dep_level + 1 as dep_level
+					from 
+						dependent
+					join v_sys_obj_dependency dep
+						on dep.master_obj_id = dependent.cls_oid
+				)
+			insert into 
+				${mainSchemaName}.meta_view_dependency(
+					view_id
+					, master_type_id
+					, level
+				)
+			select 
+				v.id as view_id
+				, dependent.type_id as master_type_id
+				, min(dependent.dep_level) as dep_level
+			from 
+				${mainSchemaName}.meta_view v
+			left join ${mainSchemaName}.meta_schema s
+				on s.id = v.schema_id
+			join dependent
+				on dependent.cls_name = v.internal_name 
+				and dependent.cls_schema = coalesce(s.internal_name, '${mainSchemaName}')
+			where 
+				not exists (
+					select 
+						1
+					from 
+						${mainSchemaName}.meta_view_dependency dep 
+					where 
+						dep.view_id = v.id
+						and dep.master_type_id = dependent.type_id
+				)
+			group by 
+				v.id
+				, dependent.type_id
+		</sql>
+	
+	</changeSet>
             			
 </databaseChangeLog>
