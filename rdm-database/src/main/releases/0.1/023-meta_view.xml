@@ -312,7 +312,22 @@
 
 	</changeSet>
 	
-	<changeSet id="meta_view_dependency on meta_type initial filling" author="${default_author}">
+	<changeSet id="meta_view_dependency on meta_type: FK fix" author="${default_author}">
+
+		<dropForeignKeyConstraint 
+			constraintName="fk_meta_view_dependency$master_type_id"
+			baseTableName="meta_view_dependency" />
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_view_dependency$master_type_id"
+			baseTableName="meta_view_dependency" 
+			baseColumnNames="master_type_id" 
+			referencedTableName="meta_type" 
+			referencedColumnNames="id" />
+	
+	</changeSet>
+	
+	<changeSet id="meta_view_dependency on meta_type initial filling (with infinite loop protection)" author="${default_author}">
 	
 		<preConditions onFail="CONTINUE">
 			<viewExists viewName="v_sys_obj_dependency" schemaName="${mainSchemaName}"/>
@@ -331,6 +346,7 @@
 						on s.id = t.schema_id
 					where 
 						not t.is_abstract
+						and not t.is_primitive
 				)
 				, v_sys_obj_dependency as (
 					select 
@@ -345,6 +361,7 @@
 						, dep.dependent_obj_name as cls_name
 						, dep.dependent_obj_schema as cls_schema
 						, 0 as dep_level
+						, array[dep.dependent_obj_id] as dep_seq
 					from 
 						v_sys_obj_dependency dep
 					join meta_type t 
@@ -352,17 +369,20 @@
 						and t.schema_name = dep.master_obj_schema
 					where
 						dep.master_obj_class = 'relation'
-					union
+					union all
 					select distinct
 						dependent.type_id
 						, dep.dependent_obj_id as cls_oid
 						, dep.dependent_obj_name as cls_name
 						, dep.dependent_obj_schema as cls_schema
 						, dependent.dep_level + 1 as dep_level
+						, dependent.dep_seq || dep.dependent_obj_id as dep_seq
 					from 
 						dependent
 					join v_sys_obj_dependency dep
 						on dep.master_obj_id = dependent.cls_oid
+					where 
+						dep.dependent_obj_id != all(dependent.dep_seq)
 				)
 			insert into 
 				${mainSchemaName}.meta_view_dependency(
