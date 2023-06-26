@@ -26,13 +26,4 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="f_is_db_maintenance_mode-function" author="${default_author}" runOnChange="true">
-		<createProcedure 
-			procedureName="f_is_db_maintenance_mode" 
-			dbms="postgresql" 
-			path="f_is_db_maintenance_mode.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
 </databaseChangeLog>

@@ -18,5 +18,16 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="v_sys_maintenance_mode-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_sys_maintenance_mode" 
+			path="v_sys_maintenance_mode.sql"
+			remarks="Database maintenance mode"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 
 </databaseChangeLog>
