@@ -7,7 +7,7 @@ from
 	pg_catalog.pg_roles u
 join pg_catalog.pg_auth_members m
 	on m.member = u.oid
-join pg_roles r 
+join pg_catalog.pg_roles r 
 	on r.oid = m.roleid
 where 
 	u.rolcanlogin
