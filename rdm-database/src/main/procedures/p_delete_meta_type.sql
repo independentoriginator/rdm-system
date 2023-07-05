@@ -89,6 +89,10 @@ begin
 	where type_id = l_type_id
 	;
 
+	delete from ${mainSchemaName}.meta_view_dependency
+	where master_type_id = l_type_id
+	;
+
 	delete from ${mainSchemaName}.meta_type_lc 
 	where master_id = l_type_id
 	;
