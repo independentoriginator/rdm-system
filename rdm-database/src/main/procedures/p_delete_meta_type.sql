@@ -1,10 +1,12 @@
 drop procedure if exists p_delete_meta_type(
 	${mainSchemaName}.meta_type.internal_name%type
+	, boolean
 );
 
 create or replace procedure p_delete_meta_type(
 	i_internal_name ${mainSchemaName}.meta_type.internal_name%type
 	, i_skip_nonexistent boolean = false
+	, i_drop_cascade boolean = false
 )
 language plpgsql
 as $procedure$
@@ -46,10 +48,11 @@ begin
 	);
 
 	execute format('
-		drop table if exists %I.%I
+		drop table if exists %I.%I %s
 		'
 		, l_schema_name
 		, i_internal_name
+		, case when i_drop_cascade then 'cascade' else '' end
 	);
 	
 	delete from ${mainSchemaName}.meta_index_column 
