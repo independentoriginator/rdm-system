@@ -18,20 +18,20 @@ begin
 		l_insert_proc_section := 
 			format(
 				$insert_section$
-				insert into 
-					%I.%I(
-						id, %s
-					)
-				select 
-					coalesce(id, nextval('%I.%I_id_seq')), %s
-				from 
-					${stagingSchemaName}.%I t
-				where 
-					t.data_package_id = i_data_package_id
-				on conflict (id) do update set
-					record_date = l_state_change_date
-					, %s	
-				;
+					insert into 
+						%I.%I(
+							id, %s
+						)
+					select 
+						coalesce(id, nextval('%I.%I_id_seq')), %s
+					from 
+						${stagingSchemaName}.%I t
+					where 
+						t.data_package_id = i_data_package_id
+					on conflict (id) do update set
+						record_date = l_state_change_date
+						, %s	
+					;
 				$insert_section$
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
@@ -128,7 +128,6 @@ begin
 		l_check_section :=
 			format(
 				$check_section$
-				
 				<<row_actuality_check>>
 				declare 
 					l_id %I.%I.id%%type;
@@ -156,7 +155,6 @@ begin
 							using hint = 'Try to recompile the data package';
 					end if;
 				end row_actuality_check;
-				
 				$check_section$
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
@@ -170,43 +168,43 @@ begin
 		l_insert_proc_section := 
 			format(
 				$insert_section$
-				update
-					%I.%I dest
-				set 
-					valid_to = l_state_change_date
-				from 
-					${stagingSchemaName}.%I src
-				where 
-					src.data_package_id = i_data_package_id
-					and dest.id = src.id
-					and dest.version = src.version
-				;
-					
-				insert into 
-					%I.%I(
-						id
-						, version
-						, valid_from
-						, valid_to
-						, record_date
+					update
+						%I.%I dest
+					set 
+						valid_to = l_state_change_date
+					from 
+						${stagingSchemaName}.%I src
+					where 
+						src.data_package_id = i_data_package_id
+						and dest.id = src.id
+						and dest.version = src.version
+					;
+						
+					insert into 
+						%I.%I(
+							id
+							, version
+							, valid_from
+							, valid_to
+							, record_date
+							, %s
+						)
+					select 
+						coalesce(id, nextval('%I.%I_id_seq')) as id
+						, nextval('%I.%I_version_seq') as version
+						, case 
+							when id is null then
+								coalesce(valid_from, ${mainSchemaName}.f_undefined_min_date())
+							else l_state_change_date
+						end as valid_from
+						, ${mainSchemaName}.f_undefined_max_date() as valid_to
+						, l_state_change_date
 						, %s
-					)
-				select 
-					coalesce(id, nextval('%I.%I_id_seq')) as id
-					, nextval('%I.%I_version_seq') as version
-					, case 
-						when id is null then
-							coalesce(valid_from, ${mainSchemaName}.f_undefined_min_date())
-						else l_state_change_date
-					end as valid_from
-					, ${mainSchemaName}.f_undefined_max_date() as valid_to
-					, l_state_change_date
-					, %s
-				from 
-					${stagingSchemaName}.%I t
-				where 
-					t.data_package_id = i_data_package_id
-				;
+					from 
+						${stagingSchemaName}.%I t
+					where 
+						t.data_package_id = i_data_package_id
+					;
 				$insert_section$
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
@@ -277,17 +275,17 @@ begin
 		l_delete_proc_section := 
 			format(
 				$delete_section$
-				update
-					%I.%I dest
-				set 
-					valid_to = l_state_change_date
-				from 
-					${stagingSchemaName}.%I src
-				where 
-					src.data_package_id = i_data_package_id
-					and dest.id = src.id
-					and dest.version = src.version
-				;
+					update
+						%I.%I dest
+					set 
+						valid_to = l_state_change_date
+					from 
+						${stagingSchemaName}.%I src
+					where 
+						src.data_package_id = i_data_package_id
+						and dest.id = src.id
+						and dest.version = src.version
+					;
 				$delete_section$
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
@@ -389,7 +387,8 @@ begin
 					and p.proname = 'p_after_processing_' || i_type_rec.internal_name
 					and p.prokind = 'p'::"char"
 					and 'i_data_package_id' = any(p.proargnames)
-			) then format('
+			) 
+			then format('
 					call %I.p_after_processing_%I(
 						i_data_package_id => i_data_package_id
 					); 
