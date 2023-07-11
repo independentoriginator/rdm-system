@@ -12,12 +12,12 @@ language plpgsql
 as $procedure$
 declare 
 	l_commands text[];
-	l_vacuum_full text := case when i_vacuum_full then ', full' else '' end;
+	l_vacuum_full text := case when i_vacuum_full then 'full, ' else '' end;
 begin
 	select
 		array_agg(
 			format(
-				'vacuum (analyze%s) %I.%I'
+				'vacuum (%sanalyze) %I.%I'
 				, l_vacuum_full 
 				, t.schema_name
 				, t.table_name
