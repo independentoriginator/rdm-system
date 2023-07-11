@@ -32,6 +32,7 @@ begin
 						add column id ${type.id} null
 						, add column version ${type.id} null
 						, add column valid_from timestamp without time zone null
+						, add column valid_to timestamp without time zone null
 					'
 					, i_type_rec.staging_schema_name
 					, i_type_rec.internal_name
