@@ -329,7 +329,7 @@ begin
   			end if;
   			
   			if l_data_package.state_name <> 'loaded' then  
-				raise exception 'The data package has unexpected state: %%', l_data_package.state_name;
+				raise exception 'The data package is in an unexpected state: %%', l_data_package.state_name;
   			end if;
   		
   			if exists (
