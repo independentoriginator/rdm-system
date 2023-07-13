@@ -47,6 +47,51 @@ begin
 			l_insert_proc_section := l_insert_proc_section || 
 				format(
 					$insert_section$
+					with 
+						meta_attribute as %s(
+							select *
+							from ${mainSchemaName}.v_meta_attribute a 
+							where a.meta_type_name = '%I'
+						)						
+						, localisable_data as (
+							select 
+								target_rec.id
+								, master_rec.id as master_id
+								, meta_attr.id as attr_id
+								, p.lang_id
+								, attr.attr_value as lc_string
+								, true as is_default_value
+							from 
+								${stagingSchemaName}.%I t
+							join ${stagingSchemaName}.data_package p 
+								on p.id = t.data_package_id
+							join %I.%I master_rec
+								on master_rec.data_package_id = t.data_package_id
+								and master_rec.data_package_rn = t.data_package_rn
+							cross join lateral (
+								values %s
+							) attr(attr_name, attr_value)
+							join meta_attribute meta_attr
+								on meta_attr.internal_name = attr.attr_name
+							left join %I.%I_lc target_rec
+								on target_rec.master_id = master_rec.id
+								and target_rec.attr_id = meta_attr.id
+								and target_rec.lang_id = p.lang_id
+								and target_rec.is_default_value = true
+							where 
+								t.data_package_id = i_data_package_id
+						) 
+						, deleted_data as (
+							delete from 
+								%I.%I_lc dest
+							using
+								localisable_data src
+							where 
+								dest.id = src.id
+								and src.lc_string is null
+							returning 
+								dest.id as deleted_id
+						)
 					insert into 
 						%I.%I_lc(
 							id
@@ -56,58 +101,37 @@ begin
 							, lc_string
 							, is_default_value
 						)
-					with 
-						meta_attribute as %s(
-							select *
-							from ${mainSchemaName}.v_meta_attribute a 
-							where a.meta_type_name = '%I'
-						)						
 					select 
-						coalesce(target_rec.id, nextval('%I.%I_lc_id_seq'))
-						, master_rec.id as master_id
-						, meta_attr.id as attr_id
-						, p.lang_id
-						, attr.attr_value as lc_string
-						, true as is_default_value
+						coalesce(src.id, nextval('%I.%I_lc_id_seq')) as id
+						, src.master_id
+						, src.attr_id
+						, src.lang_id
+						, src.lc_string
+						, src.is_default_value
 					from 
-						${stagingSchemaName}.%I t
-					join ${stagingSchemaName}.data_package p 
-						on p.id = t.data_package_id
-					join %I.%I master_rec
-						on master_rec.data_package_id = t.data_package_id
-						and master_rec.data_package_rn = t.data_package_rn
-					cross join lateral (
-						values %s
-					) attr(attr_name, attr_value)
-					join meta_attribute meta_attr
-						on meta_attr.internal_name = attr.attr_name
-					left join %I.%I_lc target_rec
-						on target_rec.master_id = master_rec.id
-						and target_rec.attr_id = meta_attr.id
-						and target_rec.lang_id = p.lang_id
-						and target_rec.is_default_value = true
+						localisable_data src
+					left join deleted_data d
+						on d.deleted_id = src.id
 					where 
-						t.data_package_id = i_data_package_id
-						and (
-							attr.attr_value is not null
-							or target_rec.id is not null
-						)
+						src.lc_string is not null
 					on conflict (id) do update set
 						lc_string = excluded.lc_string		
 					;
 					$insert_section$
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
 					, case when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') then 'materialized ' else '' end
 					, i_type_rec.internal_name
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
-					, i_type_rec.internal_name					
+					, i_type_rec.internal_name
 					, i_type_rec.localisable_attr_values_list
 					, i_type_rec.schema_name
-					, i_type_rec.internal_name					
+					, i_type_rec.internal_name
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
 				);
 		end if;
 		
@@ -189,7 +213,31 @@ begin
 					;
 						
 					with 
-						initial_versions as (
+						package_data as (
+							select 
+								t.id
+								, t.version
+								, t.valid_from
+								, t.valid_to
+								, %s
+								, row_number() over(
+									partition by
+										t.external_id
+										, t.meta_id
+									order by 
+										t.external_id
+										, t.external_version_ordinal_num
+										, t.external_version_valid_from
+										, t.meta_id
+										, t.meta_version_ordinal_num
+										, t.meta_version_valid_from
+								) as version_ordinal_num
+							from 								
+								${stagingSchemaName}.%I t
+							where 
+								t.data_package_id = i_data_package_id
+						)
+						, initial_versions as (
 							insert into 
 								%I.%I(
 									id
@@ -253,34 +301,14 @@ begin
 								) as valid_to
 								, l_state_change_date
 								, %s
-							from (
-								select 
-									t.id
-									, t.version
-									, t.valid_from
-									, t.valid_to
-									, %s
-									, row_number() over(
-										partition by
-											t.external_id
-											, t.meta_id
-										order by 
-											t.external_id
-											, t.external_version_ordinal_num
-											, t.external_version_valid_from
-											, t.meta_id
-											, t.meta_version_ordinal_num
-											, t.meta_version_valid_from
-									) as version_ordinal_num
-								from 								
-									${stagingSchemaName}.%I t
-								where 
-									t.data_package_id = i_data_package_id
-							) t
+							from 
+								package_data t
 							where 
 								t.version_ordinal_num = 1
 							on conflict (id, version) do update set
 								record_date = l_state_change_date
+								, valid_from = excluded.valid_from
+								, valid_to = excluded.valid_to
 								, %s	
 							returning 
 								id as inserted_id
@@ -327,12 +355,11 @@ begin
 							, t.valid_to
 							, %s
 						from 								
-							${stagingSchemaName}.%I t
+							package_data t
 						join initial_versions iv 
 							on iv.inserted_external_id = t.external_id
-							and iv.inserted_external_version <> t.external_version
 						where
-							t.data_package_id = i_data_package_id
+							t.version_ordinal_num > 1
 							and t.external_id is not null
 						union all
 						select 
@@ -342,12 +369,11 @@ begin
 							, t.valid_to
 							, %s
 						from 								
-							${stagingSchemaName}.%I t
+							package_data t
 						join initial_versions iv 
 							on iv.inserted_meta_id = t.meta_id
-							and iv.inserted_meta_version <> t.meta_version
 						where
-							t.data_package_id = i_data_package_id
+							t.version_ordinal_num > 1
 							and t.external_version is null
 							and t.meta_version is not null
 					) t
@@ -360,12 +386,16 @@ begin
 						, t.meta_version_valid_from
 					on conflict (id, version) do update set
 						record_date = l_state_change_date
+						, valid_from = excluded.valid_from
+						, valid_to = excluded.valid_to
 						, %s	
 					;
 				$insert_section$
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.internal_name
+				, i_type_rec.non_localisable_attributes
+				, i_type_rec.internal_name
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
@@ -378,8 +408,6 @@ begin
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
-				, i_type_rec.non_localisable_attributes
-				, i_type_rec.internal_name
  				, i_type_rec.insert_expr_on_conflict_update_part
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
@@ -388,9 +416,7 @@ begin
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
 				, i_type_rec.non_localisable_attributes
-				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
-				, i_type_rec.internal_name
  				, i_type_rec.insert_expr_on_conflict_update_part
 			);
 			
@@ -398,6 +424,53 @@ begin
 			l_insert_proc_section := l_insert_proc_section ||  
 				format(
 					$insert_section$
+					with 
+						meta_attribute as %s(
+							select *
+							from ${mainSchemaName}.v_meta_attribute a 
+							where a.meta_type_name = '%I'
+						)	
+						, localisable_data as (
+							select 
+								target_rec.id
+								, master_rec.id as master_id
+								, master_rec.version as master_version
+								, meta_attr.id as attr_id
+								, p.lang_id
+								, attr.attr_value as lc_string
+								, true as is_default_value
+							from 
+								${stagingSchemaName}.%I t
+							join ${stagingSchemaName}.data_package p 
+								on p.id = t.data_package_id
+							join %I.%I master_rec
+								on master_rec.data_package_id = t.data_package_id
+								and master_rec.data_package_rn = t.data_package_rn
+							cross join lateral (
+								values %s
+							) attr(attr_name, attr_value)
+							join meta_attribute meta_attr
+								on meta_attr.internal_name = attr.attr_name
+							left join %I.%I_lc target_rec
+								on target_rec.master_id = master_rec.id
+								and target_rec.master_version = master_rec.version
+								and target_rec.attr_id = meta_attr.id
+								and target_rec.lang_id = p.lang_id
+								and target_rec.is_default_value = true
+							where 
+								t.data_package_id = i_data_package_id
+						) 
+						, deleted_data as (
+							delete from 
+								%I.%I_lc dest
+							using
+								localisable_data src
+							where 
+								dest.id = src.id
+								and src.lc_string is null
+							returning 
+								dest.id as deleted_id
+						)
 					insert into 
 						%I.%I_lc(
 							id
@@ -408,58 +481,36 @@ begin
 							, lc_string
 							, is_default_value
 						)
-					with 
-						meta_attribute as %s(
-							select *
-							from ${mainSchemaName}.v_meta_attribute a 
-							where a.meta_type_name = '%I'
-						)						
 					select 
-						coalesce(target_rec.id, nextval('%I.%I_lc_id_seq'))
-						, master_rec.id as master_id
-						, master_rec.version as master_version
-						, meta_attr.id as attr_id
-						, p.lang_id
-						, attr.attr_value as lc_string
-						, true as is_default_value
+						coalesce(src.id, nextval('%I.%I_lc_id_seq')) as id
+						, src.master_id
+						, src.master_version
+						, src.attr_id
+						, src.lang_id
+						, src.lc_string
+						, src.is_default_value
 					from 
-						${stagingSchemaName}.%I t
-					join ${stagingSchemaName}.data_package p 
-						on p.id = t.data_package_id
-					join %I.%I master_rec
-						on master_rec.data_package_id = t.data_package_id
-						and master_rec.data_package_rn = t.data_package_rn
-					cross join lateral (
-						values %s
-					) attr(attr_name, attr_value)
-					join meta_attribute meta_attr
-						on meta_attr.internal_name = attr.attr_name
-					left join %I.%I_lc target_rec
-						on target_rec.master_id = master_rec.id
-						and target_rec.master_version = master_rec.version
-						and target_rec.attr_id = meta_attr.id
-						and target_rec.lang_id = p.lang_id
-						and target_rec.is_default_value = true
+						localisable_data src
+					left join deleted_data d
+						on d.deleted_id = src.id
 					where 
-						t.data_package_id = i_data_package_id
-						and (
-							attr.attr_value is not null				
-							or target_rec.id is not null
-						)
+						src.lc_string is not null
 					on conflict (id) do update set
 						lc_string = excluded.lc_string		
 					;
 					$insert_section$
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
 					, case when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') then 'materialized ' else '' end
-					, i_type_rec.internal_name
-					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.localisable_attr_values_list
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 				);
