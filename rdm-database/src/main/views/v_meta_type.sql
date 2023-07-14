@@ -27,6 +27,12 @@ with
 				case 
 					when a.is_localisable = false 
 					then a.internal_name || ' = excluded.' || a.internal_name
+						|| case
+							when a.is_referenced_type_temporal then
+								', ' || a.version_ref_name || ' = excluded.' || a.version_ref_name
+							else 
+								''
+						end
 				end
 				, ', ' order by a.ordinal_position nulls last
 			) as insert_expr_on_conflict_update_part		
