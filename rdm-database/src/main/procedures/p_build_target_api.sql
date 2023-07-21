@@ -270,7 +270,8 @@ begin
 										from 
 											%I.%I e 
 										where 
-											e.meta_id = t.meta_id
+											t.external_id is null 
+											and e.meta_id = t.meta_id
 											and e.source_id = t.source_id
 										order by 
 											t.meta_id
