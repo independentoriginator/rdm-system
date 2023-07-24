@@ -523,7 +523,13 @@ begin
 					update
 						%I.%I dest
 					set 
-						valid_to = l_state_change_date
+						valid_to = 
+							case 
+								when dest.external_version is not null 
+									or dest.meta_version is not null
+								then valid_from 
+								else l_state_change_date
+							end
 					from 
 						${stagingSchemaName}.%I src
 					where 
@@ -532,20 +538,6 @@ begin
 						and dest.version = src.version
 						and dest.external_version is null 
 						and dest.meta_version is null 
-					;
-				
-					delete from
-						%I.%I dest
-					using 
-						${stagingSchemaName}.%I src
-					where 
-						src.data_package_id = i_data_package_id
-						and dest.id = src.id
-						and dest.version = src.version
-						and (
-							dest.external_version is not null 
-							or dest.meta_version is not null
-						)
 					;
 				$delete_section$
 				, i_type_rec.schema_name
