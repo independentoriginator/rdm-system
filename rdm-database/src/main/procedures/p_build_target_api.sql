@@ -527,7 +527,7 @@ begin
 							case 
 								when dest.external_version is not null 
 									or dest.meta_version is not null
-								then valid_from 
+								then dest.valid_from 
 								else l_state_change_date
 							end
 					from 
