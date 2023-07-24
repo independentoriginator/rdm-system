@@ -43,7 +43,7 @@ begin
 				, i_type_rec.insert_expr_on_conflict_update_part
 			);
 	
-		if i_type_rec.is_localization_table_generated = true then
+		if i_type_rec.is_localization_table_generated then
 			l_insert_proc_section := l_insert_proc_section || 
 				format(
 					$insert_section$
@@ -77,7 +77,7 @@ begin
 								on target_rec.master_id = master_rec.id
 								and target_rec.attr_id = meta_attr.id
 								and target_rec.lang_id = p.lang_id
-								and target_rec.is_default_value = true
+								and target_rec.is_default_value
 							where 
 								t.data_package_id = i_data_package_id
 						) 
@@ -421,7 +421,7 @@ begin
  				, i_type_rec.insert_expr_on_conflict_update_part
 			);
 			
-		if i_type_rec.is_localization_table_generated = true then
+		if i_type_rec.is_localization_table_generated then
 			l_insert_proc_section := l_insert_proc_section ||  
 				format(
 					$insert_section$
@@ -457,7 +457,7 @@ begin
 								and target_rec.master_version = master_rec.version
 								and target_rec.attr_id = meta_attr.id
 								and target_rec.lang_id = p.lang_id
-								and target_rec.is_default_value = true
+								and target_rec.is_default_value
 							where 
 								t.data_package_id = i_data_package_id
 						) 
@@ -533,7 +533,42 @@ begin
 						and dest.external_version is null 
 						and dest.meta_version is null 
 					;
-				
+				$delete_section$
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
+				, i_type_rec.internal_name
+			) 
+			|| case 
+				when i_type_rec.is_localization_table_generated then
+				format(
+					$delete_section$
+					delete from
+						%I.%I_lc dest_lc
+					using 
+						${stagingSchemaName}.%I src
+					join %I.%I dest
+						on dest.id = src.id
+						and dest.version = src.version
+						and (
+							dest.external_version is not null 
+							or dest.meta_version is not null
+						)
+					where 
+						src.data_package_id = i_data_package_id
+						and dest_lc.master_id = dest.id
+						and dest_lc.master_version = dest.version
+					;
+					$delete_section$
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+					, i_type_rec.internal_name
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+				) 
+				else ''
+			end 
+			|| format(
+				$delete_section$
 					delete from
 						%I.%I dest
 					using 
@@ -548,9 +583,6 @@ begin
 						)
 					;
 				$delete_section$
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name
-				, i_type_rec.internal_name
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.internal_name
