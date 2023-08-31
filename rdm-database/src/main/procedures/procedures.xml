@@ -8,6 +8,24 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
+	<changeSet id="p_alter_table_column_type-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_alter_table_column_type" 
+			dbms="postgresql" 
+			path="p_alter_table_column_type.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
+	<changeSet id="p_adjust_serial_sequence_value-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_adjust_serial_sequence_value" 
+			dbms="postgresql" 
+			path="p_adjust_serial_sequence_value.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 	<changeSet id="p_build_target_roles-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_roles" 
@@ -184,24 +202,6 @@
 			procedureName="p_refresh_materialized_views" 
 			dbms="postgresql" 
 			path="p_refresh_materialized_views.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
-	<changeSet id="p_alter_table_column_type-procedure" author="${default_author}" runOnChange="true">
-		<createProcedure 
-			procedureName="p_alter_table_column_type" 
-			dbms="postgresql" 
-			path="p_alter_table_column_type.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
-	<changeSet id="p_adjust_serial_sequence_value-procedure" author="${default_author}" runOnChange="true">
-		<createProcedure 
-			procedureName="p_adjust_serial_sequence_value" 
-			dbms="postgresql" 
-			path="p_adjust_serial_sequence_value.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>

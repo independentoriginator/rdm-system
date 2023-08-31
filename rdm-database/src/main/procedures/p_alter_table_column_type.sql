@@ -62,7 +62,7 @@ begin
 	from 
 		${mainSchemaName}.f_sys_obj_dependency(
 			i_obj_name => i_table_name
-			, i_schema_name => 'dict'
+			, i_schema_name => i_schema_name
 			, i_is_routine => false
 			, i_treat_the_obj_as_dependent => false
 		) dependent_obj 

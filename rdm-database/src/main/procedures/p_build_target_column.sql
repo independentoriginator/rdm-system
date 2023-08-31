@@ -36,14 +36,11 @@ begin
 			end if;
 		else
 			if i_attr_rec.target_attr_type <> i_attr_rec.column_data_type then 
-				execute format('
-					alter table %I.%I
-						alter column %I set data type %s
-					'
-					, i_attr_rec.schema_name
-					, i_attr_rec.meta_type_name 
-					, i_attr_rec.internal_name 
-					, i_attr_rec.target_attr_type
+				call ${mainSchemaName}.p_alter_table_column_type(
+					i_schema_name => i_attr_rec.schema_name
+					, i_table_name => i_attr_rec.meta_type_name
+					, i_column_name => i_attr_rec.internal_name
+					, i_column_type => i_attr_rec.target_attr_type
 				);
 			end if;
 		end if;
