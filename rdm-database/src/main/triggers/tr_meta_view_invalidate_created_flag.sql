@@ -3,5 +3,9 @@ create trigger tr_meta_view_invalidate_created_flag
 before update 
 on meta_view
 for each row 
-when (old.is_created = true and new.query <> old.query)
+when (
+	old.is_created = true 
+	and new.query is distinct from old.query
+	and (not old.is_routine or not old.is_external)
+)
 execute function ${mainSchemaName}.trf_meta_view_before_update();
