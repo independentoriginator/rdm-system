@@ -665,6 +665,11 @@ begin
 			io_check_date := l_state_change_date;
 		end
 		$procedure$;
+	
+		comment on routine %I.p_process_%I(
+			${stagingSchemaName}.data_package.id%%type
+			, ${stagingSchemaName}.data_package.state_change_date%%type
+		) is $comment$%s$comment$
 		$target_procedure$			
 		, i_type_rec.schema_name
 		, i_type_rec.internal_name
@@ -694,6 +699,9 @@ begin
 			)
 			else ''
 		end
+		, i_type_rec.schema_name
+		, i_type_rec.internal_name
+		, i_type_rec.table_description
 	);
 end
 $$;			
