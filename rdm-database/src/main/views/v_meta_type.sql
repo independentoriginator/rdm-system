@@ -177,7 +177,7 @@ left join pg_catalog.pg_description target_table_descr
 	and target_table_descr.classoid = 'pg_class'::regclass
 	and target_table_descr.objsubid = 0
 left join pg_catalog.pg_description lc_table_descr 
-	on lc_table_descr.objoid = target_table.oid
+	on lc_table_descr.objoid = lc_table.oid
 	and lc_table_descr.classoid = 'pg_class'::regclass
 	and lc_table_descr.objsubid = 0	
 left join pg_catalog.pg_description staging_table_descr 
