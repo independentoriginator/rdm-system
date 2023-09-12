@@ -25,12 +25,21 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
-
+	
 	<changeSet id="p_build_target_roles-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_roles" 
 			dbms="postgresql" 
 			path="p_build_target_roles.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="p_build_target_schemas-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_build_target_schemas" 
+			dbms="postgresql" 
+			path="p_build_target_schemas.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>

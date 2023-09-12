@@ -9,14 +9,6 @@ declare
 	l_is_pk_index_exists boolean := i_type_rec.is_pk_index_exists;
 	l_table_rec record;
 begin
-	if i_type_rec.schema_id is not null and i_type_rec.is_schema_exists = false then
-		execute format('
-			create schema if not exists %I
-			'
-			, i_type_rec.schema_name
-		);
-	end if;
-	
 	if i_type_rec.is_table_exists = false then 
 		if i_type_rec.is_temporal = false then
 			execute format('

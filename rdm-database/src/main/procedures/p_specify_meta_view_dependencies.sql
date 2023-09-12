@@ -151,9 +151,11 @@ begin
 		, new_external_schema as (
 			insert into ${mainSchemaName}.meta_schema(
 				internal_name
+				, is_external
 			)
 			select distinct
 				d.obj_schema as internal_name
+				, true as is_external
 			from 
 				dependency d 
 			where 	

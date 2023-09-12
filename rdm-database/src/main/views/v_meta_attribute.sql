@@ -265,3 +265,5 @@ left join pg_catalog.pg_description target_staging_table_column_descr
 	and target_staging_table_column_descr.classoid = 'pg_class'::regclass
 	and target_staging_table_column_descr.objsubid = target_staging_table_column.ordinal_position
 ;
+
+comment on view v_meta_schema is 'Метаатрибуты';

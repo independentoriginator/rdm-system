@@ -129,9 +129,9 @@ select
 	end as is_ref_to_master_column_in_staging_table_exists
 	, t.is_built
 	, type_name.lc_string as table_description
-	, target_table_descr.description target_table_description
-	, staging_table_descr.description staging_table_description
-	, lc_table_descr.description localization_table_description
+	, target_table_descr.description as target_table_description
+	, staging_table_descr.description as staging_table_description
+	, lc_table_descr.description as localization_table_description
 from 
 	${mainSchemaName}.meta_type t
 left join ${mainSchemaName}.meta_schema s
@@ -189,3 +189,5 @@ where
 	t.is_primitive = false
 	and t.is_abstract = false
 ;
+
+comment on view v_meta_schema is 'Метатипы';

@@ -6,6 +6,8 @@ declare
 begin
 	call ${mainSchemaName}.p_build_target_roles();
 
+	call ${mainSchemaName}.p_build_target_schemas();
+
 	for l_type_rec in (
 		select
 			t.*

@@ -81,5 +81,103 @@
 		</insert>
 		
 	</changeSet>        
+	
+	<changeSet id="meta_schema: is_external" author="${default_author}">
+		<addColumn tableName="meta_schema">
+			<column 
+				name="is_external" 
+				type="boolean"
+				remarks="Is external"
+				defaultValue="false">
+				<constraints nullable="false" />
+			</column>
+		</addColumn> 
+	</changeSet>        
+	
+	<changeSet id="meta_schema localisation table" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<not>
+				<tableExists tableName="meta_schema_lc" schemaName="${mainSchemaName}"/>
+			</not>
+		</preConditions>	
+
+		<createTable
+			tableName="meta_schema_lc">
+			<column name="id" type="${type.id}" autoIncrement="true">
+				<constraints nullable="false" />
+			</column>
+			<column name="master_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="attr_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="lang_id" type="${type.id}">
+				<constraints nullable="false" />
+			</column>
+			<column name="lc_string" type="clob">
+				<constraints nullable="true" />
+			</column>
+			<column name="is_default_value" type="boolean" defaultValueBoolean="true">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_meta_schema_lc" 
+			tableName="meta_schema_lc"
+			columnNames="id"/>
+
+		<createIndex 
+			indexName="i_meta_schema_lc$master_id" 
+			tableName="meta_schema_lc">
+			<column name="master_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_schema_lc$master_id"
+			baseTableName="meta_schema_lc" 
+			baseColumnNames="master_id" 
+			referencedTableName="meta_schema" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_schema_lc$attr_id" 
+			tableName="meta_schema_lc">
+			<column name="attr_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_schema_lc$attr_id"
+			baseTableName="meta_schema_lc" 
+			baseColumnNames="attr_id"
+			referencedTableName="meta_attribute" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_schema_lc$lang_id" 
+			tableName="meta_schema_lc">
+			<column name="lang_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_schema_lc$lang_id"
+			baseTableName="meta_schema_lc" 
+			baseColumnNames="lang_id"
+			referencedTableName="language" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="ui_meta_schema_lc" 
+			tableName="meta_schema_lc"
+			unique="true">
+			<column name="master_id" />
+			<column name="attr_id" />
+			<column name="lang_id" />
+			<column name="is_default_value" />
+		</createIndex>
+		
+	</changeSet>       
 
 </databaseChangeLog>
