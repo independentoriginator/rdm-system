@@ -1,0 +1,4 @@
+ToDO list
+1. Autonomous transactions: simulation by dblink and using available PostgresPro extension
+2. Static code analysis tool: plpgsql_check extension as an example
+3. Start using Jenkins
