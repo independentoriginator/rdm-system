@@ -42,3 +42,6 @@ left join pg_catalog.pg_stat_activity blocking_activity
 	on blocking_activity.pid = blocking_pid.pid
 where 
 	not waiting_lock.granted
+;
+
+comment on view v_sys_blocked_activity is 'Блокировки';

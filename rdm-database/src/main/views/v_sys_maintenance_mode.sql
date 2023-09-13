@@ -21,3 +21,6 @@ where
 	and not v.is_populated
 	and not v.is_disabled
 limit 1
+;
+
+comment on view v_sys_maintenance_mode is 'Признак включения режима обслуживания базы данных';

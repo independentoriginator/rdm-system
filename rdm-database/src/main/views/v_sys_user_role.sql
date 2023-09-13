@@ -11,4 +11,6 @@ join pg_catalog.pg_roles r
 	on r.oid = m.roleid
 where 
 	u.rolcanlogin
-	
+;
+
+comment on view v_sys_user_role is 'Пользовательские роли';

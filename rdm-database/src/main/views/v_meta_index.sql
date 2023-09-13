@@ -225,3 +225,5 @@ where
 			and uc_index.index_name = target_index.relname
 	)
 ;
+
+comment on view v_meta_index is 'Метаиндексы';

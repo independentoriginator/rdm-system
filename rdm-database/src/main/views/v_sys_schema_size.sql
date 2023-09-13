@@ -27,6 +27,8 @@ from (
 ) t
 ;
 
+comment on view v_sys_schema_size is 'Размер схем';
+
 do $$
 declare 
 	l_roles text := (

@@ -33,6 +33,8 @@ from (
 ) t
 ;
 
+comment on view v_sys_table_size is 'Размер таблиц';
+
 do $$
 declare 
 	l_roles text := (
