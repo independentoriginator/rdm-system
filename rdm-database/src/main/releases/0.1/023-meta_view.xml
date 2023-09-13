@@ -467,5 +467,13 @@
 		</sql>
 	
 	</changeSet>
+	
+	<changeSet id="meta_view_dependency description" author="${default_author}">
+	
+ 		<setTableRemarks
+            tableName="meta_view_dependency"
+            remarks="Зависимость метапредставления" />  	
+	
+	</changeSet>
             			
 </databaseChangeLog>
