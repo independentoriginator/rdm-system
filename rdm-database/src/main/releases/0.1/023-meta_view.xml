@@ -208,6 +208,56 @@
 		
 	</changeSet>     
 	
+	<changeSet id="meta_view name" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_type_lc">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_view')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Метапредставление"/>
+		</insert>
+	
+	</changeSet>
+	
+	<changeSet id="meta_view_group name" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_type_lc">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_view_group')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Группа метапредставлений"/>
+		</insert>
+	
+	</changeSet>
+	
 	<changeSet id="meta_view_creation_order" author="${default_author}">
 
 		<addColumn tableName="meta_view">

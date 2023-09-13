@@ -242,6 +242,31 @@
 		</insert>
 		
 	</changeSet>
+	
+	<changeSet id="data_package_state name" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_type_lc">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'data_package_state')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Состояние пакета данных"/>
+		</insert>
+	
+	</changeSet>
 
 	<changeSet id="data_package-states" author="${default_author}">
 	

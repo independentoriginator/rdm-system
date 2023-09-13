@@ -57,6 +57,31 @@
 		</insert>
 
 	</changeSet>        
+	
+	<changeSet id="dbms_type name" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_type_lc">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'dbms_type')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Тип СУБД (Liquibase-compatible)"/>
+		</insert>
+	
+	</changeSet>
         
 	<changeSet id="meta_expr" author="${default_author}">
 
@@ -181,6 +206,48 @@
 		</insert>
 
 	</changeSet>        
+	
+	<changeSet id="meta_expr name registration" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_type_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_type_lc">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_expr')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Метавыражение"/>
+		</insert>
+
+		<insert tableName="meta_type_lc">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'meta_expr_body')"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_type'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Тело метавыражения"/>
+		</insert>
+	
+	</changeSet>
 
 	<changeSet id="attribute-default-value" author="${default_author}">
 
