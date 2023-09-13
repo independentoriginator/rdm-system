@@ -76,4 +76,4 @@ left join pg_catalog.pg_proc target_routine
 	) = v.internal_name
 ;
 
-comment on view v_meta_schema is 'Метапредставления';
+comment on view v_meta_view is 'Метапредставления';

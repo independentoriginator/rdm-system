@@ -190,4 +190,4 @@ where
 	and t.is_abstract = false
 ;
 
-comment on view v_meta_schema is 'Метатипы';
+comment on view v_meta_type is 'Метатипы';
