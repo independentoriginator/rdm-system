@@ -33,6 +33,16 @@ begin
 			raise exception 'The type specified is invalid: %', i_internal_name;
 		end if;
 	end if;
+
+	execute format('
+		drop procedure if exists %I.p_process_%I(
+			${stagingSchemaName}.data_package.id%%type
+			, ${stagingSchemaName}.data_package.state_change_date%%type
+		)
+		'
+		, l_schema_name
+		, i_internal_name
+	);
 	
 	execute format('
 		drop table if exists ${stagingSchemaName}.%I
