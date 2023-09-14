@@ -17,7 +17,7 @@ begin
 			s.ordinal_num
 	) 
 	loop
-		if l_schema_rec.id is null and not l_schema_rec.is_schema_exists then
+		if not l_schema_rec.is_schema_exists then
 			execute format('
 				create schema %I
 				'
