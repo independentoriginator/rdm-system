@@ -104,3 +104,7 @@ begin
 	
 end
 $procedure$;			
+
+comment on procedure p_build_target_staging_table(
+	record
+) is 'Генерация целевой промежуточной таблицы';

@@ -170,4 +170,15 @@ begin
 		raise exception 'p_execute_in_parallel failure: %', l_last_err_msg;	
 	end if;
 end
-$procedure$;		
+$procedure$;
+
+comment on procedure ${stagingSchemaName}.p_execute_in_parallel(
+	text[]
+	, integer
+	, text
+	, text
+	, integer
+	, integer
+	, integer
+	, integer
+) is 'Исполнение набора команд в параллельном режиме';

@@ -74,4 +74,11 @@ begin
 	where id = l_view_id
 	;
 end
-$procedure$;			
+$procedure$;
+
+comment on procedure p_delete_meta_view(
+	${mainSchemaName}.meta_view.id%type
+	, ${mainSchemaName}.meta_view.internal_name%type
+	, ${mainSchemaName}.meta_schema.internal_name%type
+	, boolean
+) is 'Удаление метапредставления';

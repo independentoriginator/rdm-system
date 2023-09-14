@@ -28,4 +28,12 @@ select
 		else 
 			i_data_type
 	end
-$function$;		
+$function$;
+
+comment on function f_column_type_specification(
+	information_schema.columns.data_type%type
+	, information_schema.columns.character_maximum_length%type
+	, information_schema.columns.numeric_precision%type
+	, information_schema.columns.numeric_scale%type	
+	, information_schema.columns.datetime_precision%type	
+) is 'Спецификация типа столбца таблицы';

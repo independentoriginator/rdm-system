@@ -40,4 +40,8 @@ begin
 		);
 	end if;
 end
-$procedure$;			
+$procedure$;	
+
+comment on procedure p_build_target_index(
+	record
+) is 'Генерация целевого индекса';

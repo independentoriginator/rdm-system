@@ -167,3 +167,16 @@ begin
 	end if;
 end
 $procedure$;			
+
+comment on procedure p_refresh_materialized_views(
+	boolean
+	, ${mainSchemaName}.meta_schema.internal_name%type
+	, integer
+	, text
+	, text
+	, integer
+	, boolean
+	, integer
+	, boolean
+) is 'Обновить материализованные представления';
+

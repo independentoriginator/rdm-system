@@ -26,4 +26,6 @@ begin
 	
 	return null;
 end
-$$;			
+$$;
+
+comment on function trf_meta_index_after_update is 'Метаиндекс. Триггерная функция для события "После обновления"';

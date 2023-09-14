@@ -12,3 +12,5 @@ begin
 	return new;
 end
 $$;			
+
+comment on function trf_meta_type_before_update is 'Метатип. Триггерная функция для события "Перед обновлением"';

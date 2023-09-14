@@ -54,3 +54,7 @@ begin
 	end if;
 end 
 $$;
+
+comment on procedure p_refresh_materialized_view(
+	${mainSchemaName}.meta_view.id%type
+) is 'Обновить материализованное представление';

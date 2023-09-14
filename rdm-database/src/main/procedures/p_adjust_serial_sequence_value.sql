@@ -78,4 +78,12 @@ begin
 			;
 	end if; 
 end
-$procedure$;			
+$procedure$;		
+
+comment on procedure p_adjust_serial_sequence_value(
+	name
+	, name
+	, name
+	, name
+	, name
+) is 'Исправление текущего значения последовательности';

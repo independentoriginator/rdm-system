@@ -173,4 +173,8 @@ begin
 		id = i_view_rec.id
 	;
 end
-$procedure$;			
+$procedure$;		
+
+comment on procedure p_build_target_view(
+	record
+) is 'Генерация целевого представления';

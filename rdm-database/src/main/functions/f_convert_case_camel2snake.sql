@@ -16,3 +16,7 @@ select
 		)
 	)
 $function$;		
+
+comment on function ${stagingSchemaName}.f_convert_case_camel2snake(
+	text	
+) is 'Преобразование стиля написания текста из "CamelCase" в "snake_case"';

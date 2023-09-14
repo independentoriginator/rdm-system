@@ -116,4 +116,9 @@ begin
 		)
 	;
 end
-$function$;		
+$function$;
+
+comment on function f_view_definition(
+	pg_catalog.pg_class.oid%type
+	, boolean
+) is 'Определение представления';

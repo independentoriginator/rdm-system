@@ -29,3 +29,5 @@ begin
 	return null;
 end
 $$;			
+
+comment on function trf_meta_index_column_after_update is 'Поле метаиндекса. Триггерная функция для события "После обновления"';

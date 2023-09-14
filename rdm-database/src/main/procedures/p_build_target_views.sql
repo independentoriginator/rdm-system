@@ -63,4 +63,7 @@ when others then
 		, l_exception_context
 		;
 end
-$procedure$;			
+$procedure$;	
+
+comment on procedure p_build_target_views(
+) is 'Генерация целевых представлений';

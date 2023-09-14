@@ -11,3 +11,6 @@ from
 where 
 	s.name = 'max_identifier_length'
 $function$;		
+
+comment on function ${stagingSchemaName}.f_system_name_max_length(
+) is 'Максимально возможная длина системного имени';

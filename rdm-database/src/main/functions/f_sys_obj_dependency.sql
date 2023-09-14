@@ -167,3 +167,12 @@ group by
 	, obj_class
 	, obj_type
 $function$;
+
+comment on function f_sys_obj_dependency(
+	text
+	, name
+	, bool
+	, bool
+	, integer
+	, bool
+) is 'Зависимости системного объекта';

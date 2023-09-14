@@ -22,3 +22,6 @@ select
 		)
 	);
 $function$;		
+
+comment on function f_default_language_id(
+) is 'Идентификатор языка по умолчанию';

@@ -28,3 +28,7 @@ from
 where
 	t.id = i_meta_type_id
 $function$;	
+
+comment on function f_is_meta_type_has_localization(
+	${mainSchemaName}.meta_type.id%type
+) is 'Признак наличия локализуемых атрибутов у метатипа';

@@ -87,7 +87,14 @@ begin
 		end loop;
 	end if;
 end
-$procedure$;			
+$procedure$;	
+
+comment on procedure p_alter_table_column_type(
+	name
+	, name
+	, name
+	, varchar
+) is 'Изменение типа столбца таблицы';
 
 create or replace procedure ${stagingSchemaName}.p_alter_table_column_type(
 	i_schema_name name
@@ -107,6 +114,9 @@ begin
 end
 $procedure$;			
 
-end
-
-
+comment on procedure ${stagingSchemaName}.p_alter_table_column_type(
+	name
+	, name
+	, name
+	, varchar
+) is 'Изменение типа столбца таблицы';

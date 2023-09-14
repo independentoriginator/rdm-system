@@ -14,3 +14,5 @@ begin
 	return new;
 end
 $$;			
+
+comment on function trf_meta_view_before_update is 'Метапредставление. Триггерная функция для события "Перед обновлением"';

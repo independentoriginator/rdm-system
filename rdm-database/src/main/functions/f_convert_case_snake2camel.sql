@@ -23,4 +23,8 @@ from (
 			, 'g'
 		) with ordinality as sub(part, ordinal_number) 
 ) t
-$function$;		
+$function$;
+
+comment on function ${stagingSchemaName}.f_convert_case_snake2camel(
+	text	
+) is 'Преобразование стиля написания текста из "snake_case" в "CamelCase"';

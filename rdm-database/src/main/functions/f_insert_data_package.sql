@@ -47,4 +47,13 @@ begin
 	returning id, state_change_date into o_data_package_id, o_check_date
 	;	
 end
-$function$;		
+$function$;
+
+comment on function ${stagingSchemaName}.f_insert_data_package(
+	${mainSchemaName}.meta_type.id%type
+	, ${mainSchemaName}.meta_type.internal_name%type
+	, ${mainSchemaName}.source.id%type
+	, ${mainSchemaName}.source.internal_name%type
+	, ${mainSchemaName}.language.id%type
+	, bool
+) is 'Добавление пакета данных';

@@ -80,4 +80,11 @@ order by
 	case when i_adjust_to_max_length then t.ordinal_number end  
 	, case when not i_adjust_to_max_length then t.ordinal_number end desc
 limit 1
-$function$;		
+$function$;	
+
+comment on function ${stagingSchemaName}.f_abbreviate_name(
+	text
+	, boolean
+	, integer
+	, integer
+) is 'Преобразование наименования в аббревиатуру';

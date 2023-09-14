@@ -47,4 +47,7 @@ begin
 		end if;
 	end loop;
 end
-$procedure$;			
+$procedure$;
+
+comment on procedure p_build_target_schemas(
+) is 'Генерация целевых схем';

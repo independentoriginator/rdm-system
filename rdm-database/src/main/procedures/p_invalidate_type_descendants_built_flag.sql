@@ -44,4 +44,8 @@ begin
 		t.id = d.id
 	;
 end
-$procedure$;		
+$procedure$;
+
+comment on procedure p_invalidate_type_descendants_built_flag(
+	${mainSchemaName}.meta_type.id%type
+) is 'Выставить флаг необходимости перестроения у зависимых типов указанного метатипа';

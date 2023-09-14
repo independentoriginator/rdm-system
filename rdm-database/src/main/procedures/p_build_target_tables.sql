@@ -28,3 +28,6 @@ begin
 	end loop;
 end
 $procedure$;			
+
+comment on procedure p_build_target_tables(
+) is 'Генерация целевых таблиц';

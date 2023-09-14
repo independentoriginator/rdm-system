@@ -252,3 +252,8 @@ begin
 	end if;
 end
 $procedure$;			
+
+comment on procedure p_build_target_column(
+	record
+	, record
+) is 'Генерация целевого столбца сущности';

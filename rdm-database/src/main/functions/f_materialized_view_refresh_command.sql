@@ -21,3 +21,10 @@ select
 		, i_internal_name
 	) 
 $function$;		
+
+comment on function f_materialized_view_refresh_command(
+	${mainSchemaName}.meta_schema.internal_name%type
+	, ${mainSchemaName}.meta_view.internal_name%type
+	, boolean
+	, boolean
+) is 'Текст команды обновления материализованного представления';

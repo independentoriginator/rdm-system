@@ -8,7 +8,7 @@ create or replace procedure p_specify_meta_view_dependencies(
 	i_view_name ${mainSchemaName}.meta_view.internal_name%type
 	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type
 	, i_is_routine ${mainSchemaName}.meta_view.is_routine%type
-	, i_treat_the_obj_as_dependent bool -- and as master otherwise	
+	, i_treat_the_obj_as_dependent boolean -- and as master otherwise	
 	, i_consider_registered_objects_only boolean = false
 )
 language plpgsql
@@ -277,3 +277,11 @@ begin
 	;	
 end
 $procedure$;			
+
+comment on procedure p_specify_meta_view_dependencies(
+	${mainSchemaName}.meta_view.internal_name%type
+	, ${mainSchemaName}.meta_schema.internal_name%type
+	, ${mainSchemaName}.meta_view.is_routine%type
+	, boolean
+	, boolean
+) is 'Определить зависимости метапредставления';

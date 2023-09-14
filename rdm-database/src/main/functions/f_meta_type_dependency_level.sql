@@ -31,4 +31,9 @@ select
 		) + 1,
 		0
 	)
-$function$;		
+$function$;
+
+
+comment on function f_meta_type_dependency_level(
+	${mainSchemaName}.meta_type.id%type
+) is 'Уровень зависимости метатипа';

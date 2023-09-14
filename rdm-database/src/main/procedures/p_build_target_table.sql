@@ -192,4 +192,8 @@ begin
 	where id = i_type_rec.id
 	;
 end
-$procedure$;			
+$procedure$;	
+
+comment on procedure p_build_target_table(
+	record
+) is 'Генерация целевой таблицы';

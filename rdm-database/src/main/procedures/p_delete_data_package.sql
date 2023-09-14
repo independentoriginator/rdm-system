@@ -35,4 +35,8 @@ begin
 		id = i_data_package_id
 	;
 end
-$procedure$;		
+$procedure$;
+
+comment on procedure ${stagingSchemaName}.p_delete_data_package(
+	${stagingSchemaName}.data_package.id%type
+) is 'Удаление пакета данных';

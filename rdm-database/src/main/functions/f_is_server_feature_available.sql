@@ -15,3 +15,7 @@ select
 			end
 	end
 $function$;		
+
+comment on function f_is_server_feature_available(
+	text
+) is 'Признак доступности свойства сервера';

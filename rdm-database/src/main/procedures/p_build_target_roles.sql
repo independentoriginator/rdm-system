@@ -68,4 +68,8 @@ begin
   		;
 	end loop;
 end
-$procedure$;			
+$procedure$;	
+
+comment on procedure p_build_target_roles(
+) is 'Генерация целевых пользовательских ролей';
+

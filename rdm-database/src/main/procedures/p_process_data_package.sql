@@ -30,4 +30,10 @@ begin
 			, io_check_date
 	;
 end
-$procedure$;		
+$procedure$;
+
+comment on procedure ${stagingSchemaName}.p_process_data_package(
+	${stagingSchemaName}.data_package.id%type
+	,  ${mainSchemaName}.meta_type.internal_name%type
+	, ${stagingSchemaName}.data_package.state_change_date%type
+) is 'Обработать пакет данных';

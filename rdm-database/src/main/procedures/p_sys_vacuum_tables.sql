@@ -47,4 +47,15 @@ begin
 		);	
 	end if;
 end
-$procedure$;		
+$procedure$;
+
+comment on procedure p_sys_vacuum_tables(
+	name 
+	, name
+	, boolean
+	, integer
+	, text
+	, text
+	, integer
+	, integer
+) is 'Вакуумирование таблиц';

@@ -104,4 +104,9 @@ begin
 		end if;	
 	end if;
 end
-$procedure$;			
+$procedure$;
+
+comment on procedure p_build_target_staging_table_column(
+	record
+	, record
+) is 'Генерация целевого столбца промежуточной таблицы';

@@ -111,4 +111,10 @@ begin
 	where id = l_type_id
 	;
 end
-$procedure$;			
+$procedure$;	
+
+comment on procedure p_delete_meta_type(
+	${mainSchemaName}.meta_type.internal_name%type
+	, boolean
+	, boolean
+) is 'Удаление метатипа';

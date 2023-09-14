@@ -34,3 +34,8 @@ where
 	t.id = i_meta_type_id
 ;
 $function$;		
+
+comment on function f_is_meta_type_has_attribute(
+	${mainSchemaName}.meta_type.id%type
+	, ${mainSchemaName}.meta_attribute.internal_name%type
+) is 'Признак наличия метаатрибута у метатипа';

@@ -26,4 +26,6 @@ begin
 	
 	return null;
 end
-$$;			
+$$;		
+
+comment on function trf_meta_attribute_after_update is 'Метаатрибут. Триггерная функция для события "После обновления"';

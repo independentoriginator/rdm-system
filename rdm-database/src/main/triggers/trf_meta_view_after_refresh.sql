@@ -27,4 +27,6 @@ begin
 
 	return null;
 end
-$$;			
+$$;
+
+comment on function trf_meta_view_after_refresh is 'Метапредставление. Триггерная функция для события "После обновления"';

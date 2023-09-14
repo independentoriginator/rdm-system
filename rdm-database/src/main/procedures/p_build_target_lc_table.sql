@@ -142,4 +142,8 @@ begin
 	end if;
 	
 end
-$procedure$;			
+$procedure$;
+
+comment on procedure p_build_target_lc_table(
+	record
+) is 'Генерация целевой таблицы локализации сущности';

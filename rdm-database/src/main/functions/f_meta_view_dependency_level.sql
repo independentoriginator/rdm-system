@@ -34,3 +34,7 @@ select
 from 
 	obj
 $function$;		
+
+comment on function f_meta_view_dependency_level(
+	oid
+) is 'Уровень зависимости метапредставления';

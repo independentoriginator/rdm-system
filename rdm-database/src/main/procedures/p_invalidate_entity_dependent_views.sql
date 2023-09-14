@@ -27,4 +27,8 @@ begin
 		v.id = d.id
 	;
 end
-$procedure$;		
+$procedure$;
+
+comment on procedure p_invalidate_entity_dependent_views(
+	${mainSchemaName}.meta_type.id%type
+) is 'Пометить как недействительные зависимые представления сущности';

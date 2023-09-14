@@ -704,4 +704,8 @@ begin
 		, i_type_rec.table_description
 	);
 end
-$$;			
+$$;
+
+comment on procedure p_build_target_api(
+	record
+) is 'Генерация целевого API сущности';
