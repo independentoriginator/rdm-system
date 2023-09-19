@@ -129,5 +129,94 @@
 		</insert>
 	
 	</changeSet>
+	
+	<changeSet id="directory type attribute names" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_attribute_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'directory'
+					and a.internal_name = 'code'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Код"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'directory'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Наименование"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'directory'
+					and a.internal_name = 'description'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Описание"/>
+		</insert>
+
+	</changeSet>     
 
 </databaseChangeLog>

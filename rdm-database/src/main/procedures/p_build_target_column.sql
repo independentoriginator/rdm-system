@@ -248,6 +248,17 @@ begin
 				, i_attr_rec.internal_name				
 				, i_attr_rec.column_description
 			);
+		
+			if i_attr_rec.is_referenced_type_temporal = true then
+				execute format($$
+					comment on column %I.%I.%s is $comment$%s$comment$
+					$$
+					, i_attr_rec.schema_name
+					, i_attr_rec.meta_type_name
+					, i_attr_rec.version_ref_name				
+					, i_attr_rec.column_description
+				);
+			end if;	
 		end if;	
 	end if;
 end

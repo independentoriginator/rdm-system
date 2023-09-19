@@ -29,5 +29,40 @@
 		</update>
 
 	</changeSet>        
+	
+	<changeSet id="source_record_date attribute name" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_attribute_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'source_record_date'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Дата ввода записи в исходной системе"/>
+		</insert>
+	
+	</changeSet>        
 
 </databaseChangeLog>

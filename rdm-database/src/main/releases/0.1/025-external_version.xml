@@ -474,5 +474,283 @@
 		</insert>
 	
 	</changeSet>
+	
+	<changeSet id="external_id and meta_id attribute name" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_attribute_lc" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+	
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'external_id'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Внешний идентификатор"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'external_version'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Идентификатор внешней версии"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'external_version_ordinal_num'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Порядковый номер внешней версии"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'external_version_valid_from'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Дата начала действия внешней версии"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'external_version_valid_to'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Дата окончания действия внешней версии"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'meta_id'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Метаидентификатор"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'meta_version'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Идентификатор метаверсии"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'meta_version_ordinal_num'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Порядковый номер метаверсии"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'meta_version_valid_from'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Дата начала действия метаверсии"/>
+		</insert>
+
+		<insert tableName="meta_attribute_lc">
+			<column name="master_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'entity'
+					and a.internal_name = 'meta_version_valid_to'
+			)"/>
+			<column name="attr_id" valueComputed="(
+				select 
+					a.id
+				from 
+					meta_type t 
+				join meta_attribute a 
+					on a.master_id = t.id 
+				where 
+					t.internal_name = 'meta_attribute'
+					and a.internal_name = 'name'
+			)"/>
+			<column name="lang_id" valueComputed="(select id from language where tag = 'ru')"/>
+			<column name="lc_string" value="Дата окончания действия метаверсии"/>
+		</insert>
+		
+	</changeSet>
 
 </databaseChangeLog>
