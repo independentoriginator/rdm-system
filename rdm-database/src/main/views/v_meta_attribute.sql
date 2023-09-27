@@ -40,7 +40,7 @@ with recursive
 			end as is_non_nullable
 			, false as is_unique
 			, false as is_localisable
-			, true as fk_on_delete_cascade
+			, (left(t.internal_name, length('meta_')) <> 'meta_') as fk_on_delete_cascade
 			, 0 as ordinal_position
 			, null as default_value
 		from 
