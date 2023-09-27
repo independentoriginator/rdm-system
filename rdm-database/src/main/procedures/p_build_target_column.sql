@@ -151,7 +151,7 @@ begin
 		then
 			execute format('
 				alter table %I.%I
-					add constraint %I check (%s)
+					add constraint %I %s
 				'
 				, i_attr_rec.schema_name
 				, i_attr_rec.meta_type_name 

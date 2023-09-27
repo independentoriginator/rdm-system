@@ -111,13 +111,16 @@ select
 	, a.version_ref_name
 	, (a.is_fk_constraint_added and a.is_referenced_type_temporal) as is_chk_constraint_added
 	, a.check_constraint_name
-	, format(
-		'((%s is null) = (%s is null))'
-		, a.internal_name
-		, a.version_ref_name
-	) as check_constraint_expr
+	, case 
+		when a.is_fk_constraint_added and a.is_referenced_type_temporal then
+			format(
+				'check (((%s is null) = (%s is null)))'
+				, a.internal_name
+				, a.version_ref_name
+			)		
+	end as check_constraint_expr
 	, (chk_constraint.conname is not null) as is_check_constraint_exists
-	, chk_constraint.consrc as target_check_constraint_expr
+	, pg_catalog.pg_get_constraintdef(chk_constraint.oid) as target_check_constraint_expr
 	, a.is_non_nullable
 	, (target_column.is_nullable = 'NO') as is_notnull_constraint_exists
 	, a.is_unique
