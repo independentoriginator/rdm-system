@@ -16,7 +16,7 @@ with recursive
 			, a.is_non_nullable
 			, a.is_unique
 			, a.is_localisable
-			, false as fk_on_delete_cascade
+			, a.fk_on_delete_cascade
 			, a.ordinal_position
 			, a.default_value
 		from 
@@ -66,7 +66,7 @@ with recursive
 			, a_inherited.is_non_nullable
 			, a_inherited.is_unique 
 			, a_inherited.is_localisable
-			, false as fk_on_delete_cascade
+			, a_inherited.fk_on_delete_cascade
 			, a_inherited.ordinal_position
 			, a_inherited.default_value
 		from (
