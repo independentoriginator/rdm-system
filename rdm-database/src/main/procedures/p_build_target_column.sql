@@ -76,35 +76,13 @@ begin
 				, i_attr_rec.index_name
 			);
 		end if;
-		
-		if i_attr_rec.is_fk_constraint_added = true and i_attr_rec.is_fk_constraint_exists = false then
-			if i_attr_rec.is_referenced_type_temporal = true then 
-				execute format('
-					alter table %I.%I
-						add constraint %I foreign key (%s, %s) references %I.%I(id, version)
-					'
-					, i_attr_rec.schema_name
-					, i_attr_rec.meta_type_name 
-					, i_attr_rec.fk_constraint_name
-					, i_attr_rec.internal_name
-					, i_attr_rec.version_ref_name
-					, i_attr_rec.attr_type_schema
-					, i_attr_rec.attr_type_name 
-				);
-			else				
-				execute format('
-					alter table %I.%I
-						add constraint %I foreign key (%s) references %I.%I(id) 
-					'
-					, i_attr_rec.schema_name
-					, i_attr_rec.meta_type_name 
-					, i_attr_rec.fk_constraint_name
-					, i_attr_rec.internal_name
-					, i_attr_rec.attr_type_schema
-					, i_attr_rec.attr_type_name 
-				);
-			end if;
-		elsif i_attr_rec.is_fk_constraint_added = false and i_attr_rec.is_fk_constraint_exists = true then
+
+		if i_attr_rec.is_fk_constraint_exists = true 
+			and (
+				i_attr_rec.is_fk_constraint_added = false
+				or i_attr_rec.fk_on_delete_cascade != i_attr_rec.target_fk_on_delete_cascade
+			)
+		then
 			execute format('
 				alter table %I.%I
 					drop constraint %I
@@ -113,6 +91,39 @@ begin
 				, i_attr_rec.meta_type_name 
 				, i_attr_rec.fk_constraint_name
 			);
+			
+			i_attr_rec.is_fk_constraint_exists = false;
+		end if;
+	
+		if i_attr_rec.is_fk_constraint_added = true and i_attr_rec.is_fk_constraint_exists = false then
+			if i_attr_rec.is_referenced_type_temporal = true then 
+				execute format('
+					alter table %I.%I
+						add constraint %I foreign key (%s, %s) references %I.%I(id, version) on delete %s
+					'
+					, i_attr_rec.schema_name
+					, i_attr_rec.meta_type_name 
+					, i_attr_rec.fk_constraint_name
+					, i_attr_rec.internal_name
+					, i_attr_rec.version_ref_name
+					, i_attr_rec.attr_type_schema
+					, i_attr_rec.attr_type_name 
+					, case when i_attr_rec.fk_on_delete_cascade then 'cascade' else 'no action' end
+				);
+			else				
+				execute format('
+					alter table %I.%I
+						add constraint %I foreign key (%s) references %I.%I(id) on delete %s
+					'
+					, i_attr_rec.schema_name
+					, i_attr_rec.meta_type_name 
+					, i_attr_rec.fk_constraint_name
+					, i_attr_rec.internal_name
+					, i_attr_rec.attr_type_schema
+					, i_attr_rec.attr_type_name
+					, case when i_attr_rec.fk_on_delete_cascade then 'cascade' else 'no action' end
+				);
+			end if;
 		end if;
 	
 		if (

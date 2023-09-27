@@ -16,6 +16,7 @@ with recursive
 			, a.is_non_nullable
 			, a.is_unique
 			, a.is_localisable
+			, false as fk_on_delete_cascade
 			, a.ordinal_position
 			, a.default_value
 		from 
@@ -39,6 +40,7 @@ with recursive
 			end as is_non_nullable
 			, false as is_unique
 			, false as is_localisable
+			, true as fk_on_delete_cascade
 			, 0 as ordinal_position
 			, null as default_value
 		from 
@@ -53,7 +55,8 @@ with recursive
 			, a_inherited.master_id as meta_type_id
 			, a.is_temporal
 			, a_inherited.internal_name
-			, case when a_inherited.attr_type_id = a_inherited.master_id 
+			, case 
+				when a_inherited.attr_type_id = a_inherited.master_id 
 				then a.descendant_type_id
 				else a_inherited.attr_type_id 
 			end as attr_type_id
@@ -63,6 +66,7 @@ with recursive
 			, a_inherited.is_non_nullable
 			, a_inherited.is_unique 
 			, a_inherited.is_localisable
+			, false as fk_on_delete_cascade
 			, a_inherited.ordinal_position
 			, a_inherited.default_value
 		from (
@@ -72,15 +76,15 @@ with recursive
 				, is_temporal
 			from 
 				attr 
-	) a
-	join ${mainSchemaName}.meta_attribute a_inherited
-		on a_inherited.master_id = a.super_type_id
-	join ${mainSchemaName}.meta_type t 
-		on t.id = a_inherited.master_id
-	where 
-		not a_inherited.is_owned_by_temporal_type
-		or a.is_temporal   
-)
+		) a
+		join ${mainSchemaName}.meta_attribute a_inherited
+			on a_inherited.master_id = a.super_type_id
+		join ${mainSchemaName}.meta_type t 
+			on t.id = a_inherited.master_id
+		where 
+			not a_inherited.is_owned_by_temporal_type
+			or a.is_temporal   
+	)
 select 
 	a.id
 	, a.master_id
@@ -100,7 +104,7 @@ select
 	, a.attr_type_name
 	, a.is_fk_constraint_added
 	, a.fk_constraint_name
-	, (fk_constraint.constraint_name is not null) as is_fk_constraint_exists
+	, (fk_constraint.conname is not null) as is_fk_constraint_exists
 	, a.index_name
 	, (fk_index.indexname is not null) as is_fk_index_exists
 	, a.is_referenced_type_temporal
@@ -138,6 +142,8 @@ select
 	, attr_name.lc_string as column_description
 	, target_column_descr.description target_column_description
 	, target_staging_table_column_descr.description staging_column_description
+	, a.fk_on_delete_cascade
+	, (fk_constraint.confdeltype = 'f'::"char") as target_fk_on_delete_cascade 
 from (
 	select
 		a.id
@@ -170,6 +176,7 @@ from (
 		, attr_type.internal_name as attr_type_name
 		, case when attr_type.is_primitive = false then true else false end as is_fk_constraint_added
 		, substring('fk_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as fk_constraint_name
+		, a.fk_on_delete_cascade
 		, substring('i_' || t.internal_name || '$' || a.internal_name, 1, ${stagingSchemaName}.f_system_name_max_length()) as index_name
 		, attr_type.is_temporal as is_referenced_type_temporal
 		, regexp_replace(a.internal_name, '_id$', '') || '_version' as version_ref_name
@@ -232,11 +239,10 @@ left join pg_catalog.pg_description target_column_descr
 	on target_column_descr.objoid = target_table.oid
 	and target_column_descr.classoid = 'pg_class'::regclass
 	and target_column_descr.objsubid = target_column.ordinal_position
-left join information_schema.table_constraints fk_constraint 
-	on fk_constraint.table_schema = target_schema.nspname
-	and fk_constraint.table_name = a.meta_type_name
-	and fk_constraint.constraint_name = a.fk_constraint_name
-	and fk_constraint.constraint_type = 'FOREIGN KEY'
+left join pg_catalog.pg_constraint fk_constraint
+	on fk_constraint.conrelid = target_table.oid
+	and fk_constraint.conname = a.fk_constraint_name
+	and fk_constraint.contype = 'f'::"char" 
 left join pg_catalog.pg_indexes fk_index	
 	on fk_index.schemaname = target_schema.nspname
 	and fk_index.tablename = a.meta_type_name
