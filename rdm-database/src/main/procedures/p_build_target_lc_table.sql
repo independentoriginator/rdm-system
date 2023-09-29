@@ -17,7 +17,7 @@ begin
 						lc_string text not null,
 						is_default_value boolean not null default true,
 						constraint pk_%I primary key (id),
-						constraint fk_%I$master_id_version foreign key (master_id, master_version) references %I.%I(id, version),
+						constraint fk_%I$master_id foreign key (master_id, master_version) references %I.%I(id, version) on delete cascade,
 						constraint fk_%I$attr_id foreign key (attr_id) references ${mainSchemaName}.meta_attribute(id),
 						constraint fk_%I$lang_id foreign key (lang_id) references ${mainSchemaName}.language(id)
 					)'
@@ -32,7 +32,7 @@ begin
 				);
 				
 				execute format('
-					create index i_%I$master_id_version on %I.%I(master_id, master_version);
+					create index i_%I$master_id on %I.%I(master_id, master_version);
 					create index i_%I$attr_id on %I.%I(attr_id);
 					create index i_%I$lang_id on %I.%I(lang_id);
 					'
@@ -67,7 +67,7 @@ begin
 						lc_string text not null,
 						is_default_value boolean not null default true,
 						constraint pk_%I primary key (id),
-						constraint fk_%I$master_id foreign key (master_id) references %I.%I(id),
+						constraint fk_%I$master_id foreign key (master_id) references %I.%I(id) on delete cascade,
 						constraint fk_%I$attr_id foreign key (attr_id) references ${mainSchemaName}.meta_attribute(id),
 						constraint fk_%I$lang_id foreign key (lang_id) references ${mainSchemaName}.language(id)
 					)'
