@@ -42,7 +42,7 @@ begin
 		
 	return
 		format(
-			$$CREATE %s VIEW %I.%I AS %s%s%s%s%s$$
+			$$CREATE %s VIEW %I.%I AS %s%s%s%s%s%s$$
 			, case l_view_type when 'm'::char then 'MATERIALIZED' else '' end
 			, l_schema_name
 			, l_view_name
@@ -112,6 +112,20 @@ begin
 				where 
 					i.tablename = l_view_name
 					and i.schemaname = l_schema_name 
+			)
+			, (
+				select 
+					E'\n' || array_to_string(
+						array_agg(
+							r.definition || ';'
+						), 
+						E'\n'
+					)
+				from 
+					pg_catalog.pg_rules r
+				where 
+					r.tablename = l_view_name
+					and r.schemaname = l_schema_name 
 			)
 		)
 	;
