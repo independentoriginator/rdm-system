@@ -67,7 +67,7 @@ begin
 			, case 
 				when i_sequence_name ~ '^[[:alnum:]]+\.[[:alnum:]]+$' then 
 					i_sequence_name 
-				else i_schema_name || . || i_sequence_name 
+				else format('%I.%I', i_schema_name, i_sequence_name) 
 			end
 			, i_schema_name
 			, i_table_name
