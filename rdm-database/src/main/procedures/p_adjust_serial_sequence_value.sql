@@ -1,9 +1,18 @@
+drop procedure if exists p_adjust_serial_sequence_value(
+	name
+	, name
+	, name
+	, name
+	, name
+);
+
 create or replace procedure p_adjust_serial_sequence_value(
 	i_schema_name name
 	, i_table_name name
 	, i_column_name name
 	, i_sequence_name name = null
 	, i_foreign_server name = null
+	, i_allow_value_decreasing boolean = true
 )
 language plpgsql
 security definer
@@ -41,7 +50,8 @@ begin
 								%%I.%%I
 						) t
 						where 
-							t.sequence_last_value <> t.max_id
+							t.sequence_last_value < t.max_id
+							or (t.sequence_last_value > t.max_id and i_allow_value_decreasing)
 						$sql$
 						, l_sequence_name
 						, l_sequence_name
@@ -86,4 +96,5 @@ comment on procedure p_adjust_serial_sequence_value(
 	, name
 	, name
 	, name
+	, boolean
 ) is 'Исправление текущего значения последовательности';
