@@ -51,13 +51,14 @@ begin
 						) t
 						where 
 							t.sequence_last_value < t.max_id
-							or (t.sequence_last_value > t.max_id and i_allow_value_decreasing)
+							or (t.sequence_last_value > t.max_id and %%L::boolean)
 						$sql$
 						, l_sequence_name
 						, l_sequence_name
 						, '%s'
 						, '%I'
 						, '%I' 
+						, '%s'
 					);
 			 	
 				execute l_sql_expr;
@@ -75,6 +76,7 @@ begin
 			, i_column_name
 			, i_schema_name
 			, i_table_name
+			, i_allow_value_decreasing
 		);
 	 
 	if i_foreign_server is null then 
