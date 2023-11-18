@@ -47,7 +47,7 @@ begin
 			l_insert_proc_section := l_insert_proc_section || 
 				format(
 					$insert_section$
-					create temporary table t_%I_%I_localisable_data
+					create temporary table t_localisable_data
 					on commit drop
 					as 
 					with 
@@ -87,7 +87,7 @@ begin
 					delete from 
 						%I.%I_lc dest
 					using
-						t_%I_%I_localisable_data src
+						t_localisable_data src
 					where 
 						dest.id = src.id
 						and src.lc_string is null
@@ -110,25 +110,19 @@ begin
 						, src.lc_string
 						, src.is_default_value
 					from 
-						t_%I_%I_localisable_data src
+						t_localisable_data src
 					where 
 						src.lc_string is not null
 					on conflict (id) do update set
 						lc_string = excluded.lc_string		
 					;
 					$insert_section$
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
 					, case when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') then 'materialized ' else '' end
 					, i_type_rec.internal_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.localisable_attr_values_list
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
@@ -428,7 +422,7 @@ begin
 			l_insert_proc_section := l_insert_proc_section ||  
 				format(
 					$insert_section$
-					create temporary table t_%I_%I_localisable_data
+					create temporary table t_localisable_data
 					on commit drop
 					as 
 					with 
@@ -470,7 +464,7 @@ begin
 					delete from 
 						%I.%I_lc dest
 					using
-						t_%I_%I_localisable_data src
+						t_localisable_data src
 					where 
 						dest.id = src.id
 						and src.lc_string is null
@@ -495,25 +489,19 @@ begin
 						, src.lc_string
 						, src.is_default_value
 					from 
-						t_%I_%I_localisable_data src
+						t_localisable_data src
 					where 
 						src.lc_string is not null
 					on conflict (id) do update set
 						lc_string = excluded.lc_string		
 					;
 					$insert_section$
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
 					, case when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') then 'materialized ' else '' end
 					, i_type_rec.internal_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.localisable_attr_values_list
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
