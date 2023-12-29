@@ -117,4 +117,15 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="v_month_lc_name-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_month_lc_name" 
+			path="v_month_lc_name.sql"
+			remarks="Localized month names"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>
