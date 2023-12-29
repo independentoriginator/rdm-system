@@ -95,11 +95,21 @@ with recursive
 						ic.meta_attr_name
 						, ', ' order by ic.ordinal_position
 					) as index_columns
+					, bool_or(
+						(
+							a.is_owned_by_temporal_type
+							or ic.meta_attr_name = any(array['version', 'valid_from', 'valid_to'])
+						)
+					) as is_owned_by_temporal_type
 				from
 					${mainSchemaName}.meta_index_column ic
+				left join ${mainSchemaName}.meta_attribute a
+					on a.master_id = t.id
+					and a.internal_name = ic.meta_attr_name
 				where
 					ic.master_id = i.id
-			) ic on true
+			) ic 
+			on t.is_temporal = ic.is_owned_by_temporal_type
 		) i
 		left join pg_catalog.pg_namespace n 
 			on n.nspname = i.schema_name

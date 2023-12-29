@@ -184,5 +184,40 @@
 
 	</changeSet>
 	 
+	<changeSet id="index for the temporal validity period" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+			<tableExists tableName="meta_index" schemaName="${mainSchemaName}"/>
+			<tableExists tableName="meta_index_column" schemaName="${mainSchemaName}"/>
+		</preConditions>	
+		
+		<insert tableName="meta_index">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'entity')"/>
+			<column name="tag" value="validity"/>			
+			<column name="is_unique" value="false"/>
+		</insert>
+
+		<insert tableName="meta_index_column">
+			<column name="master_id" valueComputed="(
+				select 
+					id 
+				from 
+					meta_index 
+				where 
+					master_id = (
+						select 
+							id 
+						from 
+							meta_type 
+						where 
+							internal_name = 'entity'
+					)
+					and tag = 'validity' 
+			)"/>
+			<column name="meta_attr_name" value="valid_from"/>
+			<column name="ordinal_position" value="0"/>
+		</insert>
+
+	</changeSet>
 	
 </databaseChangeLog>
