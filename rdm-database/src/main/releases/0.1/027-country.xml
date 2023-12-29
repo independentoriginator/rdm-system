@@ -1,0 +1,39 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="default country (region) for a language" author="${default_author}">
+	
+		<addColumn tableName="language">
+			<column name="default_country" type="${type.code}">
+				<constraints nullable="true" />
+			</column>
+		</addColumn> 
+
+		<insert tableName="meta_attribute">
+			<column name="master_id" valueComputed="(select id from meta_type where internal_name = 'language')"/>
+			<column name="internal_name" value="default_country"/>
+			<column name="attr_type_id" valueComputed="(select id from meta_type where internal_name = 's')"/>
+			<column name="length" value="${type.length.code}"/>			
+			<column name="is_non_nullable" value="false"/>
+		</insert>
+		
+		<update tableName="language">
+			<column name="default_country" value="RU"/>
+			<where>tag = 'ru'</where>
+		</update>
+
+		<update tableName="language">
+			<column name="default_country" value="US"/>
+			<where>tag = 'en'</where>
+		</update>
+		
+	</changeSet>
+
+</databaseChangeLog>
