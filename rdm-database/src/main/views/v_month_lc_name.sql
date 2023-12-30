@@ -16,7 +16,12 @@ from
 join pg_catalog.pg_collation c 
 	on c.collencoding = db."encoding" 
 join ng_rdm."language" l
-	on c.collname = l.tag || '_' || l.default_country
+	on c.collname = 
+		format(
+			'%s_%s'
+			, l.tag
+			, l.default_country
+		)
 cross join generate_series(1, 12) m
 where 
 	db.datname = current_database() 
