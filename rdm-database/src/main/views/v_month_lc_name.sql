@@ -14,8 +14,8 @@ select
 from
 	pg_database db 
 join pg_catalog.pg_collation c 
-	on c.collencoding = db."encoding" 
-join ng_rdm."language" l
+	on c.collencoding = db.encoding 
+join ng_rdm.language l
 	on c.collname = 
 		format(
 			'%s_%s'
