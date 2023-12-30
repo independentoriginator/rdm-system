@@ -12,7 +12,7 @@ select
 	, to_char(to_date(m::text, 'mm'), 'tmMON') as s_month_mon_uc			
 	, to_char(to_date(m::text, 'mm'), 'tmMONTH') as s_month_uc
 from
-	pg_database db 
+	pg_catalog.pg_database db 
 join pg_catalog.pg_collation c 
 	on c.collencoding = db.encoding 
 join ng_rdm.language l
