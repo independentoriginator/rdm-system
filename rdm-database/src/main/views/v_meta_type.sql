@@ -50,6 +50,13 @@ with
 				end
 				, ', ' order by a.ordinal_position nulls last
 			) as localisable_attr_values_list
+			, string_agg(
+				case 
+					when a.is_localisable = true
+					then 'when ''' || a.internal_name || ''' then t.' || a.internal_name
+				end
+				, ' ' order by a.ordinal_position nulls last
+			) as localisable_attr_case_expr_body
 		from
 			${mainSchemaName}.v_meta_attribute a
 		group by 
@@ -132,6 +139,7 @@ select
 	, target_table_descr.description as target_table_description
 	, staging_table_descr.description as staging_table_description
 	, lc_table_descr.description as localization_table_description
+	, a.localisable_attr_case_expr_body
 from 
 	${mainSchemaName}.meta_type t
 left join ${mainSchemaName}.meta_schema s

@@ -7,6 +7,13 @@ declare
 	l_check_section text;
 	l_insert_proc_section text;
 	l_delete_proc_section text;
+	l_cte_option text := 
+		case 
+			when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') 
+			then 'materialized ' 
+			else '' 
+		end
+		;
 begin
 	if i_type_rec.is_staging_table_generated = false then
 		return;
@@ -48,40 +55,54 @@ begin
 				format(
 					$insert_section$
 					with 
-						meta_attribute as %s(
-							select *
-							from ${mainSchemaName}.v_meta_attribute a 
-							where a.meta_type_name = '%I'
+						package_data as %s(
+							select 
+								t.id
+								, t.version
+								, t.valid_from
+								, t.valid_to
+								, t.data_package_id
+								, t.data_package_rn
+								, %s
+							from 								
+								${stagingSchemaName}.%I t
+							where 
+								t.data_package_id = i_data_package_id
+						)
+						, meta_attribute as %s(
+							select 
+								*
+							from 
+								${mainSchemaName}.v_meta_attribute a 
+							where 
+								a.meta_type_name = '%I'
+								and a.is_localisable
 						)						
-						, localisable_data as (
+						, localisable_data as %s(
 							select 
 								target_rec.id
 								, master_rec.id as master_id
 								, meta_attr.id as attr_id
 								, p.lang_id
-								, attr.attr_value as lc_string
+								, case meta_attr.internal_name
+									%s
+								end as lc_string
 								, true as is_default_value
 							from 
-								${stagingSchemaName}.%I t
+								package_data t
+							cross join meta_attribute meta_attr
 							join ${stagingSchemaName}.data_package p 
 								on p.id = t.data_package_id
 							join %I.%I master_rec
 								on master_rec.data_package_id = t.data_package_id
 								and master_rec.data_package_rn = t.data_package_rn
-							cross join lateral (
-								values %s
-							) attr(attr_name, attr_value)
-							join meta_attribute meta_attr
-								on meta_attr.internal_name = attr.attr_name
 							left join %I.%I_lc target_rec
 								on target_rec.master_id = master_rec.id
 								and target_rec.attr_id = meta_attr.id
 								and target_rec.lang_id = p.lang_id
 								and target_rec.is_default_value
-							where 
-								t.data_package_id = i_data_package_id
 						) 
-						, deleted_data as (
+						, deleted_data as %s(
 							delete from 
 								%I.%I_lc dest
 							using
@@ -118,14 +139,18 @@ begin
 						lc_string = excluded.lc_string		
 					;
 					$insert_section$
-					, case when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') then 'materialized ' else '' end
+					, l_cte_option
+					, i_type_rec.localisable_attributes
 					, i_type_rec.internal_name
+					, l_cte_option
+					, i_type_rec.internal_name
+					, l_cte_option
+					, i_type_rec.localisable_attr_case_expr_body
+					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
-					, i_type_rec.localisable_attr_values_list
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
+					, l_cte_option
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
@@ -213,7 +238,7 @@ begin
 					;
 						
 					with 
-						package_data as (
+						package_data as %s(
 							select 
 								t.id
 								, t.version
@@ -227,17 +252,16 @@ begin
 									order by 
 										t.external_id
 										, t.external_version_ordinal_num
-										, t.external_version_valid_from
 										, t.meta_id
 										, t.meta_version_ordinal_num
-										, t.meta_version_valid_from
+										, t.valid_from
 								) as version_ordinal_num
 							from 								
 								${stagingSchemaName}.%I t
 							where 
 								t.data_package_id = i_data_package_id
 						)
-						, initial_versions as (
+						, initial_versions as %s(
 							insert into 
 								%I.%I(
 									id
@@ -261,7 +285,7 @@ begin
 										order by 
 											t.external_id
 											, t.external_version_ordinal_num
-											, t.external_version_valid_from
+											, t.valid_from
 										limit 1
 									)
 									, (
@@ -276,7 +300,7 @@ begin
 										order by 
 											t.meta_id
 											, t.meta_version_ordinal_num
-											, t.meta_version_valid_from
+											, t.valid_from
 										limit 1
 									)
 									, nextval('%I.%I_id_seq')
@@ -381,10 +405,9 @@ begin
 					order by 
 						t.external_id
 						, t.external_version_ordinal_num
-						, t.external_version_valid_from
 						, t.meta_id
 						, t.meta_version_ordinal_num
-						, t.meta_version_valid_from
+						, t.valid_from
 					on conflict (id, version) do update set
 						record_date = l_state_change_date
 						, valid_from = excluded.valid_from
@@ -395,8 +418,10 @@ begin
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.internal_name
+				, l_cte_option
 				, i_type_rec.non_localisable_attributes
 				, i_type_rec.internal_name
+				, l_cte_option
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
@@ -426,42 +451,56 @@ begin
 				format(
 					$insert_section$
 					with 
-						meta_attribute as %s(
-							select *
-							from ${mainSchemaName}.v_meta_attribute a 
-							where a.meta_type_name = '%I'
+						package_data as %s(
+							select 
+								t.id
+								, t.version
+								, t.valid_from
+								, t.valid_to
+								, t.data_package_id
+								, t.data_package_rn
+								, %s
+							from 								
+								${stagingSchemaName}.%I t
+							where 
+								t.data_package_id = i_data_package_id
+						)
+						, meta_attribute as %s(
+							select 
+								*
+							from 
+								${mainSchemaName}.v_meta_attribute a 
+							where 
+								a.meta_type_name = '%I'
+								and a.is_localisable
 						)	
-						, localisable_data as (
+						, localisable_data as %s(
 							select 
 								target_rec.id
 								, master_rec.id as master_id
 								, master_rec.version as master_version
 								, meta_attr.id as attr_id
 								, p.lang_id
-								, attr.attr_value as lc_string
+								, case meta_attr.internal_name
+									%s
+								end as lc_string
 								, true as is_default_value
 							from 
-								${stagingSchemaName}.%I t
+								package_data t
+							cross join meta_attribute meta_attr
 							join ${stagingSchemaName}.data_package p 
 								on p.id = t.data_package_id
 							join %I.%I master_rec
 								on master_rec.data_package_id = t.data_package_id
 								and master_rec.data_package_rn = t.data_package_rn
-							cross join lateral (
-								values %s
-							) attr(attr_name, attr_value)
-							join meta_attribute meta_attr
-								on meta_attr.internal_name = attr.attr_name
 							left join %I.%I_lc target_rec
 								on target_rec.master_id = master_rec.id
 								and target_rec.master_version = master_rec.version
 								and target_rec.attr_id = meta_attr.id
 								and target_rec.lang_id = p.lang_id
 								and target_rec.is_default_value
-							where 
-								t.data_package_id = i_data_package_id
 						) 
-						, deleted_data as (
+						, deleted_data as %s(
 							delete from 
 								%I.%I_lc dest
 							using
@@ -500,14 +539,18 @@ begin
 						lc_string = excluded.lc_string		
 					;
 					$insert_section$
-					, case when ${mainSchemaName}.f_is_server_feature_available('cte_explicitly_materializing') then 'materialized ' else '' end
+					, l_cte_option
+					, i_type_rec.localisable_attributes
 					, i_type_rec.internal_name
+					, l_cte_option
+					, i_type_rec.internal_name
+					, l_cte_option
+					, i_type_rec.localisable_attr_case_expr_body
+					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
-					, i_type_rec.localisable_attr_values_list
-					, i_type_rec.schema_name
-					, i_type_rec.internal_name
+					, l_cte_option					
 					, i_type_rec.schema_name
 					, i_type_rec.internal_name
 					, i_type_rec.schema_name
