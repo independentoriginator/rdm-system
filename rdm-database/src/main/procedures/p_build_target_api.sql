@@ -58,9 +58,6 @@ begin
 						package_data as %s(
 							select 
 								t.id
-								, t.version
-								, t.valid_from
-								, t.valid_to
 								, t.data_package_id
 								, t.data_package_rn
 								, %s
