@@ -118,6 +118,10 @@
 							<name>dbms_extension.dblink.schema</name>
 							<value>${profile.dbms_extension.dblink.schema}</value>
 						</property>
+						<property>
+							<name>operation_row_limit</name>
+							<value>10000</value>
+						</property>
 					</systemProperties>
 				</configuration>
 				<executions>
