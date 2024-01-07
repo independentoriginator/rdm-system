@@ -752,5 +752,17 @@
 		</insert>
 		
 	</changeSet>
+	
+	<changeSet id="meta_id index uniqueness" author="${default_author}">
+	
+		<update tableName="meta_index">
+			<column name="is_unique" value="false"/>
+			<where>
+				master_id = (select id from meta_type where internal_name = 'entity')
+				and tag = 'meta_id'
+			</where>
+		</update>
+	
+	</changeSet>
 
 </databaseChangeLog>
