@@ -765,4 +765,41 @@
 	
 	</changeSet>
 
+	<changeSet id="meta and external validity period fields deletion" author="${default_author}">
+
+		<delete tableName="meta_attribute_lc">
+			<where>
+				master_id in (
+					select 
+						a.id
+					from 
+						meta_type t 
+					join meta_attribute a 
+						on a.master_id = t.id 
+					where 
+						t.internal_name = 'entity'
+						and a.internal_name in (
+							'external_version_valid_from'
+							, 'external_version_valid_to'
+							, 'meta_version_valid_from'
+							, 'meta_version_valid_to'
+						)
+				)
+			</where>			
+		</delete>
+		
+		<delete tableName="meta_attribute">
+			<where>
+				master_id = (select id from meta_type where internal_name = 'entity')
+				and internal_name in (
+					'external_version_valid_from'
+					, 'external_version_valid_to'
+					, 'meta_version_valid_from'
+					, 'meta_version_valid_to'
+				)
+			</where>			
+		</delete>
+		
+	</changeSet>
+
 </databaseChangeLog>
