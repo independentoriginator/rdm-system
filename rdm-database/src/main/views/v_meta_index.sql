@@ -1,7 +1,7 @@
 create or replace view v_meta_index
 as
-with recursive 
-	type_index as (
+with  
+	recursive type_index as (
 		select 
 			i.id
 	        , t.id as descendant_type_id
@@ -34,20 +34,6 @@ with recursive
 			on t.id = i.super_type_id
 		left join ${mainSchemaName}.meta_index i_inherited
 			on i_inherited.master_id = t.id 
-		where 
-			i.is_temporal
-			or not exists (
-				select 
-					1
-				from 
-					${mainSchemaName}.meta_index_column ic
-				join ${mainSchemaName}.meta_attribute a
-					on a.master_id = i_inherited.master_id
-					and a.internal_name = ic.meta_attr_name
-					and a.is_owned_by_temporal_type
-				where
-					ic.master_id = i_inherited.id
-			)
 	)
 	, meta_index as (
 		select
@@ -61,10 +47,12 @@ with recursive
 			, i.is_unique
 			, pg_index.indisunique as is_target_index_unique
 			, pg_index_col.index_columns as target_index_columns
+			, i.is_temporal
 		from (
 			select
 				i.id
 				, t.id as master_id
+				, t.is_temporal
 				, t.internal_name as meta_type_name
 				, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
 				, i.is_unique
@@ -95,21 +83,25 @@ with recursive
 						ic.meta_attr_name
 						, ', ' order by ic.ordinal_position
 					) as index_columns
-					, bool_or(
-						(
-							a.is_owned_by_temporal_type
-							or ic.meta_attr_name = any(array['version', 'valid_from', 'valid_to'])
-						)
-					) as is_owned_by_temporal_type
 				from
 					${mainSchemaName}.meta_index_column ic
+				join ${mainSchemaName}.meta_index mi 
+					on mi.id = ic.master_id
 				left join ${mainSchemaName}.meta_attribute a
-					on a.master_id = t.id
+					on a.master_id = mi.master_id
 					and a.internal_name = ic.meta_attr_name
 				where
 					ic.master_id = i.id
+					and (
+						t.is_temporal
+						or (
+							not a.is_owned_by_temporal_type
+							and ic.meta_attr_name != any(array['version', 'valid_from', 'valid_to'])
+						)
+						or ic.meta_attr_name = 'master_id'
+					) 
 			) ic 
-			on t.is_temporal = ic.is_owned_by_temporal_type
+			on true
 		) i
 		left join pg_catalog.pg_namespace n 
 			on n.nspname = i.schema_name
@@ -133,6 +125,7 @@ with recursive
 		) pg_index_col on true
 		where 
 			i.id is not null
+			and i.index_columns is not null
 	)
 	, fk_index as (
 		select 
