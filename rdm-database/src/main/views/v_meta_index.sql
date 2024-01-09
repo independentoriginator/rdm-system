@@ -188,7 +188,7 @@ join pg_catalog.pg_index pg_index
 join pg_catalog.pg_class target_index
 	on target_index.oid = pg_index.indexrelid
 	and (target_index.relname <> pk_constraint.constraint_name or pk_constraint.constraint_name is null)
-	and (target_index.relname <> 'ui_' || t.internal_name || '$id_valid_to' or t.is_temporal = false)
+	and (target_index.relname <> 'uc_' || t.internal_name || '$id_valid_to' or t.is_temporal = false) -- implicit index for the unique constraint
 left join lateral (
 	select 
 		string_agg(a.attname, ', ' order by array_position(pg_index.indkey, a.attnum)) as index_columns

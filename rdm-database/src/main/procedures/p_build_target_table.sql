@@ -94,14 +94,6 @@ begin
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name 
 			);
-			execute format('
-				create unique index ui_%I$id_valid_to on %I.%I (
-					id, valid_to
-				)'
-				, i_type_rec.internal_name 
-				, i_type_rec.schema_name
-				, i_type_rec.internal_name 
-			);
 		end if;
 	end if;
 
@@ -118,7 +110,27 @@ begin
 			, i_type_rec.pk_index_name				
 		);
 	end if;
-	
+
+	if i_type_rec.is_actual_rec_u_constraint_exists = false and i_type_rec.is_temporal = true 
+	then 
+		execute format('
+			alter table %I.%I
+				add constraint %I unique (id, valid_to) deferrable initially deferred
+			'
+			, i_type_rec.schema_name
+			, i_type_rec.internal_name 
+			, i_type_rec.actual_rec_u_constraint_name 
+		);
+	elsif i_type_rec.is_actual_rec_u_constraint_exists = true and i_type_rec.is_temporal = false then
+		execute format('
+			alter table %I.%I drop constraint %I
+			'
+			, i_type_rec.schema_name
+			, i_type_rec.internal_name 
+			, i_type_rec.actual_rec_u_constraint_name
+		);
+	end if;
+
 	if nullif(i_type_rec.table_description, i_type_rec.target_table_description) is not null then
 		execute format($$
 			comment on table %I.%I is $comment$%s$comment$
