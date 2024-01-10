@@ -117,17 +117,6 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="v_materialized_view_pending_refresh-view" author="${default_author}" runOnChange="true">
-		<createView 
-			viewName="v_materialized_view_pending_refresh" 
-			path="v_materialized_view_pending_refresh.sql"
-			remarks="Pending refresh materialized views"
-			fullDefinition="true"
-			replaceIfExists="false"   
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
 	<changeSet id="v_month_lc_name-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_month_lc_name" 
