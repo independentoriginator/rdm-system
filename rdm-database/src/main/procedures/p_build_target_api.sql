@@ -45,13 +45,11 @@ begin
 							, %s	
 						;
 					
-						get diagnostics l_row_count = row_count;
+						l_row_offset := l_row_offset + l_row_limit;
 					
-						if l_row_count = 0 then
+						if l_row_offset >= l_data_package_row_count then
 							exit data_insertion;
 						end if;
-					
-						l_row_offset := l_row_offset + l_row_limit;
 					end loop data_insertion;
 				$insert_section$
 				, i_type_rec.schema_name
@@ -155,13 +153,11 @@ begin
 							lc_string = excluded.lc_string		
 						;
 				
-						get diagnostics l_row_count = row_count;
+						l_row_offset := l_row_offset + l_row_limit;
 					
-						if l_row_count = 0 then
+						if l_row_offset >= l_data_package_row_count then
 							exit localisable_data_insertion;
 						end if;
-					
-						l_row_offset := l_row_offset + l_row_limit;
 					end loop localisable_data_insertion;
 					$insert_section$
 					, l_cte_option
@@ -445,13 +441,11 @@ begin
 							, %s	
 						;
 					
-						get diagnostics l_row_count = row_count;
+						l_row_offset := l_row_offset + l_row_limit;
 					
-						if l_row_count = 0 then
+						if l_row_offset >= l_data_package_row_count then
 							exit data_insertion;
 						end if;
-					
-						l_row_offset := l_row_offset + l_row_limit;
 					end loop data_insertion;
 				$insert_section$
 				, i_type_rec.schema_name
@@ -583,13 +577,11 @@ begin
 							lc_string = excluded.lc_string		
 						;
 					
-						get diagnostics l_row_count = row_count;
+						l_row_offset := l_row_offset + l_row_limit;
 					
-						if l_row_count = 0 then
+						if l_row_offset >= l_data_package_row_count then
 							exit localisable_data_insertion;
 						end if;
-					
-						l_row_offset := l_row_offset + l_row_limit;
 					end loop localisable_data_insertion;
 					$insert_section$
 					, l_cte_option
@@ -697,9 +689,9 @@ begin
 		declare 
 			l_data_package record;
 			l_state_change_date timestamp without time zone := current_timestamp;
-			l_row_limit bigint := ${operation_row_limit};
+			l_data_package_row_count bigint;
+			l_row_limit bigint := ${mainSchemaName}.f_operation_row_limit();
 			l_row_offset bigint;
-			l_row_count bigint;
 		begin
 			select
 				s.internal_name as state_name
@@ -725,14 +717,17 @@ begin
 				raise exception 'The data package is in an unexpected state: %%', l_data_package.state_name;
   			end if;
   		
-  			if exists (
-  				select 
-  					1
-				from 
-					${stagingSchemaName}.%I src
-				where 
-					src.data_package_id = i_data_package_id
-  			) then
+  			select 
+  				count(*)
+  			into
+  				l_data_package_row_count
+			from 
+				${stagingSchemaName}.%I src
+			where 
+				src.data_package_id = i_data_package_id
+			;
+		
+  			if l_data_package_row_count > 0 then
 				call ${mainSchemaName}.p_invalidate_entity_dependent_views(
 					i_type_id => l_data_package.type_id 
 				);
