@@ -56,7 +56,7 @@
 					<verbose>${profile.verbose}</verbose>
 					<logging>${profile.logging}</logging>
 					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-					<!-- custom properties  -->
+					<!-- Custom properties  -->
 					<systemProperties>
 						<property>
 							<name>default_author</name>
@@ -121,6 +121,15 @@
 						<property>
 							<name>operation_row_limit</name>
 							<value>10000</value>
+						</property>
+						<!-- Backward compatibility options -->
+						<property>
+							<name>bco_cte_materialized</name>
+							<value>materialized</value>
+						</property>
+						<property>
+							<name>bco_cte_not_materialized</name>
+							<value>not materialized</value>
 						</property>
 					</systemProperties>
 				</configuration>

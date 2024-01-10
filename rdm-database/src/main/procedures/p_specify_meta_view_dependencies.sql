@@ -51,9 +51,9 @@ begin
 			and view_id = l_view_id
 		)
 	;
-	
+
 	with 
-	 	dependent_obj as (
+	 	dependent_obj as ${bco_cte_materialized}(
 	 		select 
 				obj_oid
 				, obj_name
@@ -75,7 +75,7 @@ begin
 				and obj_schema not in ('information_schema', 'public')
 				and (obj_name not like 'v\_meta\_%' or obj_schema <> '${mainSchemaName}')
 	 	)
-		, meta_view as (
+		, meta_view as ${bco_cte_materialized}(
 			select 
 				v.id as view_id
 				, v.internal_name as view_name
@@ -83,13 +83,17 @@ begin
 				, v.schema_id
 				, v.is_external
 				, v.is_routine 
-				, case when v.is_routine then 'routine'::name else 'relation'::name end as view_class
+				, case 
+					when v.is_routine 
+					then 'routine'::name 
+					else 'relation'::name 
+				end as view_class
 			from
 				${mainSchemaName}.meta_view v 
 			left join ${mainSchemaName}.meta_schema s 
 				on s.id = v.schema_id 
 		)
-		, meta_type as (
+		, meta_type as ${bco_cte_materialized}(
 			select 
 				t.id
 				, t.internal_name
@@ -102,7 +106,7 @@ begin
 			where 
 				not t.is_abstract
 		)
-		, dependency as (
+		, dependency as ${bco_cte_materialized}(
 			select
 				dependent_obj.*
 				, case dependent_obj.obj_class 
