@@ -45,7 +45,8 @@ join lateral
 				regexp_replace(
 					lower(proc.prosrc)
 					, '--.*?\n'
-					, '', 'g'
+					, ''
+					, 'g'
 				)
 				, '[^[:alnum:]_\.]+'
 				, ' '
