@@ -46,41 +46,20 @@ with recursive
 		, obj_type
 		, dep_level
 	) as (
-		select 				
-			v.oid as obj_oid
-			, v.relname::text as obj_name
-			, s.nspname as obj_schema
-			, 'relation'::name as obj_class
-			, v.relkind as obj_type
+		select 
+			o.obj_id as obj_oid
+			, o.obj_name
+			, o.obj_schema
+			, o.obj_class
+			, o.obj_type
 			, 0 as dep_level
-			, array[v.oid] as dep_seq 
+			, array[o.obj_id] as dep_seq 
 		from 
-			pg_catalog.pg_namespace s
-		join pg_catalog.pg_class v
-			on v.relnamespace = s.oid
-			and v.relname = i_obj_name::name
+			${mainSchemaName}.v_sys_obj o
 		where 
-			s.nspname = i_schema_name::name
-			and i_is_routine = false
-		union all
-		select 				
-			p.oid as obj_oid
-			, i_obj_name::text as obj_name
-			, s.nspname as obj_schema
-			, 'routine'::name as obj_class
-			, p.prokind as obj_type
-			, 0 as dep_level
-			, array[p.oid] as dep_seq
-		from 
-			pg_catalog.pg_namespace s
-		join pg_catalog.pg_proc p
-			on p.pronamespace = s.oid
-			and ${mainSchemaName}.f_target_routine_name(
-				i_target_routine_id => p.oid
-			) = i_obj_name::text
-		where 
-			s.nspname = i_schema_name::name
-			and i_is_routine = true
+			o.obj_name = i_obj_name::name
+			and o.obj_schema = i_schema_name::name
+			and (o.obj_class = 'routine'::name) = i_is_routine
 		union all
 		select 
 			d.obj_oid
