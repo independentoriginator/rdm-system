@@ -58,8 +58,6 @@ join lateral
 join ${mainSchemaName}.v_sys_obj sys_obj
 	on sys_obj.obj_full_name = obj_candidate.obj_name
 	and sys_obj.obj_id <> p.obj_id 
-where 
-	p.obj_class = 'routine'::name
 ;
 
 comment on view v_sys_obj_dependency is 'Зависимости объектов базы данных';
