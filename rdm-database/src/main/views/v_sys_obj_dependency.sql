@@ -17,7 +17,7 @@ join pg_catalog.pg_rewrite pg_rewrite
 	on pg_rewrite.ev_class = dependent_obj.obj_id
 join pg_catalog.pg_depend pg_depend
 	on pg_depend.objid = pg_rewrite.oid
-	and pg_depend.deptype = 'n' 
+	and pg_depend.deptype = 'n' -- normal dependency
 	and pg_depend.classid = 'pg_rewrite'::regclass
 join ${mainSchemaName}.v_sys_obj master_obj
 	on master_obj.obj_id = pg_depend.refobjid
@@ -29,11 +29,11 @@ select distinct
 	, p.obj_schema as dependent_obj_schema
 	, p.obj_class as dependent_obj_class
 	, p.obj_type as dependent_obj_type
-	, sys_obj.obj_id as master_obj_id
-	, sys_obj.obj_name as master_obj_name
-	, sys_obj.obj_schema as master_obj_schema
-	, sys_obj.obj_class as master_obj_class
-	, sys_obj.obj_type as master_obj_type
+	, o.obj_id as master_obj_id
+	, o.obj_name as master_obj_name
+	, o.obj_schema as master_obj_schema
+	, o.obj_class as master_obj_class
+	, o.obj_type as master_obj_type
 from 
 	${mainSchemaName}.v_sys_obj p
 join pg_catalog.pg_proc proc
@@ -56,9 +56,9 @@ join lateral
 		)
 	) as obj_candidate(obj_name)
 	on true
-join ${mainSchemaName}.v_sys_obj sys_obj
-	on sys_obj.obj_full_name = obj_candidate.obj_name
-	and sys_obj.obj_id <> p.obj_id 
+join ${mainSchemaName}.v_sys_obj o
+	on o.obj_full_name = obj_candidate.obj_name
+	and o.obj_id <> p.obj_id 
 ;
 
 comment on view v_sys_obj_dependency is 'Зависимости объектов базы данных';

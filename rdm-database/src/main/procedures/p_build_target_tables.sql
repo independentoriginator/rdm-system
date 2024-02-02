@@ -26,6 +26,8 @@ begin
 			i_type_rec => l_type_rec
 		);
 	end loop;
+
+	call ${mainSchemaName}.p_perform_deferred_dependent_obj_rebuild();
 end
 $procedure$;			
 

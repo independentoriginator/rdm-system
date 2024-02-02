@@ -1,16 +1,26 @@
+drop procedure if exists p_alter_table_column_type(
+	name
+	, name
+	, name
+	, varchar
+)
+;
+
 create or replace procedure p_alter_table_column_type(
 	i_schema_name name
 	, i_table_name name
 	, i_column_name name
 	, i_column_type varchar
+	, i_defer_dependent_obj_recreation boolean = false
 )
 language plpgsql
 as $procedure$
 declare 
 	l_ddl_expr text;
-	l_dependent_objs_deletion_script text[][];
-	l_dependent_objs_creation_script text[][];
-	l_dependent_obj text[];
+	l_dependent_objs_deletion_script jsonb[];
+	l_dependent_objs_creation_script jsonb;
+	l_dependent_obj jsonb;
+	l_iteration_num integer;
 begin
 	select
 		format('
@@ -36,24 +46,31 @@ begin
 	
 	select 
 		array_agg( 
-			array[
-				dependent_obj.obj_schema || '.' || dependent_obj.obj_name 
-				, format(
-					'drop %sview %I.%I'
-					, case when dependent_obj.obj_type = 'm'::"char" then 'materialized ' else '' end 
-					, dependent_obj.obj_schema
-					, dependent_obj.obj_name
+			jsonb_build_object(
+				'name'
+				, dependent_obj.obj_schema || '.' || dependent_obj.obj_name
+				, 'command'
+				, ${mainSchemaName}.f_sys_obj_drop_command(
+					i_obj_id => dependent_obj.obj_oid
+					, i_cascade => false
+					, i_check_existence => false
 				)
-			]
+			)
 			order by dependent_obj.dep_level desc
 		) as dependent_objs_deletion_script
-		, array_agg( 
-			array[
-				dependent_obj.obj_schema || '.' || dependent_obj.obj_name 
-				, ${mainSchemaName}.f_view_definition(
-					i_view_oid => dependent_obj.obj_oid
+		, jsonb_agg( 
+			jsonb_build_object(
+				'id'
+				, dependent_obj.obj_oid
+				, 'name'
+				, dependent_obj.obj_schema || '.' || dependent_obj.obj_name
+				, 'definition'
+				, ${mainSchemaName}.f_sys_obj_definition(
+					i_obj_id => dependent_obj.obj_oid
 				)
-			]
+				, 'dep_level'
+				, dependent_obj.dep_level
+			)
 			order by dependent_obj.dep_level asc
 		) as dependent_objs_creation_script
 	into
@@ -71,9 +88,9 @@ begin
 	;	
 	
 	if l_dependent_objs_deletion_script is not null then
-		foreach l_dependent_obj slice 1 in array l_dependent_objs_deletion_script loop
-			raise notice 'Dropping the dependent object %...', l_dependent_obj[1]; 
-			execute l_dependent_obj[2];
+		foreach l_dependent_obj in array l_dependent_objs_deletion_script loop
+			raise notice 'Dropping the dependent object %...', l_dependent_obj->>'name'; 
+			execute l_dependent_obj->>'command';
 		end loop;
 	end if;
 		
@@ -81,11 +98,68 @@ begin
 	execute l_ddl_expr;
 
 	if l_dependent_objs_deletion_script is not null then
-		foreach l_dependent_obj slice 1 in array l_dependent_objs_creation_script loop
-			raise notice 'Recreating the dependent object %...', l_dependent_obj[1]; 
-			execute l_dependent_obj[2];
-		end loop;
+		
+		if i_defer_dependent_obj_recreation then 
+			raise notice 'Re-creation of the dependent objects has been deferred';
+
+			create temporary table if not exists t_pending_rebuild_dependent_sys_obj(
+				id oid not null
+				, name text not null
+				, definition text not null
+				, dep_level integer not null
+				, iteration_num integer not null
+				, primary key(id)
+			)
+			;
+		
+			create temporary sequence if not exists t_pending_rebuild_dependent_sys_obj_iteration_seq;
+		
+			l_iteration_num := nextval('t_pending_rebuild_dependent_sys_obj_iteration_seq');
+		
+			insert into 	
+				t_pending_rebuild_dependent_sys_obj(
+					id
+					, name
+					, definition
+					, dep_level
+					, iteration_num
+				)
+			select 
+				obj.id
+				, obj.name
+				, obj.definition
+				, obj.dep_level
+				, l_iteration_num
+			from 
+				jsonb_to_recordset(l_dependent_objs_creation_script) 
+					as obj(
+						id oid
+						, name text
+						, definition text
+						, dep_level integer
+					)
+			on conflict (id)
+				do update set
+					name = excluded.name
+					, definition = excluded.definition
+					, dep_level = excluded.dep_level
+					, iteration_num = excluded.iteration_num
+			;					
+		else
+			for l_dependent_obj in (
+				select 
+					obj.attrs
+				from 
+					jsonb_array_elements(l_dependent_objs_creation_script) as obj(attrs)
+			) 
+			loop
+				raise notice 'Re-creating the dependent object %...', l_dependent_obj->>'name'; 
+				execute l_dependent_obj->>'command';
+			end loop;
+		end if;
+	
 	end if;
+
 end
 $procedure$;	
 
@@ -94,13 +168,23 @@ comment on procedure p_alter_table_column_type(
 	, name
 	, name
 	, varchar
+	, boolean
 ) is 'Изменение типа столбца таблицы';
+
+drop procedure if exists ${stagingSchemaName}.p_alter_table_column_type(
+	name
+	, name
+	, name
+	, varchar
+)
+;
 
 create or replace procedure ${stagingSchemaName}.p_alter_table_column_type(
 	i_schema_name name
 	, i_table_name name
 	, i_column_name name
 	, i_column_type varchar
+	, i_defer_dependent_obj_recreation boolean = false
 )
 language plpgsql
 as $procedure$
@@ -110,6 +194,7 @@ begin
 		, i_table_name => i_table_name
 		, i_column_name => i_column_name
 		, i_column_type => i_column_type
+		, i_defer_dependent_obj_recreation => i_defer_dependent_obj_recreation
 	);
 end
 $procedure$;			
@@ -119,4 +204,5 @@ comment on procedure ${stagingSchemaName}.p_alter_table_column_type(
 	, name
 	, name
 	, varchar
+	, boolean
 ) is 'Изменение типа столбца таблицы';

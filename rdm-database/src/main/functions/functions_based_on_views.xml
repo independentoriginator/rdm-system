@@ -8,11 +8,29 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
+	<changeSet id="f_sys_obj_definition-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_sys_obj_definition" 
+			dbms="postgresql" 
+			path="f_sys_obj_definition.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 	<changeSet id="f_sys_obj_dependency-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_sys_obj_dependency" 
 			dbms="postgresql" 
 			path="f_sys_obj_dependency.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="f_sys_obj_drop_command-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_sys_obj_drop_command" 
+			dbms="postgresql" 
+			path="f_sys_obj_drop_command.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>

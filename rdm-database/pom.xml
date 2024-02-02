@@ -115,6 +115,10 @@
 							<value>varchar(63)</value>
 						</property>
 						<property>
+							<name>type.system_object_id</name>
+							<value>oid</value>
+						</property>
+						<property>
 							<name>dbms_extension.dblink.schema</name>
 							<value>${profile.dbms_extension.dblink.schema}</value>
 						</property>

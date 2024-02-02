@@ -41,6 +41,7 @@ begin
 					, i_table_name => i_attr_rec.meta_type_name
 					, i_column_name => i_attr_rec.internal_name
 					, i_column_type => i_attr_rec.target_attr_type
+					, i_defer_dependent_obj_recreation => true
 				);
 			end if;
 		end if;
