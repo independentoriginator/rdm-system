@@ -66,7 +66,7 @@ left join ${mainSchemaName}.v_sys_obj target_schema
 left join ${mainSchemaName}.v_sys_obj target_view
 	on target_view.obj_schema = target_schema.obj_name
 	and target_view.obj_name = v.internal_name
-	and target_schema.obj_general_type in (
+	and target_view.obj_general_type in (
 		'view'::name
 		, 'routine'::name
 	)
