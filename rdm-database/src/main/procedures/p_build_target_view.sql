@@ -61,13 +61,13 @@ begin
 		;	
 
 		if not i_view_rec.is_routine then
-			execute format('
-				drop %sview if exists %I.%I cascade
-				'
-				, case when i_view_rec.is_materialized then 'materialized ' else '' end
-				, i_view_rec.schema_name
-				, i_view_rec.internal_name
-			);
+			execute 
+				${mainSchemaName}.f_sys_obj_drop_command(
+					i_obj_id => i_view_rec.view_oid
+					, i_cascade => true
+					, i_check_existence => true
+				)
+				;
 		end if;
 	end if;
 
