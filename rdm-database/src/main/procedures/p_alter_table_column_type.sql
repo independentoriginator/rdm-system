@@ -11,7 +11,7 @@ create or replace procedure p_alter_table_column_type(
 	, i_table_name name
 	, i_column_name name
 	, i_column_type varchar
-	, i_defer_dependent_obj_recreation boolean = false
+	, i_defer_dependent_obj_recreation boolean = false -- calling p_perform_deferred_dependent_obj_rebuild before the session completion is expected
 )
 language plpgsql
 as $procedure$
@@ -100,7 +100,9 @@ begin
 	if l_dependent_objs_deletion_script is not null then
 		
 		if i_defer_dependent_obj_recreation then 
-			raise notice 'Re-creation of the dependent objects has been deferred';
+			raise notice 
+				'Re-creation of the dependent objects has been deferred.'
+				'Don''t forget to call the p_perform_deferred_dependent_obj_rebuild procedure before the session completion.';
 
 			create temporary table if not exists t_pending_rebuild_dependent_sys_obj(
 				id oid not null
