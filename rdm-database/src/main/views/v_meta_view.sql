@@ -11,7 +11,7 @@ select
 	, case when 'is_materialized' = any(target_view.flags) then true else false end as is_materialized
 	, (v.is_created and target_view.obj_id is not null) as is_created
 	, v.query
-	, v.is_valid
+	, (v.is_valid and 'is_populated' = any(target_view.flags)) as is_valid  
 	, v.refresh_time	
 	, v.creation_order
 	, v.is_disabled
