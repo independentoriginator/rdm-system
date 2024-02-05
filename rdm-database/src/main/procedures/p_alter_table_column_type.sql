@@ -6,12 +6,22 @@ drop procedure if exists p_alter_table_column_type(
 )
 ;
 
+drop procedure if exists p_alter_table_column_type(
+	name
+	, name
+	, name
+	, varchar
+	, boolean
+)
+;
+
 create or replace procedure p_alter_table_column_type(
 	i_schema_name name
 	, i_table_name name
 	, i_column_name name
 	, i_column_type varchar
 	, i_defer_dependent_obj_recreation boolean = false -- calling p_perform_deferred_dependent_obj_rebuild before the session completion is expected
+	, i_enforce_nodata_for_dependent_matview_being_recreated boolean = false
 )
 language plpgsql
 as $procedure$
@@ -67,6 +77,7 @@ begin
 				, 'definition'
 				, ${mainSchemaName}.f_sys_obj_definition(
 					i_obj_id => dependent_obj.obj_oid
+					, i_enforce_nodata_for_matview => i_enforce_nodata_for_dependent_matview_being_recreated
 				)
 				, 'dep_level'
 				, dependent_obj.dep_level
@@ -171,6 +182,7 @@ comment on procedure p_alter_table_column_type(
 	, name
 	, varchar
 	, boolean
+	, boolean
 ) is 'Изменение типа столбца таблицы';
 
 drop procedure if exists ${stagingSchemaName}.p_alter_table_column_type(
@@ -181,12 +193,22 @@ drop procedure if exists ${stagingSchemaName}.p_alter_table_column_type(
 )
 ;
 
+drop procedure if exists ${stagingSchemaName}.p_alter_table_column_type(
+	name
+	, name
+	, name
+	, varchar
+	, boolean
+)
+;
+
 create or replace procedure ${stagingSchemaName}.p_alter_table_column_type(
 	i_schema_name name
 	, i_table_name name
 	, i_column_name name
 	, i_column_type varchar
 	, i_defer_dependent_obj_recreation boolean = false
+	, i_enforce_nodata_for_dependent_matview_being_recreated boolean = false
 )
 language plpgsql
 as $procedure$
@@ -197,6 +219,7 @@ begin
 		, i_column_name => i_column_name
 		, i_column_type => i_column_type
 		, i_defer_dependent_obj_recreation => i_defer_dependent_obj_recreation
+		, i_enforce_nodata_for_dependent_matview_being_recreated => i_enforce_nodata_for_dependent_matview_being_recreated
 	);
 end
 $procedure$;			
@@ -206,5 +229,6 @@ comment on procedure ${stagingSchemaName}.p_alter_table_column_type(
 	, name
 	, name
 	, varchar
+	, boolean
 	, boolean
 ) is 'Изменение типа столбца таблицы';

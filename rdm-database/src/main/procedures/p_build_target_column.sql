@@ -42,6 +42,7 @@ begin
 					, i_column_name => i_attr_rec.internal_name
 					, i_column_type => i_attr_rec.target_attr_type
 					, i_defer_dependent_obj_recreation => true
+					, i_enforce_nodata_for_dependent_matview_being_recreated => true
 				);
 			end if;
 		end if;
