@@ -1,4 +1,4 @@
-drop function is exists f_sys_obj_definition(
+drop function if exists f_sys_obj_definition(
 	${mainSchemaName}.v_sys_obj.obj_id%type
 	, boolean
 );
