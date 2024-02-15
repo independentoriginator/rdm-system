@@ -1,5 +1,11 @@
+drop function is exists f_sys_obj_definition(
+	${mainSchemaName}.v_sys_obj.obj_id%type
+	, boolean
+);
+
 create or replace function f_sys_obj_definition(
 	i_obj_id ${mainSchemaName}.v_sys_obj.obj_id%type
+	, i_include_owner boolean = true
 	, i_enforce_nodata_for_matview boolean = false
 )
 returns text
@@ -7,7 +13,11 @@ language sql
 stable
 as $function$
 select 
-	format(E'set role %s;\n', o.obj_owner) 
+	case 
+		when i_include_owner 
+		then format(E'set role %s;\n'::text, o.obj_owner) 
+		else ''::text 
+	end 
 	|| case o.obj_class
 		when 'relation' then 
 			${mainSchemaName}.f_view_definition(
@@ -17,7 +27,11 @@ select
 		when 'routine' then
 			pg_catalog.pg_get_functiondef(o.obj_id)
 	end
-	|| E';\nreset role;'
+	|| case 
+		when i_include_owner 
+		then E';\nreset role;'::text 
+		else ''::text 
+	end
 from 
 	${mainSchemaName}.v_sys_obj o
 where 
@@ -26,5 +40,6 @@ $function$;
 
 comment on function f_sys_obj_definition(
 	${mainSchemaName}.v_sys_obj.obj_id%type
+	, boolean
 	, boolean
 ) is 'Определение системного объекта';
