@@ -13,16 +13,16 @@ select
 	, id as schema_id
 	, null as group_id 
 	, $sql$
-	drop function if exists f_abbreviate_name(
+	drop function if exists ${mainSchemaName}.f_abbreviate_name(
 		text
 		, boolean
 		, integer
 	);
 	
-	create or replace function f_abbreviate_name(
+	create or replace function ${mainSchemaName}.f_abbreviate_name(
 		i_name text
 		, i_adjust_to_max_length boolean = false
-		, i_max_length integer = f_system_name_max_length()
+		, i_max_length integer = ${mainSchemaName}.f_system_name_max_length()
 		, i_leave_last_characters integer = 0
 	)
 	returns text
@@ -98,7 +98,7 @@ select
 	$function$
 	;	
 	
-	comment on function f_abbreviate_name(
+	comment on function ${mainSchemaName}.f_abbreviate_name(
 		text
 		, boolean
 		, integer

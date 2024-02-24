@@ -13,7 +13,7 @@ select
 	, id as schema_id
 	, null as group_id 
 	, $sql$
-	create or replace function f_convert_case_camel2snake(
+	create or replace function ${mainSchemaName}.f_convert_case_camel2snake(
 		i_str text
 	)
 	returns text
@@ -33,7 +33,7 @@ select
 	$function$
 	;		
 	
-	comment on function f_convert_case_camel2snake(
+	comment on function ${mainSchemaName}.f_convert_case_camel2snake(
 		text	
 	) is 'Преобразование стиля написания текста из "CamelCase" в "snake_case"'
 	;
