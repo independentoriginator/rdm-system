@@ -57,7 +57,7 @@ join lateral
 	) as obj_candidate(obj_name)
 	on true
 join ${mainSchemaName}.v_sys_obj o
-	on o.obj_full_name = obj_candidate.obj_name
+	on o.schema_qualified_name = obj_candidate.obj_name
 	and o.obj_id <> p.obj_id 
 ;
 

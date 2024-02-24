@@ -12,10 +12,13 @@ select
 	, o.obj_owner
 	, o.obj_description
 	, o.flags
+	, o.unqualified_name
+	, o.obj_schema || '.' || o.unqualified_name as schema_qualified_name
 from (
 	select 
 		c.oid as obj_id
 		, c.relname::text as obj_name
+		, c.relname as unqualified_name
 		, n.nspname as obj_schema
 		, 'relation'::name as obj_class
 		, c.relkind as obj_type
@@ -61,6 +64,7 @@ from (
 		, ${mainSchemaName}.f_target_routine_name(
 			i_target_routine_id => p.oid
 		) as obj_name
+		, p.proname as unqualified_name 
 		, n.nspname as obj_schema
 		, 'routine'::name as obj_class
 		, p.prokind as obj_type
@@ -88,6 +92,7 @@ from (
 	select 
 		n.oid as obj_id
 		, n.nspname as obj_name
+		, n.nspname as unqualified_name 
 		, n.nspname as obj_schema
 		, 'schema'::name as obj_class
 		, 'n'::"char" as obj_type
