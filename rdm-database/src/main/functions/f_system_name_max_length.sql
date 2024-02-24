@@ -1,4 +1,4 @@
-create or replace function ${stagingSchemaName}.f_system_name_max_length()
+create or replace function f_system_name_max_length()
 returns integer
 language sql
 immutable
@@ -10,7 +10,24 @@ from
 	pg_catalog.pg_settings s
 where 
 	s.name = 'max_identifier_length'
-$function$;		
+$function$
+;		
+
+comment on function f_system_name_max_length(
+) is 'Максимально возможная длина системного имени'
+;
+
+create or replace function ${stagingSchemaName}.f_system_name_max_length()
+returns integer
+language sql
+immutable
+parallel safe
+as $function$
+select
+	${mainSchemaName}.f_system_name_max_length()
+$function$
+;		
 
 comment on function ${stagingSchemaName}.f_system_name_max_length(
-) is 'Максимально возможная длина системного имени';
+) is 'Максимально возможная длина системного имени'
+;

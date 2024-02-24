@@ -1,13 +1,13 @@
-drop function if exists ${stagingSchemaName}.f_abbreviate_name(
+drop function if exists f_abbreviate_name(
 	text
 	, boolean
 	, integer
 );
 
-create or replace function ${stagingSchemaName}.f_abbreviate_name(
+create or replace function f_abbreviate_name(
 	i_name text
 	, i_adjust_to_max_length boolean = false
-	, i_max_length integer = ${stagingSchemaName}.f_system_name_max_length()
+	, i_max_length integer = f_system_name_max_length()
 	, i_leave_last_characters integer = 0
 )
 returns text
@@ -80,11 +80,48 @@ order by
 	case when i_adjust_to_max_length then t.ordinal_number end  
 	, case when not i_adjust_to_max_length then t.ordinal_number end desc
 limit 1
-$function$;	
+$function$
+;	
+
+comment on function f_abbreviate_name(
+	text
+	, boolean
+	, integer
+	, integer
+) is 'Преобразование наименования в аббревиатуру'
+;
+
+drop function if exists ${stagingSchemaName}.f_abbreviate_name(
+	text
+	, boolean
+	, integer
+);
+
+create or replace function ${stagingSchemaName}.f_abbreviate_name(
+	i_name text
+	, i_adjust_to_max_length boolean = false
+	, i_max_length integer = ${stagingSchemaName}.f_system_name_max_length()
+	, i_leave_last_characters integer = 0
+)
+returns text
+language sql
+immutable
+parallel safe
+as $function$
+select 	
+	 ${mainSchemaName}.f_abbreviate_name(
+		i_name => i_name
+		, i_adjust_to_max_length => i_adjust_to_max_length
+		, i_max_length => i_max_length
+		, i_leave_last_characters => i_leave_last_characters
+	)
+$function$
+;
 
 comment on function ${stagingSchemaName}.f_abbreviate_name(
 	text
 	, boolean
 	, integer
 	, integer
-) is 'Преобразование наименования в аббревиатуру';
+) is 'Преобразование наименования в аббревиатуру'
+;

@@ -1,4 +1,4 @@
-create or replace function ${stagingSchemaName}.f_convert_case_snake2camel(
+create or replace function f_convert_case_snake2camel(
 	i_str text
 )
 returns text
@@ -23,8 +23,31 @@ from (
 			, 'g'
 		) with ordinality as sub(part, ordinal_number) 
 ) t
-$function$;
+$function$
+;
+
+comment on function f_convert_case_snake2camel(
+	text	
+) is 'Преобразование стиля написания текста из "snake_case" в "CamelCase"'
+;
+
+create or replace function ${stagingSchemaName}.f_convert_case_snake2camel(
+	i_str text
+)
+returns text
+language sql
+immutable
+parallel safe
+as $function$
+select
+	${mainSchemaName}.f_convert_case_snake2camel(
+		i_str => i_str
+	)
+$function$
+;
 
 comment on function ${stagingSchemaName}.f_convert_case_snake2camel(
 	text	
-) is 'Преобразование стиля написания текста из "snake_case" в "CamelCase"';
+) is 'Преобразование стиля написания текста из "snake_case" в "CamelCase"'
+;
+
