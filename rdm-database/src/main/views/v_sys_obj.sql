@@ -102,7 +102,7 @@ from (
 		on obj_owner.oid = n.nspowner
 	left join pg_catalog.pg_description d 
 		on d.objoid = n.oid
-) t
+) o
 ;
 
 comment on view v_sys_obj is 'Объект базы данных';
