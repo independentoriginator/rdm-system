@@ -32,8 +32,16 @@
 			call p_build_target_tables();
 		</sql>
 	</changeSet>
+	
+	<include file="functions/target_sys_layer_functions.xml" relativeToChangelogFile="true" />
+	
+	<changeSet id="build target views" author="${default_author}" runAlways="true">
+		<sql>
+			call p_build_target_views();
+		</sql>
+	</changeSet>
 
-	<!-- This fragment should be added in a custom module 
+	<!-- This fragment should be added also in a custom module 
 	<changeSet id="build target views" author="${default_author}" runAlways="true">
 		<sql>
 			call p_build_target_views();

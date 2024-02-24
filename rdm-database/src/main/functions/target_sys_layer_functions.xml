@@ -1,0 +1,65 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+	<changeSet id="f_undefined_max_date-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_undefined_max_date" 
+			dbms="postgresql" 
+			path="f_undefined_max_date.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="f_undefined_min_date-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_undefined_min_date" 
+			dbms="postgresql" 
+			path="f_undefined_min_date.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="f_abbreviate_name-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_abbreviate_name" 
+			dbms="postgresql" 
+			path="f_abbreviate_name.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
+	<changeSet id="f_convert_case_snake2camel-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_convert_case_snake2camel" 
+			dbms="postgresql" 
+			path="f_convert_case_snake2camel.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="f_convert_case_camel2snake-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_convert_case_camel2snake" 
+			dbms="postgresql" 
+			path="f_convert_case_camel2snake.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
+	<changeSet id="f_database_one_off_static_snapshot_gen_script-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_database_one_off_static_snapshot_gen_script" 
+			dbms="postgresql" 
+			path="f_database_one_off_static_snapshot_gen_script.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
+</databaseChangeLog>

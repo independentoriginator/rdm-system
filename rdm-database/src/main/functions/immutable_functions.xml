@@ -8,24 +8,6 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-	<changeSet id="f_undefined_max_date-function" author="${default_author}" runOnChange="true">
-		<createProcedure 
-			procedureName="f_undefined_max_date" 
-			dbms="postgresql" 
-			path="f_undefined_max_date.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-
-	<changeSet id="f_undefined_min_date-function" author="${default_author}" runOnChange="true">
-		<createProcedure 
-			procedureName="f_undefined_min_date" 
-			dbms="postgresql" 
-			path="f_undefined_min_date.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
 	<changeSet id="f_operation_row_limit-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_operation_row_limit" 
