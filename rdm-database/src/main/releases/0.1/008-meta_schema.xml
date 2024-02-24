@@ -204,5 +204,21 @@
 		</insert>
 	
 	</changeSet>
+	
+	<changeSet id="module schema registration" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+		    <sqlCheck expectedResult="0">
+		        select count(1)
+		        from ${mainSchemaName}.meta_schema
+		        where internal_name = '${mainSchemaName}'
+		    </sqlCheck>
+		</preConditions>
+	
+		<insert tableName="meta_schema" schemaName="${mainSchemaName}">
+			<column name="internal_name" value="${mainSchemaName}"/>
+		</insert>
+
+	</changeSet>
 
 </databaseChangeLog>
