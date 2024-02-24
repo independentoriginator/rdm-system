@@ -57,7 +57,7 @@ with recursive
 		from 
 			${mainSchemaName}.v_sys_obj o
 		where 
-			o.obj_name = i_obj_name::name
+			o.obj_name = i_obj_name::text
 			and o.obj_schema = i_schema_name::name
 			and (o.obj_class = 'routine'::name) = i_is_routine
 		union all

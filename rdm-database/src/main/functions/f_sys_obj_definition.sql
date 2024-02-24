@@ -26,6 +26,11 @@ select
 			)
 		when 'routine' then
 			pg_catalog.pg_get_functiondef(o.obj_id)
+		when 'schema' then
+			format(
+				'create schema %I'
+				, o.obj_name
+			)
 	end
 	|| case 
 		when i_include_owner 

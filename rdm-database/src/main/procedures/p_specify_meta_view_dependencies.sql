@@ -237,7 +237,7 @@ begin
 			on aev.id = dependent_obj.view_id
 		where
 			master_view.dep_level = 0
-			and master_view.is_view
+			and master_view.view_id is not null
 		group by
 			coalesce(dependent_obj.view_id, ev.id)
 			, master_view.view_id
@@ -253,7 +253,7 @@ begin
 			on dependent_obj.dep_level <> 0
 		where
 			master_view.dep_level = 0
-			and master_view.is_view
+			and master_view.view_id is not null
 			and dependent_obj.type_id is not null
 			and i_treat_the_obj_as_dependent
 		group by

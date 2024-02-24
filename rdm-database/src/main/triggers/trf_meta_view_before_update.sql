@@ -5,12 +5,6 @@ as $$
 begin
 	new.is_created = false;
 	
-	delete from 
-		${mainSchemaName}.meta_view_dependency
-	where 
-		view_id = new.id
-	;
-
 	return new;
 end
 $$;			

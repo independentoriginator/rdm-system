@@ -129,6 +129,8 @@ select
 	, a.localisable_attr_case_expr_body
 	, t.actual_rec_u_constraint_name
 	, (actual_rec_u_constraint.constraint_name is not null) as is_actual_rec_u_constraint_exists
+	, target_table.oid as table_oid
+	, lc_table.oid as localization_table_oid
 from (	
 	select
 		t.id
