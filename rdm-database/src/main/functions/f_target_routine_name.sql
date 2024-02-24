@@ -3,8 +3,9 @@ create or replace function f_target_routine_name(
 )
 returns text
 language sql
-stable
+volatile
 as $function$
+set local search_path = pg_catalog;
 select
 	regexp_replace(i_target_routine_id::regprocedure::text, '(.+)\.(.+)(\(.*\))', '\2\3')
 $function$;		
