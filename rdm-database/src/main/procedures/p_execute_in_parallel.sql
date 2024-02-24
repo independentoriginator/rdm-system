@@ -88,7 +88,7 @@ begin
 		
 			for i in 1..least(array_length(i_commands, 1) - l_command_index + 1, i_thread_max_count) loop
 				l_connection := 
-					'ng_staging.parallel'
+					'${stagingSchemaName}.parallel'
 					|| '$N' || i::text				
 					|| '$' || coalesce(replace(i_scheduled_task_name, ' ', '_'), '')
 					|| '$' || l_user
@@ -182,3 +182,98 @@ comment on procedure ${stagingSchemaName}.p_execute_in_parallel(
 	, integer
 	, integer
 ) is 'Исполнение набора команд в параллельном режиме';
+
+
+create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
+	i_command_list_query text
+	, i_do_while_checking_condition text = null
+	, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0 -- for example, caller procedure system identitifier 
+	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = 0 -- for example, pg_backend_pid() 
+	, i_max_worker_processes integer = 10
+	, i_polling_interval interval = '10 seconds'
+	, i_max_run_time interval = '8 hours'
+)
+language plpgsql
+as $procedure$
+declare
+ 	l_is_multithreaded_process boolean := (
+			i_max_worker_processes > 1 
+			and exists (
+				select 
+					1
+				from
+					pg_catalog.pg_extension e
+				where 
+					e.extname = 'dblink'
+			)
+		)
+		;
+	l_exit_flag boolean;
+	l_command text;
+	l_notification_channel name := '${project.artifactId}.parallel-worker-notifications';
+begin
+	if l_is_multithreaded_process then
+		-- Start listening to parallel worker notifications
+		perform
+			${dbms_extension.dblink.schema}.dblink_exec(
+				format(
+					'listen %s'
+					, l_notification_channel
+				)
+			)
+			;
+	else	
+		raise notice 
+			'Singlethreaded process will be executed'
+			' (for multithreaded execution, install the dblink extension and set the i_max_worker_processes procedure parameter to the appropriate value)'
+			;
+	end if;
+	
+	<<main>>
+	loop
+		if l_is_multithreaded_process then
+			<<commands>>
+			for l_command in execute i_command_list_query 
+			loop
+				perform 
+					${stagingSchemaName}.f_launch_parallel_worker(
+						i_command => l_command
+						, i_context_id => i_context_id
+						, i_operation_instance_id => i_operation_instance_id
+						, i_notification_channel => l_notification_channel
+						, i_max_worker_processes => i_max_worker_processes
+						, i_polling_interval => i_polling_interval
+						, i_max_run_time => i_max_run_time
+					)
+					;
+			end loop commands;
+			
+			if ${stagingSchemaName}.f_wait_for_parallel_process_completion(
+				i_context_id => i_context_id
+				, i_operation_instance_id => i_operation_instance_id
+				, i_notification_channel => l_notification_channel
+				, i_polling_interval => i_polling_interval
+				, i_max_run_time => i_max_run_time
+			)
+			then 
+				raise notice 
+					'Iteration completed...'
+				;		
+			end if;
+		else 
+			<<commands>>
+			for l_command in execute i_command_list_query 
+			loop
+				execute l_command;
+			end loop commands;
+		end if;		
+	
+		if i_do_while_checking_condition is null then
+			exit main;
+		else
+			execute i_do_while_checking_condition into l_exit_flag;
+			exit main when l_exit_flag;
+		end if;
+	end loop main;
+end
+$procedure$;

@@ -107,29 +107,29 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="f_abbreviate_name-function" author="${default_author}" runOnChange="true">
+	<changeSet id="f_parallel_worker_name-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
-			procedureName="f_abbreviate_name" 
+			procedureName="f_parallel_worker_name" 
 			dbms="postgresql" 
-			path="f_abbreviate_name.sql" 
-			relativeToChangelogFile="true"/>
-		<rollback/>
-	</changeSet>
-	
-	<changeSet id="f_convert_case_snake2camel-function" author="${default_author}" runOnChange="true">
-		<createProcedure 
-			procedureName="f_convert_case_snake2camel" 
-			dbms="postgresql" 
-			path="f_convert_case_snake2camel.sql" 
+			path="f_parallel_worker_name.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
 
-	<changeSet id="f_convert_case_camel2snake-function" author="${default_author}" runOnChange="true">
+	<changeSet id="f_wait_for_parallel_process_completion-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
-			procedureName="f_convert_case_camel2snake" 
+			procedureName="f_wait_for_parallel_process_completion" 
 			dbms="postgresql" 
-			path="f_convert_case_camel2snake.sql" 
+			path="f_wait_for_parallel_process_completion.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="f_launch_parallel_worker-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_launch_parallel_worker" 
+			dbms="postgresql" 
+			path="f_launch_parallel_worker.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>

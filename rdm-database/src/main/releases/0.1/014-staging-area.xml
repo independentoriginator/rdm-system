@@ -345,5 +345,33 @@
 		</insert>
 		
 	</changeSet>
+	
+	<changeSet id="parallel_worker" author="${default_author}">
+	
+		<createTable
+			tableName="parallel_worker" 
+			schemaName="${stagingSchemaName}"
+			remarks="Дочерний рабочий процесс многопоточной операции">
+			<column name="context_id" type="${type.system_object_id}" remarks="Идентификатор контекста исполнения">
+				<constraints nullable="false" />
+			</column>
+			<column name="operation_instance_id" type="integer" remarks="Идентификатор экземпляра операции">
+				<constraints nullable="false" />
+			</column>
+			<column name="worker_num" type="integer" remarks="Номер процесса">
+				<constraints nullable="false" />
+			</column>
+			<column name="start_time" type="datetime" remarks="Время старта">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<addPrimaryKey 
+			constraintName="pk_parallel_worker" 
+			tableName="parallel_worker"
+			schemaName="${stagingSchemaName}"
+			columnNames="context_id, operation_instance_id, worker_num"/>
+
+	</changeSet>
 
 </databaseChangeLog>
