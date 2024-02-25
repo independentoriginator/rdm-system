@@ -59,6 +59,9 @@ join lateral
 join ${mainSchemaName}.v_sys_obj o
 	on o.schema_qualified_name = obj_candidate.obj_name
 	and o.obj_id <> p.obj_id 
+-- ToDo: 
+-- - extract stored dependencies of a routine signature
+-- - add support to the new feature for sql functions with parsing at definition time (begin atomic ... end)   
 ;
 
 comment on view v_sys_obj_dependency is 'Зависимости объектов базы данных';
