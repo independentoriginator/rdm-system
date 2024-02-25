@@ -144,7 +144,7 @@ from (
 		, substring(
 			'uc_' || t.internal_name || '$id_valid_to'
 			, 1
-			, ${stagingSchemaName}.f_system_name_max_length()
+			, ${mainSchemaName}.f_system_name_max_length()
 		) as actual_rec_u_constraint_name
 		, t.is_temporal
 		, ${mainSchemaName}.f_is_meta_type_has_localization(

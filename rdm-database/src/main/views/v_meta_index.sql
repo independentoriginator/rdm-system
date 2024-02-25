@@ -63,7 +63,7 @@ with
 					|| '$' 
 					|| i.tag
 					, 1
-					, ${stagingSchemaName}.f_system_name_max_length()
+					, ${mainSchemaName}.f_system_name_max_length()
 				) as index_name
 				, ic.index_columns || 
 				case 
