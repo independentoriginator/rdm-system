@@ -14,6 +14,7 @@ select
 	, o.flags
 	, o.unqualified_name
 	, o.obj_schema || '.' || o.unqualified_name as schema_qualified_name
+	, o.class_id
 from (
 	select 
 		c.oid as obj_id
@@ -21,6 +22,7 @@ from (
 		, c.relname as unqualified_name
 		, n.nspname as obj_schema
 		, 'relation'::name as obj_class
+		, 'pg_class'::regclass::oid as class_id
 		, c.relkind as obj_type
 		, case 
 			when c.relkind = any(array['v', 'm']::char[]) then 'view'::name
@@ -67,6 +69,7 @@ from (
 		, p.proname as unqualified_name 
 		, n.nspname as obj_schema
 		, 'routine'::name as obj_class
+		, 'pg_proc'::regclass::oid as class_id
 		, p.prokind as obj_type
 		, 'routine'::name as obj_general_type
 		, case p.prokind
@@ -95,6 +98,7 @@ from (
 		, n.nspname as unqualified_name 
 		, n.nspname as obj_schema
 		, 'schema'::name as obj_class
+		, 'pg_namespace'::regclass::oid as class_id
 		, 'n'::"char" as obj_type
 		, 'schema'::name as obj_general_type
 		, 'schema'::name as obj_specific_type
