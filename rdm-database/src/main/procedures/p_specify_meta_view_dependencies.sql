@@ -97,14 +97,11 @@ begin
 			select 
 				t.id
 				, t.internal_name
-				, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
+				, t.schema_name
+				, t.localization_table_name
 				, 'relation'::name as obj_class
 			from 
-				${mainSchemaName}.meta_type t
-			left join ${mainSchemaName}.meta_schema s 
-				on s.id = t.schema_id
-			where 
-				not t.is_abstract
+				${mainSchemaName}.v_meta_type t
 		)
 		, dependency as ${bco_cte_materialized}(
 			select
@@ -114,7 +111,7 @@ begin
 					else false  
 				end as is_routine
 				, v.view_id 
-				, t.id as type_id
+				, coalesce(t.id, t_lc.id) as type_id
 				, coalesce(v.schema_id, s.id) as schema_id  
 				, v.is_external
 				, case 
@@ -134,6 +131,10 @@ begin
 				on t.internal_name = dependent_obj.obj_name 
 				and t.schema_name = dependent_obj.obj_schema
 				and t.obj_class = dependent_obj.obj_class
+			left join meta_type t_lc 
+				on t_lc.localization_table_name = dependent_obj.obj_name 
+				and t_lc.schema_name = dependent_obj.obj_schema
+				and t_lc.obj_class = dependent_obj.obj_class
 			left join ${mainSchemaName}.meta_schema s 
 				on s.internal_name = dependent_obj.obj_schema 
 		)
@@ -261,8 +262,8 @@ begin
 			, dependent_obj.type_id
 	) t 
 	where 
-		view_id is not null 
-		and coalesce(master_view_id, master_type_id) is not null		
+		t.view_id is not null 
+		and coalesce(t.master_view_id, t.master_type_id) is not null		
 	;	
 end
 $procedure$;			
