@@ -12,6 +12,7 @@ declare
 	l_schemas_to_create text;
 	l_drop_command text;
 	l_view_rec record;
+	l_prev_view_id record;
 	l_msg_text text;
 	l_exception_detail text;
 	l_exception_hint text;
@@ -183,19 +184,39 @@ begin
 	l_timestamp := clock_timestamp();
 
 	<<build_views>>
-	for l_view_rec in (
-		select 
-			v.*
-		from
-			${mainSchemaName}.v_meta_view v
-		where 
-			not coalesce(v.is_created, false)
-			and not coalesce(v.is_disabled, false)
-		order by
-			case when v.is_external then null else v.creation_order end
-			, v.previously_defined_dependency_level
-	)
 	loop
+		select
+			t.*
+		into
+			l_view_rec
+		from 
+			${mainSchemaName}.v_meta_view t
+		join ${mainSchemaName}.meta_view meta_view 
+			on meta_view.id = t.id
+		where 
+			(coalesce(t.is_created, false) = false or meta_view.dependency_level is null)
+			and coalesce(t.is_disabled, false) = false
+		order by
+			case when t.is_external then null else t.creation_order end
+			, t.previously_defined_dependency_level
+		limit 1
+		for update of meta_view
+		;
+		
+		exit build_views when l_view_rec is null;
+		
+		if l_prev_view_id is not null and l_view_rec.id = l_prev_view_id 
+		then
+			raise exception 
+				'The % was not processed for a some unexpected reason: %.%...'
+				, l_view_rec.view_type
+				, l_view_rec.schema_name
+				, l_view_rec.internal_name
+			;
+		end if;
+		
+		l_prev_view_id = l_view_rec.id;
+	
 		if not l_view_rec.is_external 
 			or not l_view_rec.is_routine
 			or (
