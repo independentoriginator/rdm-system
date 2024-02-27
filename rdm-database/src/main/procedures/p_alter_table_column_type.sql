@@ -58,10 +58,10 @@ begin
 		array_agg( 
 			jsonb_build_object(
 				'name'
-				, dependent_obj.obj_schema || '.' || dependent_obj.obj_name
+				, dependent_obj.dep_obj_schema || '.' || dependent_obj.dep_obj_name
 				, 'command'
 				, ${mainSchemaName}.f_sys_obj_drop_command(
-					i_obj_id => dependent_obj.obj_oid
+					i_obj_id => dependent_obj.dep_obj_id
 					, i_cascade => false
 					, i_check_existence => false
 				)
@@ -71,12 +71,12 @@ begin
 		, jsonb_agg( 
 			jsonb_build_object(
 				'id'
-				, dependent_obj.obj_oid
+				, dependent_obj.dep_obj_id
 				, 'name'
-				, dependent_obj.obj_schema || '.' || dependent_obj.obj_name
+				, dependent_obj.dep_obj_schema || '.' || dependent_obj.dep_obj_name
 				, 'definition'
 				, ${mainSchemaName}.f_sys_obj_definition(
-					i_obj_id => dependent_obj.obj_oid
+					i_obj_id => dependent_obj.dep_obj_id
 					, i_enforce_nodata_for_matview => i_enforce_nodata_for_dependent_matview_being_recreated
 				)
 				, 'dep_level'
@@ -89,13 +89,21 @@ begin
 		, l_dependent_objs_creation_script
 	from 
 		${mainSchemaName}.f_sys_obj_dependency(
-			i_obj_name => i_table_name
-			, i_schema_name => i_schema_name
-			, i_is_routine => false
+			i_objects =>
+				jsonb_build_array( 
+					jsonb_build_object(
+						'obj_name' 
+						, i_table_name
+						, 'obj_schema'			
+						, i_schema_name
+						, 'obj_class'
+						, 'relation'
+					)
+				)
 			, i_treat_the_obj_as_dependent => false
 		) dependent_obj 
 	where 
-		dependent_obj.obj_class = 'relation'
+		dependent_obj.dep_obj_class = 'relation'
 	;	
 	
 	if l_dependent_objs_deletion_script is not null then

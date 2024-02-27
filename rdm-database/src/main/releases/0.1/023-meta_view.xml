@@ -381,6 +381,14 @@
 	
 		<preConditions onFail="CONTINUE">
 			<viewExists viewName="v_sys_obj_dependency" schemaName="${mainSchemaName}"/>
+		    <sqlCheck expectedResult="0">
+				select 
+					count(1)
+		        from 
+		        	${mainSchemaName}.meta_view_dependency
+		        where 
+		        	master_type_id is not null
+		    </sqlCheck>			
 		</preConditions>	
 	
 		<sql dbms="postgresql">

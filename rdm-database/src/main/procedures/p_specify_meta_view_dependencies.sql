@@ -4,38 +4,40 @@ drop procedure if exists p_detect_meta_view_dependants(
 	, ${mainSchemaName}.meta_view.is_routine%type
 );
 
+drop procedure if exists p_detect_meta_view_dependants(
+	${mainSchemaName}.meta_view.internal_name%type
+	, ${mainSchemaName}.meta_schema.internal_name%type
+	, ${mainSchemaName}.meta_view.is_routine%type
+	, boolean	
+	, boolean
+);
+
 create or replace procedure p_specify_meta_view_dependencies(
-	i_view_name ${mainSchemaName}.meta_view.internal_name%type
-	, i_schema_name ${mainSchemaName}.meta_schema.internal_name%type
-	, i_is_routine ${mainSchemaName}.meta_view.is_routine%type
+	i_views jsonb
 	, i_treat_the_obj_as_dependent boolean -- and as master otherwise	
 	, i_consider_registered_objects_only boolean = false
 )
 language plpgsql
 as $procedure$
 declare 
-	l_view_id ${mainSchemaName}.meta_view.id%type;
+	l_view_ids ${type.id}[];
 begin
 	select 
-		v.id
+		array_agg(v.id)
 	into 
-		l_view_id
+		l_view_ids
 	from
-		${mainSchemaName}.meta_view v 
-	left join ${mainSchemaName}.meta_schema s 
-		on s.id = v.schema_id 
-	where 
-		v.internal_name = i_view_name
-		and coalesce(s.internal_name, '${mainSchemaName}') = i_schema_name
-		and v.is_routine = i_is_routine
+		${mainSchemaName}.v_meta_view v 
+	join jsonb_to_recordset(i_views) as obj(obj_schema name, obj_name text, obj_class name)
+		on obj.obj_name = v.internal_name  
+		and obj.obj_schema = v.schema_name
+		and obj.obj_class = v.obj_class
 	;
 
-	if l_view_id is null then
+	if l_view_ids is null or cardinality(l_view_ids) <>  jsonb_array_length(i_views) then
 		raise exception 
-			'The % specified is unknown: %.%'
-			, case when i_is_routine then 'routine' else 'view' end
-			, i_schema_name
-			, i_view_name
+			'Unknown objects specified: %'
+			, i_views
 		;
 	end if;
 	
@@ -44,54 +46,46 @@ begin
 	where 
 		(
 			i_treat_the_obj_as_dependent = false
-			and master_view_id = l_view_id
+			and master_view_id = any(l_view_ids)
 		)
 		or (
 			i_treat_the_obj_as_dependent = true
-			and view_id = l_view_id
+			and view_id = any(l_view_ids)
 		)
 	;
 
 	with 
 	 	dependent_obj as ${bco_cte_materialized}(
 	 		select 
-				obj_oid
-				, obj_name
-				, obj_schema
-				, obj_class
-				, obj_type
+				obj_id
+				, dep_obj_id
+				, dep_obj_name
+				, dep_obj_schema
+				, dep_obj_class
+				, dep_obj_type
 				, dep_level
-				, (obj_type in ('v'::"char", 'm'::"char")) as is_view
+				, (dep_obj_type in ('v'::"char", 'm'::"char")) as is_view
 	 		from
 				${mainSchemaName}.f_sys_obj_dependency(
-					i_obj_name => i_view_name
-					, i_schema_name => i_schema_name
-					, i_is_routine => i_is_routine
+					i_objects => i_views
 					, i_treat_the_obj_as_dependent => i_treat_the_obj_as_dependent
-					, i_exclude_curr_obj => false
+					, i_exclude_the_obj_specified => false
+					, i_exclude_system_objects => true
 				)	 	
 			where 
-				obj_schema not like 'pg\_%'
-				and obj_schema not in ('information_schema', 'public')
-				and (obj_name not like 'v\_meta\_%' or obj_schema <> '${mainSchemaName}')
+				dep_obj_name not like 'v\_meta\_%'
 	 	)
 		, meta_view as ${bco_cte_materialized}(
 			select 
 				v.id as view_id
 				, v.internal_name as view_name
-				, coalesce(s.internal_name, '${mainSchemaName}') as view_schema
+				, v.schema_name as view_schema
 				, v.schema_id
 				, v.is_external
 				, v.is_routine 
-				, case 
-					when v.is_routine 
-					then 'routine'::name 
-					else 'relation'::name 
-				end as view_class
+				, v.obj_class as view_class
 			from
-				${mainSchemaName}.meta_view v 
-			left join ${mainSchemaName}.meta_schema s 
-				on s.id = v.schema_id 
+				${mainSchemaName}.v_meta_view v 
 		)
 		, meta_type as ${bco_cte_materialized}(
 			select 
@@ -105,8 +99,15 @@ begin
 		)
 		, dependency as ${bco_cte_materialized}(
 			select
-				dependent_obj.*
-				, case dependent_obj.obj_class 
+				dependent_obj.obj_id
+				, dependent_obj.dep_obj_id
+				, dependent_obj.dep_obj_name
+				, dependent_obj.dep_obj_schema
+				, dependent_obj.dep_obj_class
+				, dependent_obj.dep_obj_type
+				, dependent_obj.dep_level
+				, dependent_obj.is_view
+				, case dependent_obj.dep_obj_class 
 					when 'routine'::name then true 
 					else false  
 				end as is_routine
@@ -115,62 +116,66 @@ begin
 				, coalesce(v.schema_id, s.id) as schema_id  
 				, v.is_external
 				, case 
-					when (v.view_id is null or v.is_external) and dependent_obj.obj_oid is not null then
+					when (v.view_id is null or v.is_external) and dependent_obj.dep_obj_id is not null then
 						${mainSchemaName}.f_sys_obj_definition(
-							i_obj_id => dependent_obj.obj_oid
+							i_obj_id => dependent_obj.dep_obj_id
 							, i_enforce_nodata_for_matview => true
 						)
 				end as external_view_def
 			from 
 				dependent_obj
 			left join meta_view v 
-				on v.view_name = dependent_obj.obj_name 
-				and v.view_schema = dependent_obj.obj_schema
-				and v.view_class = dependent_obj.obj_class
+				on v.view_name = dependent_obj.dep_obj_name 
+				and v.view_schema = dependent_obj.dep_obj_schema
+				and v.view_class = dependent_obj.dep_obj_class
 			left join meta_type t 
-				on t.internal_name = dependent_obj.obj_name 
-				and t.schema_name = dependent_obj.obj_schema
-				and t.obj_class = dependent_obj.obj_class
+				on t.internal_name = dependent_obj.dep_obj_name 
+				and t.schema_name = dependent_obj.dep_obj_schema
+				and t.obj_class = dependent_obj.dep_obj_class
 			left join meta_type t_lc 
-				on t_lc.localization_table_name = dependent_obj.obj_name 
-				and t_lc.schema_name = dependent_obj.obj_schema
-				and t_lc.obj_class = dependent_obj.obj_class
+				on t_lc.localization_table_name = dependent_obj.dep_obj_name 
+				and t_lc.schema_name = dependent_obj.dep_obj_schema
+				and t_lc.obj_class = dependent_obj.dep_obj_class
 			left join ${mainSchemaName}.meta_schema s 
-				on s.internal_name = dependent_obj.obj_schema 
+				on s.internal_name = dependent_obj.dep_obj_schema 
 		)
 		, new_external_schema as (
-			insert into ${mainSchemaName}.meta_schema(
-				internal_name
-				, is_external
-			)
+			insert into 
+				${mainSchemaName}.meta_schema(
+					internal_name
+					, is_external
+				)
 			select distinct
-				d.obj_schema as internal_name
+				d.dep_obj_schema as internal_name
 				, true as is_external
 			from 
 				dependency d 
 			where 	
 				d.view_id is null 
-				and d.obj_schema not in (
+				and d.dep_obj_schema not in (
 					select 
 						s.internal_name 
 					from 
 						${mainSchemaName}.meta_schema s
 				)
 				and i_consider_registered_objects_only = false
-			returning id, internal_name
+			returning 
+				id
+				, internal_name
 		)
 		, new_external_view as (
-			insert into ${mainSchemaName}.meta_view(
-				internal_name
-				, schema_id
-				, query
-				, is_external
-				, is_routine
-				, is_created
-				, modification_time
-			)
+			insert into 
+				${mainSchemaName}.meta_view(
+					internal_name
+					, schema_id
+					, query
+					, is_external
+					, is_routine
+					, is_created
+					, modification_time
+				)
 			select distinct
-				d.obj_name as internal_name
+				d.dep_obj_name as internal_name
 				, coalesce(d.schema_id, ns.id) as schema_id
 				, d.external_view_def as query
 				, true as is_external
@@ -180,14 +185,19 @@ begin
 			from 
 				dependency d 
 			left join new_external_schema ns 
-				on ns.internal_name = d.obj_schema
+				on ns.internal_name = d.dep_obj_schema
 			where
 				d.view_id is null 
 				and i_consider_registered_objects_only = false
-			returning id, internal_name, schema_id, is_routine
+			returning 
+				id
+				, internal_name
+				, schema_id
+				, is_routine
 		)
 		, actualized_external_view as (
-			update ${mainSchemaName}.meta_view v
+			update 
+				${mainSchemaName}.meta_view v
 			set 
 				query = d.external_view_def
 				, is_disabled = false
@@ -197,19 +207,21 @@ begin
 			where 
 				v.id = d.view_id
 				and d.is_external = true
-			returning id
+			returning 
+				id
 		)
-	insert into ${mainSchemaName}.meta_view_dependency(
-		view_id
-		, master_view_id
-		, master_type_id
-		, level
-	)
+	insert into 
+		${mainSchemaName}.meta_view_dependency(
+			view_id
+			, master_view_id
+			, master_type_id
+			, level
+		)
 	select 
-		view_id
-		, master_view_id
-		, master_type_id
-		, level
+		t.view_id
+		, t.master_view_id
+		, t.master_type_id
+		, t.level
 	from (
 		select
 			case i_treat_the_obj_as_dependent
@@ -225,13 +237,14 @@ begin
 		from 
 			dependency master_view
 		join dependency dependent_obj
-			on dependent_obj.dep_level <> 0
+			on dependent_obj.obj_id = master_view.obj_id 
+			and dependent_obj.dep_level <> 0
 		left join ${mainSchemaName}.meta_schema s 
-			on s.internal_name = dependent_obj.obj_schema 
+			on s.internal_name = dependent_obj.dep_obj_schema 
 		left join new_external_schema es 
-			on es.internal_name = dependent_obj.obj_schema
+			on es.internal_name = dependent_obj.dep_obj_schema
 		left join new_external_view ev 
-			on ev.internal_name = dependent_obj.obj_name
+			on ev.internal_name = dependent_obj.dep_obj_name
 			and ev.schema_id = coalesce(s.id, es.id)
 			and ev.is_routine = dependent_obj.is_routine
 		left join actualized_external_view aev
@@ -251,7 +264,8 @@ begin
 		from 
 			dependency master_view
 		join dependency dependent_obj
-			on dependent_obj.dep_level <> 0
+			on dependent_obj.obj_id = master_view.obj_id
+			and dependent_obj.dep_level <> 0
 		where
 			master_view.dep_level = 0
 			and master_view.view_id is not null
@@ -269,9 +283,7 @@ end
 $procedure$;			
 
 comment on procedure p_specify_meta_view_dependencies(
-	${mainSchemaName}.meta_view.internal_name%type
-	, ${mainSchemaName}.meta_schema.internal_name%type
-	, ${mainSchemaName}.meta_view.is_routine%type
-	, boolean
+	jsonb
+	, boolean	
 	, boolean
 ) is 'Определить зависимости метапредставления';

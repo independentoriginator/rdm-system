@@ -56,7 +56,13 @@ select
 	, case when 'is_populated' = any(target_view.flags) then true else false end as is_populated
 	, v.modification_time
 	, v.group_id
-	, target_view.obj_class
+	, coalesce(
+		target_view.obj_class
+		, case 
+			when v.is_routine then 'routine'::name
+			else 'relation'::name
+		end
+	) as obj_class
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s
