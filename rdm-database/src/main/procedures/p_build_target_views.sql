@@ -12,7 +12,7 @@ declare
 	l_schemas_to_create text;
 	l_drop_command text;
 	l_view_rec record;
-	l_prev_view_id record;
+	l_prev_view_id ${type.id};
 	l_msg_text text;
 	l_exception_detail text;
 	l_exception_hint text;
@@ -174,7 +174,6 @@ begin
 		;
 	end if;
 
-	l_view_ids := array[]::${type.id}[];
 	l_views := '[]'::jsonb;
 
 	raise notice 
@@ -243,7 +242,6 @@ begin
 				execute 
 					l_view_rec.query;
 			
-				l_view_ids := l_view_ids || l_view_rec.id;	
 				l_views := 
 						l_views
 						|| jsonb_build_object(
@@ -303,6 +301,29 @@ begin
 					
 					);
 			end if;
+		
+			update 
+				${mainSchemaName}.meta_view v
+			set 
+				is_created = true
+				, is_valid = false
+				, dependency_level = 
+					coalesce((
+							select 
+								max(dep.level)
+							from 
+								${mainSchemaName}.meta_view_dependency dep
+							where
+								dep.view_id = v.id
+								and dep.master_view_id is not null		
+						)
+						, 0
+					)
+				, modification_time = current_timestamp
+			where 
+				id = l_view_rec.id
+			;
+		
 		elsif l_view_rec.is_external 
 			and not l_view_rec.is_view_exists
 			and (l_view_rec.modification_time <> current_timestamp or l_view_rec.modification_time is null)	
@@ -345,28 +366,6 @@ begin
 	raise notice 
 		'Done in %.'
 		, clock_timestamp() - l_timestamp
-	;
-
-	update 
-		${mainSchemaName}.meta_view v
-	set 
-		is_created = true
-		, is_valid = false
-		, dependency_level = 
-			coalesce((
-					select 
-						max(dep.level)
-					from 
-						${mainSchemaName}.meta_view_dependency dep
-					where
-						dep.view_id = v.id
-						and dep.master_view_id is not null		
-				)
-				, 0
-			)
-		, modification_time = current_timestamp
-	where 
-		id = any(l_view_ids)
 	;
 
 	raise notice 
