@@ -174,6 +174,7 @@ begin
 		;
 	end if;
 
+	l_view_ids := array[]::${type.id}[];
 	l_views := '[]'::jsonb;
 
 	raise notice 
@@ -193,8 +194,8 @@ begin
 		join ${mainSchemaName}.meta_view meta_view 
 			on meta_view.id = t.id
 		where 
-			(coalesce(t.is_created, false) = false or meta_view.dependency_level is null)
-			and coalesce(t.is_disabled, false) = false
+			not coalesce(t.is_created, false)
+			and not coalesce(t.is_disabled, false)
 		order by
 			case when t.is_external then null else t.creation_order end
 			, t.previously_defined_dependency_level
@@ -242,6 +243,7 @@ begin
 				execute 
 					l_view_rec.query;
 			
+				l_view_ids := l_view_ids || l_view_rec.id;					
 				l_views := 
 						l_views
 						|| jsonb_build_object(
@@ -307,19 +309,6 @@ begin
 			set 
 				is_created = true
 				, is_valid = false
-				, dependency_level = 
-					coalesce((
-							select 
-								max(dep.level)
-							from 
-								${mainSchemaName}.meta_view_dependency dep
-							where
-								dep.view_id = v.id
-								and dep.master_view_id is not null		
-						)
-						, 0
-					)
-				, modification_time = current_timestamp
 			where 
 				id = l_view_rec.id
 			;
@@ -366,6 +355,26 @@ begin
 	raise notice 
 		'Done in %.'
 		, clock_timestamp() - l_timestamp
+	;
+
+	update 
+		${mainSchemaName}.meta_view v
+	set 
+		dependency_level = 
+			coalesce((
+					select 
+						max(dep.level)
+					from 
+						${mainSchemaName}.meta_view_dependency dep
+					where
+						dep.view_id = v.id
+						and dep.master_view_id is not null		
+				)
+				, 0
+			)
+		, modification_time = current_timestamp
+	where 
+		id = any(l_view_ids)
 	;
 
 	raise notice 
