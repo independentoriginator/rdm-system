@@ -72,8 +72,6 @@ begin
 					, i_exclude_the_obj_specified => false
 					, i_exclude_system_objects => true
 				)	 	
-			where 
-				dep_obj_name not like 'v\_meta\_%'
 	 	)
 		, meta_view as ${bco_cte_materialized}(
 			select 
