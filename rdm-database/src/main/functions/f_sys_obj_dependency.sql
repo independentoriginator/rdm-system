@@ -63,15 +63,7 @@ with recursive
  		from
  			${mainSchemaName}.v_sys_obj_dependency 
  	)
-	, master_obj(
-		obj_id
-		, dep_obj_id
-		, dep_obj_name
-		, dep_obj_schema
-		, dep_obj_class
-		, dep_obj_type
-		, dep_level
-	) as (
+ 	, obj_specified as (
 		select 
 			o.obj_id
 			, o.obj_id as dep_obj_id
@@ -87,6 +79,27 @@ with recursive
 			on obj.obj_name = o.obj_name  
 			and obj.obj_schema = o.obj_schema
 			and obj.obj_class = o.obj_class
+ 	)
+	, master_obj(
+		obj_id
+		, dep_obj_id
+		, dep_obj_name
+		, dep_obj_schema
+		, dep_obj_class
+		, dep_obj_type
+		, dep_level
+	) as (
+		select 
+			obj_id
+			, dep_obj_id
+			, dep_obj_name
+			, dep_obj_schema
+			, dep_obj_class
+			, dep_obj_type
+			, dep_level
+			, dep_seq 
+		from 
+			obj_specified
 		union all
 		select
 			master_obj.obj_id
@@ -122,20 +135,16 @@ with recursive
 		, dep_level
 	) as (
 		select 
-			o.obj_id
-			, o.obj_id as dep_obj_id
-			, o.obj_name as dep_obj_name
-			, o.obj_schema as dep_obj_schema
-			, o.obj_class as dep_obj_class
-			, o.obj_type as dep_obj_type
-			, 0 as dep_level
-			, array[o.obj_id] as dep_seq 
+			obj_id
+			, dep_obj_id
+			, dep_obj_name
+			, dep_obj_schema
+			, dep_obj_class
+			, dep_obj_type
+			, dep_level
+			, dep_seq 
 		from 
-			${mainSchemaName}.v_sys_obj o
-		join jsonb_to_recordset(i_objects) as obj(obj_schema name, obj_name text, obj_class name)
-			on obj.obj_name = o.obj_name  
-			and obj.obj_schema = o.obj_schema
-			and obj.obj_class = o.obj_class
+			obj_specified
 		union all
 		select
 			dependent_obj.obj_id
