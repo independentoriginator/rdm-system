@@ -63,6 +63,55 @@ with recursive
  		from
  			${mainSchemaName}.v_sys_obj_dependency 
  	)
+	, master_obj(
+		obj_id
+		, dep_obj_id
+		, dep_obj_name
+		, dep_obj_schema
+		, dep_obj_class
+		, dep_obj_type
+		, dep_level
+	) as (
+		select 
+			o.obj_id
+			, o.obj_id as dep_obj_id
+			, o.obj_name as dep_obj_name
+			, o.obj_schema as dep_obj_schema
+			, o.obj_class as dep_obj_class
+			, o.obj_type as dep_obj_type
+			, 0 as dep_level
+			, array[o.obj_id] as dep_seq 
+		from 
+			${mainSchemaName}.v_sys_obj o
+		join jsonb_to_recordset(i_objects) as obj(obj_schema name, obj_name text, obj_class name)
+			on obj.obj_name = o.obj_name  
+			and obj.obj_schema = o.obj_schema
+			and obj.obj_class = o.obj_class
+		union all
+		select
+			master_obj.obj_id
+			, dep.master_obj_id as dep_obj_id
+			, dep.master_obj_name as dep_obj_name
+			, dep.master_obj_schema as dep_obj_schema
+			, dep.master_obj_class as dep_obj_class
+			, dep.master_obj_type as dep_obj_type
+			, master_obj.dep_level - 1 as dep_level
+			, master_obj.dep_seq || dep.master_obj_id as dep_seq
+		from 
+			sys_obj_dependency dep
+		join master_obj 
+			on master_obj.dep_obj_id = dep.dependent_obj_id
+		where 
+			dep.master_obj_id <> all(master_obj.dep_seq)
+			and (abs(master_obj.dep_level - 1) <= i_dependency_level_limit or i_dependency_level_limit is null)
+			and (
+				(
+					dep.master_obj_schema not like 'pg\_%'
+					and dep.master_obj_schema not in ('information_schema', 'public')
+				) 
+				or not i_exclude_system_objects
+			)
+	)
 	, dependent_obj(
 		obj_id
 		, dep_obj_id
@@ -88,70 +137,26 @@ with recursive
 			and obj.obj_schema = o.obj_schema
 			and obj.obj_class = o.obj_class
 		union all
-		select 
-			d.obj_id
-			, d.dep_obj_id
-			, d.dep_obj_name
-			, d.dep_obj_schema
-			, d.dep_obj_class
-			, d.dep_obj_type
-			, d.dep_level
-			, d.dep_seq || d.dep_obj_id as dep_seq
-		from (
-			select
-				dependent_obj.obj_id
-				, dep_obj.obj_id as dep_obj_id
-				, dep_obj.obj_name as dep_obj_name
-				, dep_obj.obj_schema as dep_obj_schema
-				, dep_obj.obj_class as dep_obj_class
-				, dep_obj.obj_type as dep_obj_type
-				, dep_obj.dep_level
-				, dependent_obj.dep_seq
-			from 
-				sys_obj_dependency dep
-			join dependent_obj 
-				on (
-					(i_treat_the_obj_as_dependent = true and dependent_obj.dep_obj_id = dep.dependent_obj_id)
-					or (i_treat_the_obj_as_dependent = false and dependent_obj.dep_obj_id = dep.master_obj_id)
-				)
-				and (abs(dependent_obj.dep_level) <= i_dependency_level_limit or i_dependency_level_limit is null)
-			join lateral (
-				values
-					(
-						true
-						, dep.master_obj_id
-						, dep.master_obj_name
-						, dep.master_obj_schema
-						, dep.master_obj_class
-						, dep.master_obj_type
-						, dependent_obj.dep_level - 1
-					)
-					, (
-						false
-						, dep.dependent_obj_id
-						, dep.dependent_obj_name
-						, dep.dependent_obj_schema
-						, dep.dependent_obj_class
-						, dep.dependent_obj_type
-						, dependent_obj.dep_level + 1
-					)
-			) as dep_obj(
-				is_dependent
-				, obj_id
-				, obj_name
-				, obj_schema
-				, obj_class
-				, obj_type
-				, dep_level
-			)
-				on dep_obj.is_dependent = i_treat_the_obj_as_dependent			
-		) d
+		select
+			dependent_obj.obj_id
+			, dep.dependent_obj_id as dep_obj_id
+			, dep.dependent_obj_name as dep_obj_name
+			, dep.dependent_obj_schema as dep_obj_schema
+			, dep.dependent_obj_class as dep_obj_class
+			, dep.dependent_obj_type as dep_obj_type
+			, dependent_obj.dep_level + 1 as dep_level
+			, dependent_obj.dep_seq || dep.dependent_obj_id as dep_seq
+		from 
+			sys_obj_dependency dep
+		join dependent_obj 
+			on dependent_obj.dep_obj_id = dep.master_obj_id
 		where 
-			d.dep_obj_id <> all(d.dep_seq)
+			dep.dependent_obj_id <> all(dependent_obj.dep_seq)
+			and (abs(dependent_obj.dep_level + 1) <= i_dependency_level_limit or i_dependency_level_limit is null)
 			and (
 				(
-					d.dep_obj_schema not like 'pg\_%'
-					and d.dep_obj_schema not in ('information_schema', 'public')
+					dep.dependent_obj_schema not like 'pg\_%'
+					and dep.dependent_obj_schema not in ('information_schema', 'public')
 				) 
 				or not i_exclude_system_objects
 			)
@@ -165,9 +170,9 @@ select
 	, dep_obj_type
 	, min(dep_level) as dep_level
 from 
-	dependent_obj
+	master_obj
 where 
-	i_treat_the_obj_as_dependent = true
+	i_treat_the_obj_as_dependent
 	and (dep_level < 0 or i_exclude_the_obj_specified = false)
 group by 
 	obj_id
@@ -188,7 +193,7 @@ select
 from 
 	dependent_obj
 where 
-	i_treat_the_obj_as_dependent = false
+	not i_treat_the_obj_as_dependent
 	and (dep_level > 0 or i_exclude_the_obj_specified = false)
 group by 
 	obj_id
