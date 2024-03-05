@@ -176,9 +176,14 @@ select
 				else ''
 			end
 			|| case 
-					when not t.is_alternative_quote_delimiter_used 
-					then '\n' 
-					else E'\n' 
+				when t.is_intercmd_newline_delimiter_used
+				then 
+					case 
+						when not t.is_alternative_quote_delimiter_used 
+						then '\n' 
+						else E'\n' 
+					end
+				else ''
 			end
 			|| case when t.is_alternative_quote_delimiter_used then i_alternative_quote_delimiter else '''' end
 		else 
@@ -194,6 +199,7 @@ from (
 		, 0 as command_num
 		, true as is_statement
 		, false as is_alternative_quote_delimiter_used
+		, true as is_intercmd_newline_delimiter_used
 	union all	
 	select 
 		format('DROP SCHEMA IF EXISTS %I CASCADE', schema_name)
@@ -203,6 +209,7 @@ from (
 		, 0 as command_num
 		, true as is_statement
 		, false as is_alternative_quote_delimiter_used
+		, true as is_intercmd_newline_delimiter_used
 	from 
 		target_schema
 	union all	
@@ -214,6 +221,7 @@ from (
 		, 0 as command_num
 		, true as is_statement
 		, false as is_alternative_quote_delimiter_used
+		, true as is_intercmd_newline_delimiter_used
 	from 
 		target_schema
 	union all
@@ -224,7 +232,8 @@ from (
 		, t.obj_num
 		, c.command_num
 		, c.is_statement
-		, false is_alternative_quote_delimiter_used
+		, false as is_alternative_quote_delimiter_used
+		, c.is_intercmd_newline_delimiter_used
 	from (
 		select
 			t.schema_name
@@ -321,16 +330,17 @@ from (
 	) t
 	join lateral (
 		values
-			(t.dest_table_def, 'select', 1, true)
-			, (t.copy_from_stdin_cmd, 'select', 2, true)		
-			, (t.copy_to_stdout_cmd, 'perform', 3, true)
-			, ('\.', 'select', 4, false) -- data_end_marker
+			(t.dest_table_def, 'select', 1, true, true)
+			, (t.copy_from_stdin_cmd, 'select', 2, true, false)		
+			, (t.copy_to_stdout_cmd, 'perform', 3, true, false)
+			, ('\\.', 'select', 4, false, true) -- data_end_marker
 	) 
 	as c(
 		command
 		, command_type
 		, command_num
 		, is_statement
+		, is_intercmd_newline_delimiter_used
 	)
 		on c.command_num = 1 or i_include_data
 	union all 
@@ -345,6 +355,7 @@ from (
 		, 0 as command_num
 		, true as is_statement
 		, true as is_alternative_quote_delimiter_used
+		, true as is_intercmd_newline_delimiter_used
 	from 
 		target_routine r 
 ) t
