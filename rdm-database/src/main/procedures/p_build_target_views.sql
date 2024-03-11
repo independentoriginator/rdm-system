@@ -2,7 +2,12 @@ drop procedure if exists p_build_target_view(
 	record
 );
 
-create or replace procedure p_build_target_views()
+drop procedure if exists p_build_target_views(
+);
+
+create or replace procedure p_build_target_views(
+	i_schema_name ${mainSchemaName}.meta_schema.internal_name%type = null
+)
 language plpgsql
 as $procedure$
 declare 
@@ -88,6 +93,7 @@ begin
 	where 
 		(not coalesce(v.is_created, false) or mv.dependency_level is null)
 		and not coalesce(v.is_disabled, false)
+		and (v.schema_name = i_schema_name or i_schema_name is null)
 	;
 
 	if l_view_ids is null then
@@ -186,19 +192,20 @@ begin
 	<<build_views>>
 	loop
 		select
-			t.*
+			v.*
 		into
 			l_view_rec
 		from 
-			${mainSchemaName}.v_meta_view t
+			${mainSchemaName}.v_meta_view v
 		join ${mainSchemaName}.meta_view meta_view 
-			on meta_view.id = t.id
+			on meta_view.id = v.id
 		where 
-			not coalesce(t.is_created, false)
-			and not coalesce(t.is_disabled, false)
+			not coalesce(v.is_created, false)
+			and not coalesce(v.is_disabled, false)
+			and (v.schema_name = i_schema_name or i_schema_name is null)
 		order by
-			case when t.is_external then null else t.creation_order end
-			, t.previously_defined_dependency_level
+			case when v.is_external then null else v.creation_order end
+			, v.previously_defined_dependency_level
 		limit 1
 		for update of meta_view
 		;
@@ -385,4 +392,5 @@ end
 $procedure$;	
 
 comment on procedure p_build_target_views(
+	${mainSchemaName}.meta_schema.internal_name%type
 ) is 'Генерация целевых представлений';
