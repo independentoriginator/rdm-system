@@ -66,7 +66,7 @@ select
 						) over(
 							order by 
 								t.ordinal_number
-							rows between current row and unbounded following exclude current row
+							rows between 1 following and unbounded following
 						)
 						, ''
 					)
