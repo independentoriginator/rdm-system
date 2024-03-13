@@ -15,7 +15,7 @@ from
 	pg_catalog.pg_database db 
 join pg_catalog.pg_collation c 
 	on c.collencoding = db.encoding 
-join ng_rdm.language l
+join ${mainSchemaName}.language l
 	on c.collname = 
 		format(
 			'%s_%s'

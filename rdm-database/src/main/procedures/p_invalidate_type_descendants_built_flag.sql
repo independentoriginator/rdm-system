@@ -9,8 +9,8 @@ begin
 			select
 				subtype.id
 			from
-				ng_rdm.meta_type t
-			join ng_rdm.meta_type subtype
+				${mainSchemaName}.meta_type t
+			join ${mainSchemaName}.meta_type subtype
 				on subtype.super_type_id = t.id
 			where 
 				t.id = i_type_id
@@ -19,7 +19,7 @@ begin
 				subtype.id
 			from 
 				type_descendants t
-			join ng_rdm.meta_type subtype
+			join ${mainSchemaName}.meta_type subtype
 				on subtype.super_type_id = t.id 
 		)
 		, meta_type_descendants as (
