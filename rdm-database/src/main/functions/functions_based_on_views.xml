@@ -8,6 +8,15 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
+	<changeSet id="f_apply_backward_compatibility_macro-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_apply_backward_compatibility_macro" 
+			dbms="postgresql" 
+			path="f_apply_backward_compatibility_macro.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="f_sys_obj_definition-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_sys_obj_definition" 

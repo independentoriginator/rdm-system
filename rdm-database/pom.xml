@@ -129,11 +129,11 @@
 						<!-- Backward compatibility options -->
 						<property>
 							<name>bco_cte_materialized</name>
-							<value>materialized</value>
+							<value>/* #if #server_major_version >= 12 *//* #then */materialized/* #endif */</value>
 						</property>
 						<property>
 							<name>bco_cte_not_materialized</name>
-							<value>not materialized</value>
+							<value>/* #if #server_major_version >= 12 *//* #then */not materialized/* #endif */</value>
 						</property>
 					</systemProperties>
 				</configuration>

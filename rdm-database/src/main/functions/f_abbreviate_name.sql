@@ -66,7 +66,12 @@ select
 						) over(
 							order by 
 								t.ordinal_number
-							rows between 1 following and unbounded following
+							/* #if #server_major_version >= 11 */
+							/* #then */
+							rows between current row and unbounded following exclude current row
+							/* #else */
+							/* rows between 1 following and unbounded following */
+							/* #endif */
 						)
 						, ''
 					)

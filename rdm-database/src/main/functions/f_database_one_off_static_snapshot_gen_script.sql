@@ -7,10 +7,18 @@ drop function if exists f_database_one_off_static_snapshot_gen_script(
 	, boolean
 );
 
+drop function if exists f_database_one_off_static_snapshot_gen_script(
+	text
+	, boolean
+	, boolean
+	, text
+);
+
 create or replace function f_database_one_off_static_snapshot_gen_script(
 	i_schemas name[] = null
 	, i_include_tables boolean = false
 	, i_include_data boolean = true
+	, i_enforced_compatibility_level integer = null
 	, i_alternative_quote_delimiter text = '$quote_delimiter$' 
 )
 returns setof text
@@ -348,6 +356,7 @@ from (
 		${mainSchemaName}.f_sys_obj_definition(
 			i_obj_id => r.obj_id
 			, i_include_owner => false
+			, i_enforced_compatibility_level => i_enforced_compatibility_level
 		) as command
 		, 'select' command_type
 		, 5 as obj_type_num
@@ -369,5 +378,6 @@ comment on function f_database_one_off_static_snapshot_gen_script(
 	name[]
 	, boolean
 	, boolean
+	, integer
 	, text 
 ) is 'Скрипт генерации одноразового статического снимка базы данных';
