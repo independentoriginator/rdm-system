@@ -50,6 +50,7 @@ with
 		select
 			v.id
 			, v.view_oid as obj_id
+			, v.obj_class
 			, v.schema_name
 			, v.internal_name 
 			, row_number()
@@ -354,7 +355,8 @@ from (
 	union all 
 	select 
 		${mainSchemaName}.f_sys_obj_definition(
-			i_obj_id => r.obj_id
+			i_obj_class => r.obj_class
+			, i_obj_id => r.obj_id
 			, i_include_owner => false
 			, i_enforced_compatibility_level => i_enforced_compatibility_level
 		) as command

@@ -61,7 +61,8 @@ begin
 				, dependent_obj.dep_obj_schema || '.' || dependent_obj.dep_obj_name
 				, 'command'
 				, ${mainSchemaName}.f_sys_obj_drop_command(
-					i_obj_id => dependent_obj.dep_obj_id
+					i_obj_class => dependent_obj.dep_obj_class
+					, i_obj_id => dependent_obj.dep_obj_id
 					, i_cascade => false
 					, i_check_existence => false
 				)
@@ -76,7 +77,8 @@ begin
 				, dependent_obj.dep_obj_schema || '.' || dependent_obj.dep_obj_name
 				, 'definition'
 				, ${mainSchemaName}.f_sys_obj_definition(
-					i_obj_id => dependent_obj.dep_obj_id
+					i_obj_class => dependent_obj.dep_obj_class
+					, i_obj_id => dependent_obj.dep_obj_id
 					, i_enforce_nodata_for_matview => i_enforce_nodata_for_dependent_matview_being_recreated
 				)
 				, 'dep_level'

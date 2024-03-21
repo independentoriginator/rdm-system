@@ -71,7 +71,8 @@ begin
 		) as schemas_to_create
 		, string_agg(
 			${mainSchemaName}.f_sys_obj_drop_command(
-				i_obj_id => v.view_oid
+				i_obj_class => v.obj_class
+				, i_obj_id => v.view_oid
 				, i_cascade => true
 				, i_check_existence => true
 			)

@@ -116,7 +116,8 @@ begin
 				, case 
 					when (v.view_id is null or v.is_external) and dependent_obj.dep_obj_id is not null then
 						${mainSchemaName}.f_sys_obj_definition(
-							i_obj_id => dependent_obj.dep_obj_id
+							i_obj_class => dependent_obj.dep_obj_class
+							, i_obj_id => dependent_obj.dep_obj_id
 							, i_enforce_nodata_for_matview => true
 						)
 				end as external_view_def
