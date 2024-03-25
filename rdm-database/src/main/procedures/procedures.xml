@@ -134,6 +134,15 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="p_build_matview_emulation-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_build_matview_emulation" 
+			dbms="postgresql" 
+			path="p_build_matview_emulation.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="p_build_target_views-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_views" 

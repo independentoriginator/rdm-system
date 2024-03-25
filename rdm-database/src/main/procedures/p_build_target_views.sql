@@ -16,7 +16,7 @@ declare
 	l_views jsonb;
 	l_schemas_to_create text;
 	l_drop_command text;
-	l_view_rec record;
+	l_view_rec ${mainSchemaName}.v_meta_view;
 	l_prev_view_id ${type.id};
 	l_msg_text text;
 	l_exception_detail text;
@@ -247,9 +247,15 @@ begin
 					, l_view_rec.schema_name
 					, l_view_rec.internal_name
 					;
-			
-				execute 
-					l_view_rec.query;
+				
+				if l_view_rec.is_matview_emulation then
+					call ${mainSchemaName}.p_build_matview_emulation(
+						i_view_rec => l_view_rec  
+					);
+				else
+					execute 
+						l_view_rec.query;
+				end if;
 			
 				l_view_ids := l_view_ids || l_view_rec.id;					
 				l_views := 

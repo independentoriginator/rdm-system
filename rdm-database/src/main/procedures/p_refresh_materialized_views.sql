@@ -47,12 +47,21 @@ begin
 					, ', '
 				)
 				, array_agg(
-					${mainSchemaName}.f_materialized_view_refresh_command(
-						i_schema_name => t.schema_name
-						, i_internal_name => t.internal_name
-						, i_has_unique_index => t.has_unique_index
-						, i_is_populated => t.is_populated
-					)
+					case 
+						when t.is_matview_emulation then 
+							format(
+								'call %I.p_refresh_%I()'
+								, t.schema_name
+								, t.internal_name
+							) 
+						else 
+							${mainSchemaName}.f_materialized_view_refresh_command(
+								i_schema_name => t.schema_name
+								, i_internal_name => t.internal_name
+								, i_has_unique_index => t.has_unique_index
+								, i_is_populated => t.is_populated
+							)
+					end
 				)
 			into 
 				l_view_ids

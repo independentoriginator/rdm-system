@@ -483,5 +483,21 @@
             remarks="Зависимость метапредставления" />  	
 	
 	</changeSet>
+	
+	<changeSet id="materialized view emulation" author="${default_author}">
+
+		<addColumn tableName="meta_view">
+			<column name="is_matview_emulation" type="boolean" remarks="Is materialized view emulation" defaultValueBoolean="false">
+				<constraints nullable="false" />
+			</column>
+			<column name="mv_emulation_chunking_field" type="${type.internal_name}" remarks="Materialized view emulation chunking field">
+				<constraints nullable="true" />
+			</column>
+			<column name="mv_emulation_chunks_query" type="clob" remarks="Materialized view emulation chunks query">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+		
+	</changeSet>
             			
 </databaseChangeLog>

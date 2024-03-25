@@ -5,7 +5,11 @@ on meta_view
 for each row 
 when (
 	old.is_created = true 
-	and new.query is distinct from old.query
+	and (
+		new.query is distinct from old.query
+		or new.mv_emulation_chunking_field is distinct from old.mv_emulation_chunking_field
+		or new.mv_emulation_chunks_query is distinct from old.mv_emulation_chunks_query
+	)
 	and (not old.is_routine or not old.is_external)
 )
 execute function ${mainSchemaName}.trf_meta_view_before_update();

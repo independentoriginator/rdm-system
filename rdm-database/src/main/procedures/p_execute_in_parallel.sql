@@ -197,17 +197,17 @@ language plpgsql
 as $procedure$
 declare
  	l_is_multithreaded_process boolean := (
-			i_max_worker_processes > 1 
-			and exists (
-				select 
-					1
-				from
-					pg_catalog.pg_extension e
-				where 
-					e.extname = 'dblink'
-			)
+		i_max_worker_processes > 1 
+		and exists (
+			select 
+				1
+			from
+				pg_catalog.pg_extension e
+			where 
+				e.extname = 'dblink'
 		)
-		;
+	)
+	;
 	l_exit_flag boolean;
 	l_command text;
 	l_notification_channel name := '${project.artifactId}.parallel-worker-notifications';

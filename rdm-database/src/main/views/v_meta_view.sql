@@ -8,7 +8,12 @@ select
 	, coalesce(s.internal_name, '${mainSchemaName}') as schema_name
 	, (target_schema.obj_id is not null) as is_schema_exists
 	, (target_view.obj_id is not null) as is_view_exists
-	, case when 'is_materialized' = any(target_view.flags) then true else false end as is_materialized
+	, case 
+		when 'is_materialized' = any(target_view.flags)
+			or v.is_matview_emulation
+		then true 
+		else false 
+	end as is_materialized
 	, (v.is_created and target_view.obj_id is not null) as is_created
 	, v.query
 	, (v.is_valid and 'is_populated' = any(target_view.flags)) as is_valid  
@@ -53,7 +58,11 @@ select
 		) then true
 		else false
 	end as has_unique_index	
-	, case when 'is_populated' = any(target_view.flags) then true else false end as is_populated
+	, case
+		when v.is_matview_emulation then (target_view.obj_id is not null)
+		when 'is_populated' = any(target_view.flags) then true 
+		else false 
+	end as is_populated
 	, v.modification_time
 	, v.group_id
 	, coalesce(
@@ -63,6 +72,9 @@ select
 			else 'relation'::name
 		end
 	) as obj_class
+	, v.is_matview_emulation
+	, v.mv_emulation_chunking_field
+	, v.mv_emulation_chunks_query
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s
@@ -73,9 +85,9 @@ left join ${mainSchemaName}.v_sys_obj target_schema
 left join ${mainSchemaName}.v_sys_obj target_view
 	on target_view.obj_schema = target_schema.obj_name
 	and target_view.obj_name = v.internal_name
-	and target_view.obj_general_type in (
-		'view'::name
-		, 'routine'::name
+	and (
+		(v.is_routine and target_view.obj_general_type = 'routine'::name)
+		or (not v.is_routine and target_view.obj_general_type in ('view'::name, 'table'::name))
 	)
 ;
 
