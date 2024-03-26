@@ -85,6 +85,9 @@ select
 	, v.is_matview_emulation
 	, v.mv_emulation_chunking_field
 	, v.mv_emulation_chunks_query
+	, 'p_refresh_' || v.internal_name as mv_emulation_refresh_proc_name 
+	, 'i_' || v.mv_emulation_chunking_field as mv_emulation_refresh_proc_param
+	, mve_target_proc.oid as mv_emulation_refresh_proc_oid
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s
@@ -98,6 +101,17 @@ left join ${mainSchemaName}.v_sys_obj target_view
 	and (
 		(v.is_routine and target_view.obj_general_type = 'routine'::name)
 		or (not v.is_routine and target_view.obj_general_type in ('view'::name, 'table'::name))
+	)
+left join pg_catalog.pg_proc mve_target_proc
+	on mve_target_proc.pronamespace = target_schema.obj_id
+	and mve_target_proc.proname = 'p_refresh_' || v.internal_name
+	and (
+		(mve_target_proc.pronargs = 0 and v.mv_emulation_chunking_field is null)
+		or (
+			mve_target_proc.pronargs = 1 
+			and v.mv_emulation_chunking_field is not null
+			and mve_target_proc.proargnames = array['i_' || v.mv_emulation_chunking_field]::text[]
+		)
 	)
 ;
 

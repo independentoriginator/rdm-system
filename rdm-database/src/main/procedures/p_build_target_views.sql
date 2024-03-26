@@ -252,23 +252,54 @@ begin
 					call ${mainSchemaName}.p_build_matview_emulation(
 						i_view_rec => l_view_rec  
 					);
+				
+					l_views := 
+							l_views
+							|| jsonb_build_object(
+								'obj_name' 
+								, l_view_rec.internal_name
+								, 'obj_schema'			
+								, l_view_rec.schema_name
+								, 'obj_class'
+								, l_view_rec.obj_class
+								, 'attendants'
+								, json_build_array((
+									select 
+										jsonb_build_object(
+											'obj_name' 
+											, p.obj_name
+											, 'obj_schema'			
+											, p.obj_schema
+											, 'obj_class'
+											, p.obj_class
+										)
+									from 
+										${mainSchemaName}.v_meta_view v
+									join ${mainSchemaName}.v_sys_obj p
+										on p.obj_id = v.mv_emulation_refresh_proc_oid
+									where
+										v.id = l_view_rec.id									
+								))
+							)
+							;
 				else
 					execute 
 						l_view_rec.query;
+					
+					l_views := 
+							l_views
+							|| jsonb_build_object(
+								'obj_name' 
+								, l_view_rec.internal_name
+								, 'obj_schema'			
+								, l_view_rec.schema_name
+								, 'obj_class'
+								, l_view_rec.obj_class
+							)
+							;
 				end if;
 			
 				l_view_ids := l_view_ids || l_view_rec.id;					
-				l_views := 
-						l_views
-						|| jsonb_build_object(
-							'obj_name' 
-							, l_view_rec.internal_name
-							, 'obj_schema'			
-							, l_view_rec.schema_name
-							, 'obj_class'
-							, l_view_rec.obj_class
-						)
-						;
 			exception
 				when others then
 					get stacked diagnostics

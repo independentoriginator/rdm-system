@@ -66,19 +66,24 @@ with recursive
  	, obj_specified as (
 		select 
 			o.obj_id
-			, o.obj_id as dep_obj_id
-			, o.obj_name as dep_obj_name
-			, o.obj_schema as dep_obj_schema
-			, o.obj_class as dep_obj_class
-			, o.obj_type as dep_obj_type
+			, dep_obj.obj_id as dep_obj_id
+			, dep_obj.obj_name as dep_obj_name
+			, dep_obj.obj_schema as dep_obj_schema
+			, dep_obj.obj_class as dep_obj_class
+			, dep_obj.obj_type as dep_obj_type
 			, 0 as dep_level
-			, array[o.obj_id] as dep_seq 
+			, array[dep_obj.obj_id] as dep_seq 
 		from 
-			${mainSchemaName}.v_sys_obj o
-		join jsonb_to_recordset(i_objects) as obj(obj_schema name, obj_name text, obj_class name)
-			on obj.obj_name = o.obj_name  
-			and obj.obj_schema = o.obj_schema
-			and obj.obj_class = o.obj_class
+			jsonb_to_recordset(i_objects) as obj(obj_schema name, obj_name text, obj_class name, attendants jsonb)
+		join ${mainSchemaName}.v_sys_obj o
+			on o.obj_name = obj.obj_name  
+			and o.obj_schema = obj.obj_schema
+			and o.obj_class = obj.obj_class
+		left join jsonb_to_recordset(obj.attendants) as attendant_obj(obj_schema name, obj_name text, obj_class name)
+			on true
+		left join ${mainSchemaName}.v_sys_obj dep_obj
+			on (dep_obj.obj_name, dep_obj.obj_schema, dep_obj.obj_class) = (o.obj_name, o.obj_schema, o.obj_class)
+			or (dep_obj.obj_name, dep_obj.obj_schema, dep_obj.obj_class) = (attendant_obj.obj_name, attendant_obj.obj_schema, attendant_obj.obj_class)
  	)
 	, master_obj(
 		obj_id

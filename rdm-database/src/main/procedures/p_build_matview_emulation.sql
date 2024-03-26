@@ -5,6 +5,7 @@ language plpgsql
 as $procedure$
 declare 
 	l_sttmnt record;
+	l_is_matview_recognized boolean := false;
 begin
 	for l_sttmnt in (
 		select 
@@ -26,7 +27,7 @@ begin
 						, case 
 							when i_view_rec.mv_emulation_chunking_field is null then
 								format(
-									E'create or replace procedure %I.p_refresh_%I()'
+									E'create or replace procedure %I.%I()'
 									'\nlanguage plpgsql'
 									'\nas $routine$'
 									'\nbegin'
@@ -34,112 +35,134 @@ begin
 									'\nend'
 									'\n$routine$;'
 									, i_view_rec.schema_name
-									, i_view_rec.internal_name
-									, format(
-										E'truncate %I.%I;'
-										'\n\n\tinsert into %I.%I\n\t%s\n\t;'
-										, i_view_rec.schema_name
-										, i_view_rec.internal_name
-										, i_view_rec.schema_name
-										, i_view_rec.internal_name
-										, view_query[1]
+									, i_view_rec.mv_emulation_refresh_proc_name
+									, ${mainSchemaName}.f_indent_text(
+										i_text => 									
+											format(
+												E'truncate %I.%I;'
+												'\n\ninsert into %I.%I\n%s\n;'
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, view_query[1]
+											)
+										, i_indentation_level => 1		
 									)
 								)
 							else
 								format(
-									E'create or replace procedure %I.p_refresh_%I()'
+									E'create or replace procedure %I.%I('
+									'\n\t%s %I.%I.%s%%type = null'
+									'\n)'
 									'\nlanguage plpgsql'
 									'\nas $routine$'
 									'\ndeclare'
-									'\n\tl_query text := $sql$'
-									'\n\t%s'
-									'\n\t$sql$'
-									'\n\t;'
-									'\n\tl_chunk_refresh_cmds text[];'
+									'\n	l_chunk_refresh_cmds text[];'
 									'\nbegin'
-									'\n	select'
-									'\n		array_agg('
-									'\n			format('
-									'\n				l_query'
-									'\n				, t.%s'
-									'\n				, t.%s'
+									'\n	if %s is null then'
+									'\n		select'
+									'\n			array_agg('
+									'\n				format('
+									'\n					''call %I.%I(%s => %%L)'''
+									'\n					, c.%s'
+									'\n				)'
 									'\n			)'
-									'\n		)'
-									'\n	into' 
-									'\n		l_chunk_refresh_cmds'
-									'\n	from (\n%s\n\t) t'
-									'\n	;'
+									'\n		into' 
+									'\n			l_chunk_refresh_cmds'
+									'\n		from ('
+									'\n			%s'
+									'\n		) c;'
 									'\n'
-									'\n	call ${stagingSchemaName}.p_execute_in_parallel('
-									'\n		i_commands => l_chunk_refresh_cmds'
-									'\n	);'
+									'\n		call ${stagingSchemaName}.p_execute_in_parallel('
+									'\n			i_commands => l_chunk_refresh_cmds'
+									'\n		);'
+									'\n	else'
+									'\n		%s'
+									'\n	end if;'
 									'\nend'
 									'\n$routine$;'
 									, i_view_rec.schema_name
+									, i_view_rec.mv_emulation_refresh_proc_name
+									, i_view_rec.mv_emulation_refresh_proc_param
+									, i_view_rec.schema_name
 									, i_view_rec.internal_name
-									, format(
-										E'delete from %I.%I where %s = %%L;'
-										'\n\n\tinsert into %I.%I\n\t%s\n\t;'
-										, i_view_rec.schema_name
-										, i_view_rec.internal_name
-										, i_view_rec.mv_emulation_chunking_field
-										, i_view_rec.schema_name
-										, i_view_rec.internal_name
-										, case
-											when chunking_filter_marker[1] is null then
-												format(
-													E'select *'
-													'\n\tfrom ('
-													'\n\t%s'
-													'\n\t) t'
-													'\n\twhere'
-													'\n\t\t%s = %%L'
-													, view_query[1]
-													, i_view_rec.mv_emulation_chunking_field
-												)													
-											else
-												replace(
-													view_query[1]
-												 	, chunking_filter_marker[1]
-												 	, chunking_filter_expr[1]
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.mv_emulation_refresh_proc_param
+									, i_view_rec.schema_name
+									, i_view_rec.mv_emulation_refresh_proc_name
+									, i_view_rec.mv_emulation_refresh_proc_param
+									, i_view_rec.mv_emulation_chunking_field
+									, ${mainSchemaName}.f_indent_text(
+										i_text => 
+											format(
+												E'with chunks as ('
+												'\n\t%s'
+												'\n)'
+												'\nselect'
+												'\n\t%s'
+												'\nfrom'
+												'\n\tchunks'
+												'\nunion all'
+												'\n('
+													'\n\tselect'
+													'\n\t\t%s'
+													'\n\tfrom'
+													'\n\t\tchunks'
+													'\n\texcept'
+													'\n\t('
+														'\n\t\tselect distinct'
+														'\n\t\t\t%s'
+														'\n\t\tfrom'
+														'\n\t\t\t%I.%I'
+													'\n\t)'
+												'\n)'
+												, ${mainSchemaName}.f_indent_text(
+													i_text => i_view_rec.mv_emulation_chunks_query
+													, i_indentation_level => 1
 												)
-										end
+												, i_view_rec.mv_emulation_chunking_field
+												, i_view_rec.mv_emulation_chunking_field
+												, i_view_rec.mv_emulation_chunking_field
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+											)														
+										, i_indentation_level => 3
 									)
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunking_field
-									, format(
-										E'\t\twith chunks as ('
-										'\n\t\t\t%s'
-										'\n\t\t)'
-										'\n\t\tselect'
-										'\n\t\t\t%s'
-										'\n\t\tfrom'
-										'\n\t\t\tchunks'
-										'\n\t\tunion all'
-										'\n\t\t('
-											'\n\t\t\tselect'
-											'\n\t\t\t\t%s'
-											'\n\t\t\tfrom'
-											'\n\t\t\t\tchunks'
-											'\n\t\t\texcept'
-											'\n\t\t\t('
-												'\n\t\t\t\tselect distinct'
-												'\n\t\t\t\t\t%s'
-												'\n\t\t\t\tfrom'
-												'\n\t\t\t\t\t%I.%I'
-											'\n\t\t\t)'
-										'\n\t\t)'
-										, replace(
-											i_view_rec.mv_emulation_chunks_query
-											, E'\n'
-											, E'\n\t\t'
-										)
-										, i_view_rec.mv_emulation_chunking_field
-										, i_view_rec.mv_emulation_chunking_field
-										, i_view_rec.mv_emulation_chunking_field
-										, i_view_rec.schema_name
-										, i_view_rec.internal_name
-									)													
+									, ${mainSchemaName}.f_indent_text(
+										i_text =>
+											format(
+												E'delete from %I.%I where %s = %s;'
+												'\n\ninsert into %I.%I\n%s\n;'
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, i_view_rec.mv_emulation_chunking_field
+												, i_view_rec.mv_emulation_refresh_proc_param												
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, case
+													when chunking_filter_marker[1] is null then
+														format(
+															E'select *'
+															'\nfrom ('
+															'\n\t%s'
+															'\n) t'
+															'\nwhere'
+															'\n\t%s = %s'
+															, view_query[1]
+															, i_view_rec.mv_emulation_chunking_field
+															, i_view_rec.mv_emulation_refresh_proc_param
+														)													
+													else
+														replace(
+															view_query[1]
+														 	, chunking_filter_marker[1]
+														 	, chunking_filter_expr[1]
+														)
+												end
+											)
+										, i_indentation_level => 2
+									)
 								)
 						end
 					)
@@ -151,6 +174,7 @@ begin
 					 	, 'i'
 					)
 			end as ddl_sttmnt
+			, (view_query[1] is not null) is_matview_query
 		from 
 			regexp_matches(
 				i_view_rec.query
@@ -177,7 +201,15 @@ begin
 		execute
 			l_sttmnt.ddl_sttmnt
 		;
+	
+		if l_sttmnt.is_matview_query then 
+			l_is_matview_recognized := true;
+		end if;
 	end loop;
+
+	if not l_is_matview_recognized then
+		raise 'Materialized view %.% is not defined as expected', i_view_rec.schema_name, i_view_rec.internal_name; 
+	end if;
 end
 $procedure$;	
 

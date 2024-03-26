@@ -34,7 +34,7 @@ begin
 		and obj.obj_class = v.obj_class
 	;
 
-	if l_view_ids is null or cardinality(l_view_ids) <>  jsonb_array_length(i_views) then
+	if l_view_ids is null or cardinality(l_view_ids) <> jsonb_array_length(i_views) then
 		raise exception 
 			'Unknown objects specified: %'
 			, i_views
@@ -82,6 +82,7 @@ begin
 				, v.is_external
 				, v.is_routine 
 				, v.obj_class as view_class
+				, v.view_oid
 			from
 				${mainSchemaName}.v_meta_view v 
 		)
@@ -124,9 +125,12 @@ begin
 			from 
 				dependent_obj
 			left join meta_view v 
-				on v.view_name = dependent_obj.dep_obj_name 
-				and v.view_schema = dependent_obj.dep_obj_schema
-				and v.view_class = dependent_obj.dep_obj_class
+				on v.view_oid = dependent_obj.obj_id 
+				or (
+					v.view_name = dependent_obj.dep_obj_name 
+					and v.view_schema = dependent_obj.dep_obj_schema
+					and v.view_class = dependent_obj.dep_obj_class
+				) 
 			left join meta_type t 
 				on t.internal_name = dependent_obj.dep_obj_name 
 				and t.schema_name = dependent_obj.dep_obj_schema
