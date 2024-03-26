@@ -14,7 +14,17 @@ select
 		then true 
 		else false 
 	end as is_materialized
-	, (v.is_created and target_view.obj_id is not null) as is_created
+	, (
+		v.is_created 
+		and target_view.obj_id is not null
+		and (		
+			(v.is_routine and target_view.obj_general_type = 'routine'::name)
+			or not v.is_routine and (
+				(v.is_matview_emulation and target_view.obj_general_type = 'table'::name)
+				or (not v.is_matview_emulation and target_view.obj_general_type = 'view'::name)
+			)
+		)
+	) as is_created
 	, v.query
 	, (v.is_valid and 'is_populated' = any(target_view.flags)) as is_valid  
 	, v.refresh_time	
