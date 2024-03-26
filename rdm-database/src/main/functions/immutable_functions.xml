@@ -16,5 +16,14 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="f_indent_text-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_indent_text" 
+			dbms="postgresql" 
+			path="f_indent_text.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 		
 </databaseChangeLog>
