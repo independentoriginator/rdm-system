@@ -81,9 +81,11 @@ with recursive
 			and o.obj_class = obj.obj_class
 		left join jsonb_to_recordset(obj.attendants) as attendant_obj(obj_schema name, obj_name text, obj_class name)
 			on true
-		left join ${mainSchemaName}.v_sys_obj dep_obj
-			on (dep_obj.obj_name, dep_obj.obj_schema, dep_obj.obj_class) = (o.obj_name, o.obj_schema, o.obj_class)
-			or (dep_obj.obj_name, dep_obj.obj_schema, dep_obj.obj_class) = (attendant_obj.obj_name, attendant_obj.obj_schema, attendant_obj.obj_class)
+		join ${mainSchemaName}.v_sys_obj dep_obj
+			on (dep_obj.obj_name, dep_obj.obj_schema, dep_obj.obj_class) in (
+				(o.obj_name, o.obj_schema, o.obj_class)
+				, (attendant_obj.obj_name, attendant_obj.obj_schema, attendant_obj.obj_class)
+			)
  	)
 	, master_obj(
 		obj_id

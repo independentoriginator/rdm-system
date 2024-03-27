@@ -12,6 +12,14 @@ drop procedure if exists p_detect_meta_view_dependants(
 	, boolean
 );
 
+drop procedure if exists p_specify_meta_view_dependencies(
+	${mainSchemaName}.meta_view.internal_name%type
+	, ${mainSchemaName}.meta_schema.internal_name%type
+	, ${mainSchemaName}.meta_view.is_routine%type
+	, boolean	
+	, boolean
+);
+
 create or replace procedure p_specify_meta_view_dependencies(
 	i_views jsonb
 	, i_treat_the_obj_as_dependent boolean -- and as master otherwise	
@@ -21,6 +29,7 @@ language plpgsql
 as $procedure$
 declare 
 	l_view_ids ${type.id}[];
+	l_view_id ${type.id};
 begin
 	select 
 		array_agg(v.id)
@@ -226,38 +235,48 @@ begin
 		, t.master_type_id
 		, t.level
 	from (
-		select
-			case i_treat_the_obj_as_dependent
-				when true then master_view.view_id
-				else coalesce(dependent_obj.view_id, ev.id)
-			end as view_id
-			, case i_treat_the_obj_as_dependent
-				when true then coalesce(dependent_obj.view_id, ev.id)
-				else master_view.view_id
-			end as master_view_id
+		select  
+			t.view_id
+			, t.master_view_id
 			, null::${type.id} as master_type_id
-			, min(abs(dependent_obj.dep_level)) as level
-		from 
-			dependency master_view
-		join dependency dependent_obj
-			on dependent_obj.obj_id = master_view.obj_id 
-			and dependent_obj.dep_level <> 0
-		left join ${mainSchemaName}.meta_schema s 
-			on s.internal_name = dependent_obj.dep_obj_schema 
-		left join new_external_schema es 
-			on es.internal_name = dependent_obj.dep_obj_schema
-		left join new_external_view ev 
-			on ev.internal_name = dependent_obj.dep_obj_name
-			and ev.schema_id = coalesce(s.id, es.id)
-			and ev.is_routine = dependent_obj.is_routine
-		left join actualized_external_view aev
-			on aev.id = dependent_obj.view_id
-		where
-			master_view.dep_level = 0
-			and master_view.view_id is not null
-		group by
-			coalesce(dependent_obj.view_id, ev.id)
-			, master_view.view_id
+			, t.level
+		from (
+			select
+				case 
+					when i_treat_the_obj_as_dependent 
+					then master_view.view_id
+					else coalesce(dependent_obj.view_id, ev.id)
+				end as view_id
+				, case 
+					when i_treat_the_obj_as_dependent 
+					then coalesce(dependent_obj.view_id, ev.id)
+					else master_view.view_id
+				end as master_view_id
+				, min(abs(dependent_obj.dep_level)) as level
+			from 
+				dependency master_view
+			join dependency dependent_obj
+				on dependent_obj.obj_id = master_view.obj_id 
+				and dependent_obj.dep_level <> 0
+			left join ${mainSchemaName}.meta_schema s 
+				on s.internal_name = dependent_obj.dep_obj_schema 
+			left join new_external_schema es 
+				on es.internal_name = dependent_obj.dep_obj_schema
+			left join new_external_view ev 
+				on ev.internal_name = dependent_obj.dep_obj_name
+				and ev.schema_id = coalesce(s.id, es.id)
+				and ev.is_routine = dependent_obj.is_routine
+			left join actualized_external_view aev
+				on aev.id = dependent_obj.view_id
+			where
+				master_view.dep_level = 0
+				and master_view.view_id is not null
+			group by
+				coalesce(dependent_obj.view_id, ev.id)
+				, master_view.view_id
+		) t 
+		where 
+			t.view_id <> t.master_view_id
 		union all
 		select
 			master_view.view_id
@@ -280,8 +299,59 @@ begin
 	) t 
 	where 
 		t.view_id is not null 
-		and coalesce(t.master_view_id, t.master_type_id) is not null		
+		and coalesce(t.master_view_id, t.master_type_id) is not null	
 	;	
+
+	if i_treat_the_obj_as_dependent then
+		for l_view_id in (
+			select
+				v.id
+			from 
+				${mainSchemaName}.v_meta_view v
+			where 
+				v.id = any(l_view_ids)
+			order by
+				case when v.is_external then null else v.creation_order end
+				, v.previously_defined_dependency_level
+		) 
+		loop		
+			insert into 
+				${mainSchemaName}.meta_view_dependency(
+					view_id
+					, master_view_id
+					, master_type_id
+					, level
+				)
+			select
+				t.view_id
+				, dep_inherited.master_view_id
+				, dep_inherited.master_type_id
+				, dep_inherited.level + 1 as level
+			from 
+				${mainSchemaName}.meta_view_dependency t
+			join ${mainSchemaName}.meta_view_dependency dep_inherited
+				on dep_inherited.view_id = t.master_view_id
+				and (
+					dep_inherited.master_view_id <> t.view_id
+					or dep_inherited.master_type_id is not null 
+				)
+			where 
+				t.view_id = l_view_id
+				and not exists (
+					select 
+						1
+					from 
+						${mainSchemaName}.meta_view_dependency dep 
+					where 
+						dep.view_id = t.view_id
+						and (
+							dep.master_view_id = dep_inherited.master_view_id
+							or dep.master_type_id = dep_inherited.master_type_id
+						)
+				)
+			;
+		end loop;
+	end if;	
 end
 $procedure$;			
 

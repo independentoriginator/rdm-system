@@ -26,7 +26,14 @@ select
 		)
 	) as is_created
 	, v.query
-	, (v.is_valid and 'is_populated' = any(target_view.flags)) as is_valid  
+	, (
+		v.is_valid 
+		and case
+			when v.is_matview_emulation then (target_view.obj_id is not null)
+			when 'is_populated' = any(target_view.flags) then true 
+			else false 
+		end		
+	) as is_valid  
 	, v.refresh_time	
 	, v.creation_order
 	, v.is_disabled
