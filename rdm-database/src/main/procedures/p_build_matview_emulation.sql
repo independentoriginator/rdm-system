@@ -125,39 +125,7 @@ begin
 									, ${max_parallel_worker_processes}
 									, i_view_rec.mv_emulation_chunking_field
 									, ${mainSchemaName}.f_indent_text(
-										i_text => 
-											format(
-												E'with chunks as ('
-												'\n\t%s'
-												'\n)'
-												'\nselect'
-												'\n\t%s'
-												'\nfrom'
-												'\n\tchunks'
-												'\nunion'
-												'\n('
-													'\n\tselect'
-													'\n\t\t%s'
-													'\n\tfrom'
-													'\n\t\tchunks'
-													'\n\texcept'
-													'\n\t('
-														'\n\t\tselect distinct'
-														'\n\t\t\t%s'
-														'\n\t\tfrom'
-														'\n\t\t\t%I.%I'
-													'\n\t)'
-												'\n)'
-												, ${mainSchemaName}.f_indent_text(
-													i_text => i_view_rec.mv_emulation_chunks_query
-													, i_indentation_level => 1
-												)
-												, i_view_rec.mv_emulation_chunking_field
-												, i_view_rec.mv_emulation_chunking_field
-												, i_view_rec.mv_emulation_chunking_field
-												, i_view_rec.schema_name
-												, i_view_rec.internal_name
-											)														
+										i_text => i_view_rec.mv_emulation_chunks_query									
 										, i_indentation_level => 5
 									)
 									, ${mainSchemaName}.f_indent_text(
