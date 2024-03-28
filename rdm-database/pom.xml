@@ -126,6 +126,10 @@
 							<name>operation_row_limit</name>
 							<value>10000</value>
 						</property>
+						<property>
+							<name>max_parallel_worker_processes</name>
+							<value>10</value>
+						</property>
 						<!-- Backward compatibility options -->
 						<property>
 							<name>bco_cte_materialized</name>

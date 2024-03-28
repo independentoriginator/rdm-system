@@ -8,13 +8,13 @@ drop function if exists f_sys_obj_drop_command(
 	${mainSchemaName}.v_sys_obj.obj_class%type
 	, ${mainSchemaName}.v_sys_obj.obj_id%type
 	, boolean
-	, boolean
 );
 
 create or replace function f_sys_obj_drop_command(
 	i_obj_class ${mainSchemaName}.v_sys_obj.obj_class%type
 	, i_obj_id ${mainSchemaName}.v_sys_obj.obj_id%type
 	, i_cascade boolean = false
+	, i_check_existence boolean = false
 )
 returns text
 language sql
@@ -22,8 +22,9 @@ stable
 as $function$
 select
 	format(
-		'drop %s %I.%I%s'
+		'drop %s%s %I.%s%s'
 		, o.obj_specific_type
+		, case when i_check_existence then ' if exists' else '' end		
 		, o.obj_schema
 		, o.obj_name
 		, case when i_cascade then ' cascade' else ' restrict' end 
@@ -39,5 +40,6 @@ $function$
 comment on function f_sys_obj_drop_command(
 	${mainSchemaName}.v_sys_obj.obj_class%type
 	, ${mainSchemaName}.v_sys_obj.obj_id%type
+	, boolean
 	, boolean
 ) is 'Составление команды на удаление системного объекта';

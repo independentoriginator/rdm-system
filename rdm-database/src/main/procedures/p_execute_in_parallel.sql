@@ -2,7 +2,7 @@ drop procedure if exists ${stagingSchemaName}.p_execute_in_parallel(text[], inte
 
 create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_commands text[]
-	, i_thread_max_count integer = 10
+	, i_thread_max_count integer = ${max_parallel_worker_processes}
 	, i_scheduler_type_name text = null
 	, i_scheduled_task_name text = null -- 'project_internal_name.scheduled_task_internal_name'
 	, i_scheduled_task_stage_ord_pos integer = 0
@@ -189,7 +189,7 @@ create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	, i_do_while_checking_condition text = null
 	, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0 -- for example, caller procedure system identitifier 
 	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = 0 -- for example, pg_backend_pid() 
-	, i_max_worker_processes integer = 10
+	, i_max_worker_processes integer = ${max_parallel_worker_processes}
 	, i_polling_interval interval = '10 seconds'
 	, i_max_run_time interval = '8 hours'
 )

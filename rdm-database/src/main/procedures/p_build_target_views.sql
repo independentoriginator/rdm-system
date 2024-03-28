@@ -70,10 +70,14 @@ begin
 				not v.is_schema_exists
 		) as schemas_to_create
 		, string_agg(
-			${mainSchemaName}.f_sys_obj_drop_command(
-				i_obj_class => v.obj_class
-				, i_obj_id => v.view_oid
-				, i_cascade => true
+			concat_ws(	
+				E';\n'
+				, ${mainSchemaName}.f_sys_obj_drop_command(
+					i_obj_class => v.obj_class
+					, i_obj_id => v.view_oid
+					, i_cascade => true
+				)
+				, v.mv_emulation_refresh_procedures_drop_cmd
 			)
 			, E';\n'
 		) filter(
@@ -86,14 +90,41 @@ begin
 		, l_views
 		, l_schemas_to_create
 		, l_drop_command
-	from
-		${mainSchemaName}.v_meta_view v
-	join ${mainSchemaName}.meta_view mv 
-		on mv.id = v.id
-	where 
-		(not coalesce(v.is_created, false) or mv.dependency_level is null)
-		and not coalesce(v.is_disabled, false)
-		and (v.schema_name = i_schema_name or i_schema_name is null)
+	from (
+		select 
+			v.id
+			, v.schema_name
+			, v.internal_name
+			, v.obj_class
+			, v.is_routine
+			, v.is_schema_exists
+			, v.is_view_exists			
+			, v.view_oid
+			, (
+				select 
+					string_agg(
+						${mainSchemaName}.f_sys_obj_drop_command(
+							i_obj_class => p.obj_class
+							, i_obj_id => p.obj_id
+							, i_check_existence => true							
+						)		
+						, E';\n'
+					)	
+				from 
+					${mainSchemaName}.v_sys_obj p
+				where 
+					p.obj_schema = v.schema_name
+					and p.unqualified_name = v.mv_emulation_refresh_proc_name
+			) as mv_emulation_refresh_procedures_drop_cmd
+		from
+			${mainSchemaName}.v_meta_view v
+		join ${mainSchemaName}.meta_view mv 
+			on mv.id = v.id
+		where 
+			(not coalesce(v.is_created, false) or mv.dependency_level is null)
+			and not coalesce(v.is_disabled, false)
+			and (v.schema_name = i_schema_name or i_schema_name is null)
+	) v
 	;
 
 	if l_view_ids is null then

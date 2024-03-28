@@ -52,8 +52,14 @@ begin
 								)
 							else
 								format(
-									E'create or replace procedure %I.%I('
-									'\n\t%s %I.%I.%s%%type = null'
+									E'create temp view tv_%I_%I as'
+									'\nselect' 
+									'\n	array('
+									'\n		select %s from %I.%I limit 0'
+									'\n	) as arr_%s'
+									'\n;'
+									'\ncreate or replace procedure %I.%I('
+									'\n\t%s tv_%I_%I.arr_%s%%type = null'
 									'\n)'
 									'\nlanguage plpgsql'
 									'\nas $routine$'
@@ -71,7 +77,20 @@ begin
 									'\n		into' 
 									'\n			l_chunk_refresh_cmds'
 									'\n		from ('
-									'\n			%s'
+									'\n			select' 
+									'\n				array_agg('
+									'\n					%s order by %s'
+									'\n				) as %s'
+									'\n			from ('
+									'\n				select' 
+									'\n					%s'
+									'\n					, ntile(%s) over(order by %s) as bucket_num'
+									'\n				from ('
+									'\n					%s'
+									'\n				) c'
+									'\n			) c'
+									'\n			group by' 
+									'\n				bucket_num'
 									'\n		) c;'
 									'\n'
 									'\n		call ${stagingSchemaName}.p_execute_in_parallel('
@@ -83,6 +102,12 @@ begin
 									'\nend'
 									'\n$routine$;'
 									, i_view_rec.schema_name
+									, i_view_rec.internal_name
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.schema_name
+									, i_view_rec.internal_name
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_refresh_proc_name
 									, i_view_rec.mv_emulation_refresh_proc_param
 									, i_view_rec.schema_name
@@ -92,6 +117,12 @@ begin
 									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_refresh_proc_name
 									, i_view_rec.mv_emulation_refresh_proc_param
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.mv_emulation_chunking_field
+									, ${max_parallel_worker_processes}
 									, i_view_rec.mv_emulation_chunking_field
 									, ${mainSchemaName}.f_indent_text(
 										i_text => 
@@ -103,7 +134,7 @@ begin
 												'\n\t%s'
 												'\nfrom'
 												'\n\tchunks'
-												'\nunion all'
+												'\nunion'
 												'\n('
 													'\n\tselect'
 													'\n\t\t%s'
@@ -127,12 +158,12 @@ begin
 												, i_view_rec.schema_name
 												, i_view_rec.internal_name
 											)														
-										, i_indentation_level => 3
+										, i_indentation_level => 5
 									)
 									, ${mainSchemaName}.f_indent_text(
 										i_text =>
 											format(
-												E'delete from %I.%I where %s = %s;'
+												E'delete from %I.%I where %s = any(%s);'
 												'\n\ninsert into %I.%I\n%s\n;'
 												, i_view_rec.schema_name
 												, i_view_rec.internal_name
@@ -148,7 +179,7 @@ begin
 															'\n\t%s'
 															'\n) t'
 															'\nwhere'
-															'\n\t%s = %s'
+															'\n\t%s = any(%s)'
 															, view_query[1]
 															, i_view_rec.mv_emulation_chunking_field
 															, i_view_rec.mv_emulation_refresh_proc_param
