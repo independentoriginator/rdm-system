@@ -101,8 +101,8 @@ begin
 									'\n	end if;'
 									'\nend'
 									'\n$routine$;'
-									, i_view_rec.schema_name
 									, i_view_rec.internal_name
+									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_chunking_field
 									, i_view_rec.schema_name
 									, i_view_rec.internal_name
@@ -110,8 +110,8 @@ begin
 									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_refresh_proc_name
 									, i_view_rec.mv_emulation_refresh_proc_param
-									, i_view_rec.schema_name
 									, i_view_rec.internal_name
+									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_chunking_field
 									, i_view_rec.mv_emulation_refresh_proc_param
 									, i_view_rec.schema_name
