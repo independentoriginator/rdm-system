@@ -21,9 +21,8 @@ language sql
 stable
 as $function$
 select
-	format('
-		drop %s %I.%I%s
-		'
+	format(
+		'drop %s %I.%I%s'
 		, o.obj_specific_type
 		, o.obj_schema
 		, o.obj_name
