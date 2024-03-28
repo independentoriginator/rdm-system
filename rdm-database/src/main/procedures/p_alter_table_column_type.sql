@@ -64,7 +64,6 @@ begin
 					i_obj_class => dependent_obj.dep_obj_class
 					, i_obj_id => dependent_obj.dep_obj_id
 					, i_cascade => false
-					, i_check_existence => false
 				)
 			)
 			order by dependent_obj.dep_level desc

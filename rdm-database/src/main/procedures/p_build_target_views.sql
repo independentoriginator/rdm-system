@@ -74,7 +74,6 @@ begin
 				i_obj_class => v.obj_class
 				, i_obj_id => v.view_oid
 				, i_cascade => true
-				, i_check_existence => true
 			)
 			, E';\n'
 		) filter(
