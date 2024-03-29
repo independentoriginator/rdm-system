@@ -499,5 +499,15 @@
 		</addColumn>
 		
 	</changeSet>
+
+	<changeSet id="materialized view emulation: mv_emulation_chunks_bucket_size" author="${default_author}">
+
+		<addColumn tableName="meta_view">
+			<column name="mv_emulation_chunks_bucket_size" type="integer" remarks="Materialized view emulation chunks bucket size" defaultValueNumeric="1">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+		
+	</changeSet>
             			
 </databaseChangeLog>

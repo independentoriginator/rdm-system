@@ -39,8 +39,11 @@ begin
 									, ${mainSchemaName}.f_indent_text(
 										i_text => 									
 											format(
-												E'truncate %I.%I;'
+												E'perform pg_catalog.pg_advisory_xact_lock(''%I.%I''::regclass::bigint);'
+												'\n\ntruncate %I.%I;'
 												'\n\ninsert into %I.%I\n%s\n;'
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
 												, i_view_rec.schema_name
 												, i_view_rec.internal_name
 												, i_view_rec.schema_name
@@ -79,18 +82,18 @@ begin
 									'\n		from ('
 									'\n			select' 
 									'\n				array_agg('
-									'\n					%s order by %s'
+									'\n					c.%s order by c.%s'
 									'\n				) as %s'
 									'\n			from ('
 									'\n				select' 
-									'\n					%s'
-									'\n					, ntile(%s) over(order by %s) as bucket_num'
+									'\n					c.%s'
+									'\n					, ((row_number() over(order by c.%s) - 1) / %s) + 1 as bucket_num' 
 									'\n				from ('
 									'\n					%s'
 									'\n				) c'
 									'\n			) c'
 									'\n			group by' 
-									'\n				bucket_num'
+									'\n				c.bucket_num'
 									'\n		) c;'
 									'\n'
 									'\n		call ${stagingSchemaName}.p_execute_in_parallel('
@@ -122,8 +125,8 @@ begin
 									, i_view_rec.mv_emulation_chunking_field
 									, i_view_rec.mv_emulation_chunking_field
 									, i_view_rec.mv_emulation_chunking_field
-									, ${max_parallel_worker_processes}
 									, i_view_rec.mv_emulation_chunking_field
+									, coalesce(i_view_rec.mv_emulation_chunks_bucket_size, 1)
 									, ${mainSchemaName}.f_indent_text(
 										i_text => i_view_rec.mv_emulation_chunks_query									
 										, i_indentation_level => 5
@@ -131,8 +134,19 @@ begin
 									, ${mainSchemaName}.f_indent_text(
 										i_text =>
 											format(
-												E'delete from %I.%I where %s = any(%s);'
+												E'perform '
+												'\n	pg_catalog.pg_advisory_xact_lock('
+												'\n		''%I.%I''::regclass::integer'
+												'\n		, hashtext(c::text)'
+												'\n	)'
+												'\nfrom '
+												'\n	unnest(%s) c'
+												'\n;'
+												'\n\ndelete from %I.%I where %s = any(%s);'
 												'\n\ninsert into %I.%I\n%s\n;'
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, i_view_rec.mv_emulation_refresh_proc_param												
 												, i_view_rec.schema_name
 												, i_view_rec.internal_name
 												, i_view_rec.mv_emulation_chunking_field
