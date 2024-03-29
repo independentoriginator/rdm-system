@@ -9,6 +9,7 @@ when (
 		new.query is distinct from old.query
 		or new.mv_emulation_chunking_field is distinct from old.mv_emulation_chunking_field
 		or new.mv_emulation_chunks_query is distinct from old.mv_emulation_chunks_query
+		or new.mv_emulation_chunks_bucket_size is distinct from old.mv_emulation_chunks_bucket_size
 	)
 	and (not old.is_routine or not old.is_external)
 )
