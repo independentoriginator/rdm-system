@@ -341,7 +341,9 @@ begin
 						;
 					if l_view_rec.is_external then 
 						raise notice 
-							'External view creation error: %: % (hint: %, context: %). The view will be disabled.'
+							'External view %.% creation error: %: % (hint: %, context: %). The view will be disabled.'
+							, l_view_rec.schema_name
+							, l_view_rec.internal_name
 							, l_msg_text
 							, l_exception_detail
 							, l_exception_hint
@@ -357,7 +359,9 @@ begin
 						;
 					else
 						raise exception 
-							'View creation error: %: % (hint: %, context: %)'
+							'View %.% creation error: %: % (hint: %, context: %)'
+							, l_view_rec.schema_name
+							, l_view_rec.internal_name
 							, l_msg_text
 							, l_exception_detail
 							, l_exception_hint
