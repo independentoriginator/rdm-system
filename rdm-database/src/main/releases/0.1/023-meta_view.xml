@@ -509,5 +509,15 @@
 		</addColumn>
 		
 	</changeSet>
+
+	<changeSet id="materialized view emulation: mv_emulation_with_partitioning" author="${default_author}">
+
+		<addColumn tableName="meta_view">
+			<column name="mv_emulation_with_partitioning" type="boolean" remarks="Materialized view emulation with partitioning" defaultValueBoolean="false">
+				<constraints nullable="false" />
+			</column>
+		</addColumn>
+		
+	</changeSet>
             			
 </databaseChangeLog>

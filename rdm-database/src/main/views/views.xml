@@ -127,6 +127,26 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="v_sys_partitioned_table-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_sys_partitioned_table" 
+			path="v_sys_partitioned_table.sql"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
+	<changeSet id="v_sys_table_partition-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_sys_table_partition" 
+			path="v_sys_table_partition.sql"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="v_month_lc_name-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_month_lc_name" 
@@ -137,5 +157,5 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
-	
+
 </databaseChangeLog>

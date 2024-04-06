@@ -31,7 +31,6 @@ from (
 		, case c.relkind
 			when 'v'::"char" then 'view'::name
 			when 'm'::"char" then 'materialized view'::name
-			when 'p'::"char" then 'partitioned table'::name
 			when 'f'::"char" then 'foreign table'::name
 			else 'table'::name
 		end as obj_specific_type

@@ -95,7 +95,9 @@ select
 	, 'p_refresh_' || v.internal_name as mv_emulation_refresh_proc_name 
 	, 'i_' || v.mv_emulation_chunking_field as mv_emulation_refresh_proc_param
 	, mve_target_proc.oid as mv_emulation_refresh_proc_oid
-	, v.mv_emulation_chunks_bucket_size
+	, coalesce(v.mv_emulation_chunks_bucket_size, 1) as mv_emulation_chunks_bucket_size
+	, v.mv_emulation_with_partitioning
+	, 'f_' || v.internal_name as mv_emulation_table_func_name
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s
