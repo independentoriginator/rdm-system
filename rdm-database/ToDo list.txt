@@ -6,4 +6,5 @@ ToDO list
 - RLS support
 - Target table partitioning support
 - Integration of a full user role permissions model 
-- Materialized views incremental refresh: https://github.com/sraoss/pg_ivm  
+- Materialized views incremental refresh: https://github.com/sraoss/pg_ivm
+- Set application_name process attribute  
