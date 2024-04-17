@@ -7,11 +7,19 @@ stable
 parallel safe
 as $function$
 select 
-	schema_name || '.' || internal_name as meta_view_name
-from
-	${mainSchemaName}.v_meta_view
+	coalesce(s.internal_name, '${mainSchemaName}')
+	|| '.' 
+	|| v.internal_name 
+	as meta_view_name
+from 
+	${mainSchemaName}.meta_view v
+left join ${mainSchemaName}.meta_schema s
+	on s.id = v.schema_id
+left join ${mainSchemaName}.v_sys_obj target_schema
+	on target_schema.obj_name = coalesce(s.internal_name, '${mainSchemaName}')
+	and target_schema.obj_class = 'schema'::name 
 where 
-	id = i_meta_view_id
+	v.id = i_meta_view_id
 $function$
 ;	
 
