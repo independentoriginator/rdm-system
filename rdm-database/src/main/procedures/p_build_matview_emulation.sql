@@ -266,6 +266,7 @@ begin
 														'\n		chunk.id'
 														'\n		, ${mainSchemaName}.f_valid_system_name('
 														'\n			i_raw_name => chunk.id::text'
+														'\n			, i_is_considered_as_whole_name => false'
 														'\n		) as sys_name'
 														'\n	from'
 														'\n		unnest(%s) chunk(id)'
