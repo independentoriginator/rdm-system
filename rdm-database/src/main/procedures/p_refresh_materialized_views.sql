@@ -96,7 +96,7 @@ begin
 	   		raise notice 'Refreshing materialized view(s): %...', l_view_names;
 	   		
 	   		l_timestamp := clock_timestamp();
-	   		
+	   	
 			call ${stagingSchemaName}.p_execute_in_parallel(
 				i_commands => l_view_refresh_commands
 				, i_thread_max_count => i_thread_max_count
@@ -105,7 +105,7 @@ begin
 				, i_scheduled_task_stage_ord_pos => i_scheduled_task_stage_ord_pos
 				, i_iteration_number => l_iteration_number
 				, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds 
-			);	
+			);
 			
 			update 
 				${mainSchemaName}.meta_view 
@@ -188,4 +188,64 @@ comment on procedure p_refresh_materialized_views(
 	, integer
 	, boolean
 ) is 'Обновить материализованные представления';
+
+/*
+create or replace procedure _p_refresh_materialized_views(
+	i_max_worker_processes integer = ${max_parallel_worker_processes}
+	, i_polling_interval interval = '10 seconds'
+	, i_max_run_time interval = '8 hours'
+)
+language plpgsql
+security definer
+as $procedure$
+declare 
+	l_view_ids ${type.id}[];
+	l_view_names text;
+	l_view_refresh_commands text[];
+	l_start_timestamp timestamp := clock_timestamp();
+	l_timestamp timestamp;
+	l_iteration_number integer = 0;
+begin
+	call ${stagingSchemaName}.p_execute_in_parallel(
+		i_command_list_query => $sql$
+			select
+				case 
+					when t.is_matview_emulation then 
+						format(
+							'call %I.p_refresh_%I()'
+							, t.schema_name
+							, t.internal_name
+						) 
+					else 
+						${mainSchemaName}.f_materialized_view_refresh_command(
+							i_schema_name => t.schema_name
+							, i_internal_name => t.internal_name
+							, i_has_unique_index => t.has_unique_index
+							, i_is_populated => t.is_populated
+						)
+				end
+			from 
+				${mainSchemaName}.v_meta_view t
+			where 
+				t.is_valid = false 
+				and t.is_materialized = true
+				and coalesce(t.is_disabled, false) = false
+			group by 
+				t.dependency_level
+			order by 
+				t.dependency_level
+		$sql$
+		, i_do_while_checking_condition text = null
+		, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0 -- for example, system identitifier of a caller procedure 
+		, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = 0 -- for example, pg_backend_pid() 
+		, i_max_worker_processes integer = ${max_parallel_worker_processes}
+		, i_polling_interval interval = '10 seconds'
+		, i_max_run_time interval = '8 hours'
+	)
+	;
+
+	
+end
+$procedure$;	
+*/
 

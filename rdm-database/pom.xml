@@ -59,6 +59,10 @@
 					<!-- Custom properties  -->
 					<systemProperties>
 						<property>
+							<name>project_internal_name</name>
+							<value>${project.artifactId}</value>
+						</property>
+						<property>
 							<name>default_author</name>
 							<value>developer</value>
 						</property>

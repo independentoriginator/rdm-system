@@ -374,4 +374,28 @@
 
 	</changeSet>
 
+	<changeSet id="parallel_worker: start_time nullability" author="${default_author}">
+	
+		<dropNotNullConstraint
+			tableName="parallel_worker"
+			schemaName="${stagingSchemaName}"
+			columnName="start_time" />		
+
+	</changeSet>
+	
+	<changeSet id="parallel_worker: extra_info" author="${default_author}">
+
+		<addColumn 
+			tableName="parallel_worker"
+			schemaName="${stagingSchemaName}">
+			<column 
+				name="extra_info" 
+				type="${type.description}"
+				remarks="Extra info">
+				<constraints nullable="true" />
+			</column>
+		</addColumn> 
+
+	</changeSet>
+
 </databaseChangeLog>

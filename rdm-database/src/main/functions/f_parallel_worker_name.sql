@@ -9,11 +9,14 @@ immutable
 parallel safe
 as $function$
 select 	
-	format(
-		'${project.artifactId}.parallel_worker.%s.%s.%s'
-		, i_context_id
-		, i_operation_instance_id
-		, i_worker_num
+	${mainSchemaName}.f_valid_system_name(
+		i_raw_name => 
+			format(
+				'${project_internal_name}_parallel_worker_%s_%s_%s'
+				, i_context_id
+				, i_operation_instance_id
+				, i_worker_num
+			)
 	)
 $function$;	
 

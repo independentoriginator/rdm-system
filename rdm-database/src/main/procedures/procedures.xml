@@ -8,6 +8,15 @@
         http://www.liquibase.org/xml/ns/dbchangelog 
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
+	<changeSet id="p_delay_execution-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_delay_execution" 
+			dbms="postgresql" 
+			path="p_delay_execution.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 	<changeSet id="p_alter_table_column_type-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_alter_table_column_type" 

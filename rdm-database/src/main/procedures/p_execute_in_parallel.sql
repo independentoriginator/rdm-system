@@ -183,15 +183,26 @@ comment on procedure ${stagingSchemaName}.p_execute_in_parallel(
 	, integer
 ) is 'Исполнение набора команд в параллельном режиме';
 
+drop procedure if exists ${stagingSchemaName}.p_execute_in_parallel(
+	text
+	, text
+	, ${stagingSchemaName}.parallel_worker.context_id%type 
+	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type 
+	, integer
+	, interval
+	, interval
+)
+;
 
 create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	i_command_list_query text
 	, i_do_while_checking_condition text = null
-	, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0 -- for example, caller procedure system identitifier 
+	, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0 -- for example, system identitifier of a caller procedure 
 	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = 0 -- for example, pg_backend_pid() 
 	, i_max_worker_processes integer = ${max_parallel_worker_processes}
 	, i_polling_interval interval = '10 seconds'
 	, i_max_run_time interval = '8 hours'
+	, i_close_process_pool_on_completion boolean = false
 )
 language plpgsql
 as $procedure$
@@ -208,61 +219,99 @@ declare
 		)
 	)
 	;
+	l_context_id ${stagingSchemaName}.parallel_worker.context_id%type = coalesce(i_context_id, 0); 
+	l_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = coalesce(i_operation_instance_id, 0); 
 	l_exit_flag boolean;
 	l_command text;
-	l_notification_channel name := '${project.artifactId}.parallel-worker-notifications';
+	l_extra_info ${stagingSchemaName}.parallel_worker.extra_info%type;
+	l_notification_channel name := 
+		${mainSchemaName}.f_valid_system_name(
+			i_raw_name => 
+				format(
+					'${project_internal_name}.parallel_worker_notifications_%s_%s'
+					, i_context_id
+					, i_operation_instance_id
+				)					
+		)
+	;
+	l_listener_worker name;
+	l_worker name;
 begin
+	-- Make sure of start possibility
+	perform 
+		pg_catalog.pg_advisory_xact_lock(
+			l_context_id::integer
+			, l_operation_instance_id::integer
+		)
+	;
+
 	if l_is_multithreaded_process then
 		-- Start listening to parallel worker notifications
-		perform
-			${dbms_extension.dblink.schema}.dblink_exec(
-				format(
-					'listen %s'
-					, l_notification_channel
-				)
+		l_listener_worker :=  
+			${stagingSchemaName}.f_launch_parallel_worker(
+				i_command => 
+					format(
+						'listen %s'
+						, l_notification_channel
+					)
+				, i_extra_info => null
+				, i_context_id => l_context_id
+				, i_operation_instance_id => l_operation_instance_id
+				, i_notification_channel => l_notification_channel
+				, i_max_worker_processes => i_max_worker_processes
+				, i_polling_interval => i_polling_interval
+				, i_max_run_time => i_max_run_time
+				, i_is_async => false
+				, i_is_onetime_executor => false
 			)
-			;
+		;
+	
+		raise notice 
+			'Notifications listener process started: %'
+			, l_listener_worker 
+		;		
 	else	
 		raise notice 
 			'Singlethreaded process will be executed'
-			' (for multithreaded execution, install the dblink extension and set the i_max_worker_processes procedure parameter to the appropriate value)'
+			' (for multithreaded execution, install the dblink extension and set the i_max_worker_processes procedure parameter to an appropriate value)'
 			;
 	end if;
 	
 	<<main>>
 	loop
 		if l_is_multithreaded_process then
+			-- Launch workers and wait for them to complete
 			<<commands>>
-			for l_command in execute i_command_list_query 
+			for l_command, l_extra_info in execute i_command_list_query using l_context_id, l_operation_instance_id  
 			loop
 				perform 
 					${stagingSchemaName}.f_launch_parallel_worker(
 						i_command => l_command
-						, i_context_id => i_context_id
-						, i_operation_instance_id => i_operation_instance_id
+						, i_extra_info => l_extra_info
+						, i_context_id => l_context_id
+						, i_operation_instance_id => l_operation_instance_id
 						, i_notification_channel => l_notification_channel
 						, i_max_worker_processes => i_max_worker_processes
 						, i_polling_interval => i_polling_interval
 						, i_max_run_time => i_max_run_time
+						, i_listener_worker => l_listener_worker
 					)
 					;
 			end loop commands;
 			
-			if ${stagingSchemaName}.f_wait_for_parallel_process_completion(
-				i_context_id => i_context_id
-				, i_operation_instance_id => i_operation_instance_id
-				, i_notification_channel => l_notification_channel
-				, i_polling_interval => i_polling_interval
-				, i_max_run_time => i_max_run_time
-			)
-			then 
-				raise notice 
-					'Iteration completed...'
-				;		
-			end if;
+			perform
+				${stagingSchemaName}.f_wait_for_parallel_process_completion(
+					i_context_id => l_context_id
+					, i_operation_instance_id => l_operation_instance_id
+					, i_notification_channel => l_notification_channel
+					, i_listener_worker => l_listener_worker
+					, i_polling_interval => i_polling_interval
+					, i_max_run_time => i_max_run_time
+				)
+			;
 		else 
 			<<commands>>
-			for l_command in execute i_command_list_query 
+			for l_command, l_extra_info in execute i_command_list_query using l_context_id, l_operation_instance_id
 			loop
 				execute l_command;
 			end loop commands;
@@ -275,5 +324,70 @@ begin
 			exit main when l_exit_flag;
 		end if;
 	end loop main;
+
+	if l_is_multithreaded_process then
+		if i_close_process_pool_on_completion then 
+			for l_worker in (
+				select 
+					${stagingSchemaName}.f_parallel_worker_name(
+						i_context_id => i_context_id
+						, i_operation_instance_id => i_operation_instance_id
+						, i_worker_num => l_worker
+					)
+				from 
+					${stagingSchemaName}.parallel_worker
+				where 
+					context_id = i_context_id
+					and operation_instance_id = i_operation_instance_id
+			)
+			loop
+				perform
+				from
+					${dbms_extension.dblink.schema}.dblink_disconnect(
+						l_worker
+					)
+				;
+			end loop;
+
+			delete from 
+				${stagingSchemaName}.parallel_worker
+			where 
+				context_id = i_context_id
+				and operation_instance_id = i_operation_instance_id
+			;
+		else 
+			perform 
+				${dbms_extension.dblink.schema}.dblink_exec(
+					l_listener_worker
+					, format(
+						'unlisten %s'
+						, l_notification_channel
+					)
+				)
+			;
+		
+			update
+				${stagingSchemaName}.parallel_worker
+			set
+				start_time = null
+				, extra_info = null
+			where 
+				context_id = i_context_id
+				and operation_instance_id = i_operation_instance_id
+			;
+		end if;
+	end if;
 end
 $procedure$;
+
+comment on procedure ${stagingSchemaName}.p_execute_in_parallel(
+	text
+	, text
+	, ${stagingSchemaName}.parallel_worker.context_id%type 
+	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type 
+	, integer
+	, interval
+	, interval
+	, boolean
+) is 'Исполнение набора команд в параллельном режиме';
+
