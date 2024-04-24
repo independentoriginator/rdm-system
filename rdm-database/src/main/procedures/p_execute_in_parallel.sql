@@ -161,9 +161,11 @@ begin
 			end loop;
 		end loop command_loop;
 	else
-		foreach l_command in array i_commands loop
-			execute l_command;
-		end loop;	
+		if i_commands is not null then
+			foreach l_command in array i_commands loop
+				execute l_command;
+			end loop;
+		end if;
 	end if;
 	
 	if l_last_err_msg is not null then
