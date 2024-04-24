@@ -38,70 +38,78 @@ begin
 	end if;
 
 	call ${stagingSchemaName}.p_execute_in_parallel(
-		i_command_list_query => $sql$
-			with 
-				materialized_view as (
-					select 
-						t.*
-					from 
-						${mainSchemaName}.v_meta_view t
-					where 
-						t.is_valid = false
-						and t.is_materialized = true
-						and coalesce(
-							t.is_disabled
-							, false
-						) = false
-				)
-			select
-				format(
-					'call ${mainSchemaName}.p_refresh_materialized_view(i_view_id => %s)'
-					, refreshable_view.id
-				)
-				, refreshable_view.id::varchar as extra_info
-			from
-			(
-				select 
-					t.id
-				from 
-					materialized_view t
-				except
-				select 
-					dep.view_id
-				from 
-					${mainSchemaName}.meta_view_dependency dep
-				join materialized_view mv 
-					on mv.id = dep.master_view_id
-				except 
-				select 
-					extra_info::${type.id} as view_id
-				from 
-					${stagingSchemaName}.parallel_worker
-				where 
-					context_id = $1
-					and operation_instance_id = $2
-			) refreshable_view
-			join materialized_view v
-				on v.id = refreshable_view.id
-			order by 
-				v.dependency_level
-		$sql$
-		, i_do_while_checking_condition => $sql$
-			select 
-				not exists (
+		i_command_list_query => 
+			format(
+				$sql$
+				with 
+					materialized_view as (
+						select 
+							t.*
+						from 
+							${mainSchemaName}.v_meta_view t
+						where 
+							t.is_valid = false
+							and t.is_materialized = true
+							and coalesce(
+								t.is_disabled
+								, false
+							) = false%s
+					)
+				select
+					format(
+						'call ${mainSchemaName}.p_refresh_materialized_view(i_view_id => %%s)'
+						, refreshable_view.id
+					)
+					, refreshable_view.id::varchar as extra_info
+				from
+				(
 					select 
 						t.id
 					from 
-						${mainSchemaName}.v_meta_view t
+						materialized_view t
+					except
+					select 
+						dep.view_id
+					from 
+						${mainSchemaName}.meta_view_dependency dep
+					join materialized_view mv 
+						on mv.id = dep.master_view_id
+					except 
+					select 
+						extra_info::${type.id} as view_id
+					from 
+						${stagingSchemaName}.parallel_worker
 					where 
-						t.is_valid = false
-						and t.is_materialized = true
-						and coalesce(
-							t.is_disabled
-							, false
-						) = false
-				)
-		$sql$
+						context_id = $1
+						and operation_instance_id = $2
+				) refreshable_view
+				join materialized_view v
+					on v.id = refreshable_view.id
+				order by 
+					v.dependency_level
+				$sql$
+				, case when i_unpopulated_only then E'\nand t.is_populated = false' else '' end
+			)
+		, i_do_while_checking_condition =>
+			format(
+				$sql$
+				select 
+					not exists (
+						select 
+							t.id
+						from 
+							${mainSchemaName}.v_meta_view t
+						where 
+							t.is_valid = false
+							and t.is_materialized = true
+							and coalesce(
+								t.is_disabled
+								, false
+							) = false%s
+					)
+				$sql$
+				, case when i_unpopulated_only then E'\nand t.is_populated = false' else '' end
+			)
 		, i_context_id => 0
 		-- ${mainSchemaName}.p_refresh_materialized_views()::regprocedure::integer
 		, i_operation_instance_id => 0

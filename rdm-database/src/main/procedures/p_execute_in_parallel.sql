@@ -301,16 +301,19 @@ begin
 					;
 			end loop commands;
 			
-			perform
-				${stagingSchemaName}.f_wait_for_parallel_process_completion(
-					i_context_id => l_context_id
-					, i_operation_instance_id => l_operation_instance_id
-					, i_notification_channel => l_notification_channel
-					, i_listener_worker => l_listener_worker
-					, i_polling_interval => i_polling_interval
-					, i_max_run_time => i_max_run_time
-				)
-			;
+			-- When at least one worker started
+			if l_command is not null then
+				perform
+					${stagingSchemaName}.f_wait_for_parallel_process_completion(
+						i_context_id => l_context_id
+						, i_operation_instance_id => l_operation_instance_id
+						, i_notification_channel => l_notification_channel
+						, i_listener_worker => l_listener_worker
+						, i_polling_interval => i_polling_interval
+						, i_max_run_time => i_max_run_time
+					)
+				;
+			end if;
 		else 
 			<<commands>>
 			for l_command, l_extra_info in execute i_command_list_query using l_context_id, l_operation_instance_id
