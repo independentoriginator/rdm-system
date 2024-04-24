@@ -18,6 +18,12 @@
 		</sql>
 	</changeSet>
 
+	<changeSet id="database owner" author="${default_author}" runAlways="true">
+		<sql dbms="postgresql">
+			SET role = ${databaseOwner}
+		</sql>
+	</changeSet>
+
 	<include file="functions/immutable_functions.xml" relativeToChangelogFile="true" />
 	<includeAll path="releases" relativeToChangelogFile="true" />
 	<include file="functions/functions.xml" relativeToChangelogFile="true" />

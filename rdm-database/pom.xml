@@ -67,6 +67,10 @@
 							<value>developer</value>
 						</property>
 						<property>
+							<name>databaseOwner</name>
+							<value>${databaseOwnerName}</value>
+						</property>
+						<property>
 							<name>mainSchemaName</name>
 							<value>${databaseMainSchemaName}</value>
 						</property>
