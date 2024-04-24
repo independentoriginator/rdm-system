@@ -1,3 +1,7 @@
+drop function if exists f_valid_system_name(
+	text
+);
+
 create or replace function f_valid_system_name(
 	i_raw_name text
 	, i_is_considered_as_whole_name	boolean = true
