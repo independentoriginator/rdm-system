@@ -398,4 +398,20 @@
 
 	</changeSet>
 
+	<changeSet id="parallel_worker: async mode" author="${default_author}">
+
+		<addColumn 
+			tableName="parallel_worker"
+			schemaName="${stagingSchemaName}">
+			<column 
+				name="async_mode" 
+				type="boolean"
+				remarks="Asynchronous mode"
+				defaultValueBoolean="true"	>
+				<constraints nullable="false" />
+			</column>
+		</addColumn> 
+
+	</changeSet>
+	
 </databaseChangeLog>

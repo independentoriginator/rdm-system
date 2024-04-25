@@ -20,25 +20,41 @@ language plpgsql
 volatile
 as $function$
 declare 
-	l_workers integer[];
-	l_workers_completed integer[];
-	l_worker integer;
+	l_workers_opened jsonb[];
+	l_workers_completed jsonb[];
+	l_worker jsonb;
 	l_worker_name name;
 	l_err_msg text;
 	l_start_timestamp timestamp := clock_timestamp();
 begin
 	select 
-		array_agg(worker_num)
+		array_agg(
+			jsonb_build_object(
+				'num'
+				, pw.worker_num
+				, 'name'
+				, conn.name
+				, 'async_mode'
+				, pw.async_mode
+			)
+		)
 	into 
-		l_workers
+		l_workers_opened
 	from 
-		${stagingSchemaName}.parallel_worker
+		${stagingSchemaName}.parallel_worker pw
+	join unnest(${dbms_extension.dblink.schema}.dblink_get_connections()) conn(name)
+		on conn.name = 
+			${stagingSchemaName}.f_parallel_worker_name(
+				i_context_id => pw.context_id
+				, i_operation_instance_id => pw.operation_instance_id
+				, i_worker_num => pw.worker_num
+			)	
 	where
-		context_id = i_context_id
-		and operation_instance_id = i_operation_instance_id
+		pw.context_id = i_context_id
+		and pw.operation_instance_id = i_operation_instance_id
 	;
 	
-	if cardinality(l_workers) > 0 
+	if cardinality(l_workers_opened) > 0 
 	then
 		<<waiting_for_completion>>
 		loop
@@ -55,17 +71,30 @@ begin
 							select 
 								worker.num
 							from 
-								unnest(l_workers) as worker(num) 
+								unnest(l_workers_opened) worker_obj
+							join lateral jsonb_to_record(worker_obj) worker(num integer, name text) on true 
 							join ${dbms_extension.dblink.schema}.dblink_get_notify(i_listener_worker) n
 								on n.notify_name = i_notification_channel
 								and n.extra = worker.num::text
 						)
 					returning 
 						worker_num
+						, async_mode
 				)
 			select 
 				array_agg(
-					worker_num
+					jsonb_build_object(
+						'num'
+						, worker_num
+						, 'name'
+						, ${stagingSchemaName}.f_parallel_worker_name(
+							i_context_id => i_context_id
+							, i_operation_instance_id => i_operation_instance_id
+							, i_worker_num => worker_num
+						)
+						, 'async_mode'
+						, async_mode
+					)
 				)
 			into 
 				l_workers_completed
@@ -78,16 +107,14 @@ begin
 				
 				foreach l_worker in array l_workers_completed
 				loop
-					perform
-					from
-						${dbms_extension.dblink.schema}.dblink_get_result(
-							${stagingSchemaName}.f_parallel_worker_name(
-								i_context_id => i_context_id
-								, i_operation_instance_id => i_operation_instance_id
-								, i_worker_num => l_worker
-							)
-						) as res(val text)
-					;
+					if (l_worker->>'async_mode')::boolean then
+						perform
+						from
+							${dbms_extension.dblink.schema}.dblink_get_result(
+								l_worker->>'name'
+							) as res(val text)
+						;
+					end if;
 				end loop;
 			
 				return 
@@ -102,21 +129,18 @@ begin
 				, i_start_timestamp => l_start_timestamp
 			);	
 		
-			foreach l_worker in array l_workers
+			foreach l_worker in array l_workers_opened
 			loop
-				l_worker_name :=
-					${stagingSchemaName}.f_parallel_worker_name(
-						i_context_id => i_context_id
-						, i_operation_instance_id => i_operation_instance_id
-						, i_worker_num => l_worker
-					)
+				l_worker_name := l_worker->>'name'
 				;
 			
-				perform
-					${dbms_extension.dblink.schema}.dblink_is_busy(
-						l_worker_name
-					)
-				;
+				if (l_worker->>'async_mode')::boolean then
+					perform
+						${dbms_extension.dblink.schema}.dblink_is_busy(
+							l_worker_name
+						)
+					;
+				end if;
 			
 				l_err_msg := 
 					nullif(
@@ -128,15 +152,11 @@ begin
 				;
 			
 				if l_err_msg is not null then
-					foreach l_worker in array l_workers
+					foreach l_worker in array l_workers_opened
 					loop
 						perform
 							${dbms_extension.dblink.schema}.dblink_cancel_query(
-								${stagingSchemaName}.f_parallel_worker_name(
-									i_context_id => i_context_id
-									, i_operation_instance_id => i_operation_instance_id
-									, i_worker_num => l_worker
-								)
+								l_worker->>'name'
 							)
 						;
 					end loop;

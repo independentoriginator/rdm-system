@@ -30,6 +30,7 @@ declare
 	l_worker_num ${stagingSchemaName}.parallel_worker.worker_num%type;
 	l_worker_name name;
 	l_is_new_worker boolean;
+	l_prev_mode_async boolean;
 	l_command text;
 	l_db name := current_database();
 	l_user name := session_user;
@@ -38,40 +39,32 @@ begin
 	<<waiting_for_available_worker>>
 	loop
 		l_is_new_worker := true;
-	
+
 		-- Get available worker if any
-		update 
-			${stagingSchemaName}.parallel_worker
-		set 
-			start_time = current_timestamp
-			, extra_info = i_extra_info
-		where 
-			(context_id, operation_instance_id, worker_num) = ( 
-				select 
-					context_id, operation_instance_id, worker_num
-				from 
-					${stagingSchemaName}.parallel_worker
-				where 
-					context_id = i_context_id
-					and operation_instance_id = i_operation_instance_id
-					and (
-						start_time is null
-						or clock_timestamp() - start_time >= i_max_run_time
-					)
-				order by 
-					worker_num
-					, start_time
-				limit 1
-				for update skip locked
-			)
-		returning 
-			worker_num		
+		select 
+			worker_num
+			, async_mode
 		into 
 			l_worker_num
+			, l_prev_mode_async
+		from 
+			${stagingSchemaName}.parallel_worker
+		where 
+			context_id = i_context_id
+			and operation_instance_id = i_operation_instance_id
+			and (
+				start_time is null
+				or clock_timestamp() - start_time >= i_max_run_time
+			)
+		order by 
+			worker_num
+			, start_time
+		limit 1
+		for update skip locked
 		;
-	
-		-- Create new worker within the total worker count limit
+		
 		if l_worker_num is null then
+			-- Create new worker within the total worker count limit
 			insert into 
 				${stagingSchemaName}.parallel_worker(
 					context_id
@@ -79,6 +72,7 @@ begin
 					, worker_num
 					, start_time
 					, extra_info
+					, async_mode
 				)
 			select
 				i_context_id 
@@ -86,6 +80,7 @@ begin
 				, worker_num
 				, current_timestamp			
 				, i_extra_info
+				, i_is_async
 			from (
 				select (
 						select 
@@ -105,8 +100,20 @@ begin
 			into 
 				l_worker_num
 			;
-		else 
+		else
 			l_is_new_worker := false;
+		
+			update 
+				${stagingSchemaName}.parallel_worker
+			set 
+				start_time = current_timestamp
+				, extra_info = i_extra_info
+				, async_mode = i_is_async
+			where 
+				context_id = i_context_id
+				and operation_instance_id = i_operation_instance_id
+				and worker_num = l_worker_num
+			;
 		end if;
 	
 		if l_worker_num is not null 
@@ -133,6 +140,7 @@ begin
 				;		
 			end if;
 		end if;
+	
 	end loop waiting_for_available_worker;
 
 	l_worker_name := 
@@ -154,35 +162,37 @@ begin
 			)
 	) 
 	then
-		while 
-			${dbms_extension.dblink.schema}.dblink_is_busy(
-				l_worker_name
-			) = 1 
-		loop
-			raise notice 
-				'The worker is busy...'
-			;		
-			
-			call ${mainSchemaName}.p_delay_execution(
-				i_delay_interval => i_polling_interval
-				, i_max_run_time => i_max_run_time
-				, i_start_timestamp => l_start_timestamp
-			);	
-		end loop;		
-
-		raise notice 
-			'Waiting for completion...'
-			;		
-
-		-- Request the result of the previous async query twice to use the existing connection again 
-		for i in 1..2 loop
-			perform
-			from
-				${dbms_extension.dblink.schema}.dblink_get_result(
+		if l_prev_mode_async then
+			while 
+				${dbms_extension.dblink.schema}.dblink_is_busy(
 					l_worker_name
-				) as res(val text)
-			;
-		end loop;
+				) = 1 
+			loop
+				raise notice 
+					'The worker is busy...'
+				;		
+				
+				call ${mainSchemaName}.p_delay_execution(
+					i_delay_interval => i_polling_interval
+					, i_max_run_time => i_max_run_time
+					, i_start_timestamp => l_start_timestamp
+				);	
+			end loop;		
+	
+			raise notice 
+				'Waiting for completion...'
+				;		
+	
+			-- Request the result of the previous async query twice to use the existing connection again 
+			for i in 1..2 loop
+				perform
+				from
+					${dbms_extension.dblink.schema}.dblink_get_result(
+						l_worker_name
+					) as res(val text)
+				;
+			end loop;
+		end if;
 	else
 		perform 
 			${dbms_extension.dblink.schema}.dblink_connect_u(
