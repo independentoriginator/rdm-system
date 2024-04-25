@@ -248,6 +248,16 @@ begin
 	;
 
 	if l_is_multithreaded_process then
+		update
+			${stagingSchemaName}.parallel_worker
+		set
+			start_time = null
+			, extra_info = null
+		where 
+			context_id = i_context_id
+			and operation_instance_id = i_operation_instance_id
+		;
+	
 		-- Start listening to parallel worker notifications
 		l_listener_worker :=  
 			${stagingSchemaName}.f_launch_parallel_worker(
