@@ -347,7 +347,7 @@ begin
 					${stagingSchemaName}.f_parallel_worker_name(
 						i_context_id => i_context_id
 						, i_operation_instance_id => i_operation_instance_id
-						, i_worker_num => l_worker
+						, i_worker_num => worker_num
 					)
 				from 
 					${stagingSchemaName}.parallel_worker
