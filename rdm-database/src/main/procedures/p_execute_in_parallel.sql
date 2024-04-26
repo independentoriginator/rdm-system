@@ -204,7 +204,7 @@ create or replace procedure ${stagingSchemaName}.p_execute_in_parallel(
 	, i_max_worker_processes integer = ${max_parallel_worker_processes}
 	, i_polling_interval interval = '10 seconds'
 	, i_max_run_time interval = '8 hours'
-	, i_close_process_pool_on_completion boolean = false
+	, i_close_process_pool_on_completion boolean = true
 )
 language plpgsql
 as $procedure$

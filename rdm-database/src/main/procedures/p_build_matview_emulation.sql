@@ -106,39 +106,35 @@ begin
 									'\n\t%s tv_%I_%I.arr_%s%%type = null'
 									'\n)'
 									'\nlanguage plpgsql'
-									'\nas $routine$'
-									'\ndeclare'
-									'\n	l_chunk_refresh_cmds text[];%s'
+									'\nas $routine$%s'
 									'\nbegin'
 									'\n	if %s is null then'
-									'\n		select'
-									'\n			array_agg('
-									'\n				format('
-									'\n					''call %I.%I(%s => %%L)'''
-									'\n					, c.%s'
-									'\n				)'
-									'\n			)'
-									'\n		into' 
-									'\n			l_chunk_refresh_cmds'
-									'\n		from ('
-									'\n			select' 
-									'\n				array_agg('
-									'\n					c.%s order by c.%s'
-									'\n				) as %s'
-									'\n			from ('
-									'\n				select' 
-									'\n					c.%s'
-									'\n					, ((row_number() over(order by c.%s) - 1) / %s) + 1 as bucket_num' 
-									'\n				from ('
-									'\n					%s'
-									'\n				) c'
-									'\n			) c'
-									'\n			group by' 
-									'\n				c.bucket_num'
-									'\n		) c;'
-									'\n'
 									'\n		call ${stagingSchemaName}.p_execute_in_parallel('
-									'\n			i_commands => l_chunk_refresh_cmds'
+									'\n			i_command_list_query => $sql$'
+									'\n				select'
+									'\n					format('
+									'\n						''call %I.%I(%s => %%L)'''
+									'\n						, c.%s'
+									'\n					) as command'
+									'\n					, c.%s::varchar as extra_info'
+									'\n				from ('
+									'\n					select' 
+									'\n						array_agg('
+									'\n							c.%s order by c.%s'
+									'\n						) as %s'
+									'\n					from ('
+									'\n						select' 
+									'\n							c.%s'
+									'\n							, ((row_number() over(order by c.%s) - 1) / %s) + 1 as bucket_num' 
+									'\n						from ('
+									'\n							%s'
+									'\n						) c'
+									'\n					) c'
+									'\n					group by' 
+									'\n						c.bucket_num'
+									'\n				) c'
+									'\n			$sql$'
+									'\n			, i_context_id => ''%I.%I''::regproc::integer'
 									'\n		);'
 									'\n	else'
 									'\n		%s'
@@ -168,7 +164,7 @@ begin
 									, i_view_rec.mv_emulation_chunking_field
 									, case 
 										when i_view_rec.mv_emulation_with_partitioning then
-											E'\n\tl_chunk_rec record;'
+											E'\ndeclare\n\tl_chunk_rec record;'
 										else 
 											''
 									end									
@@ -182,11 +178,14 @@ begin
 									, i_view_rec.mv_emulation_chunking_field
 									, i_view_rec.mv_emulation_chunking_field
 									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.mv_emulation_chunking_field
 									, i_view_rec.mv_emulation_chunks_bucket_size
 									, ${mainSchemaName}.f_indent_text(
 										i_text => i_view_rec.mv_emulation_chunks_query									
-										, i_indentation_level => 5
+										, i_indentation_level => 6
 									)
+									, i_view_rec.schema_name
+									, i_view_rec.mv_emulation_refresh_proc_name
 									, ${mainSchemaName}.f_indent_text(
 										i_text =>
 											format(
@@ -292,7 +291,7 @@ begin
 														'\n'
 														'\nif l_chunk_rec.existing_partition_chunks is not null then '
 														'\n	insert into %I.%I'
-														'\n	select * from %I.%I(%s => l_chunk_rec.existing_partition_chunks)'
+														'\n		select * from %I.%I(%s => l_chunk_rec.existing_partition_chunks)'
 														'\n	;'
 														'\nend if;'
 														, i_view_rec.schema_name

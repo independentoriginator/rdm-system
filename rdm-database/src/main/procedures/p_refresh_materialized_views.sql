@@ -117,6 +117,7 @@ begin
 		, i_max_worker_processes => i_thread_max_count
 		, i_polling_interval => '10 seconds'
 		, i_max_run_time => '8 hours'
+		, i_close_process_pool_on_completion => false
 	)
 	;
 
