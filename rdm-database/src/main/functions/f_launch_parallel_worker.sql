@@ -162,7 +162,7 @@ begin
 			)
 	) 
 	then
-		if l_prev_mode_async then
+		if coalesce(l_prev_mode_async, true) then
 			while 
 				${dbms_extension.dblink.schema}.dblink_is_busy(
 					l_worker_name
