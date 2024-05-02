@@ -129,17 +129,20 @@ begin
 				, i_start_timestamp => l_start_timestamp
 			);	
 		
+			<<asking_for_an_error>>
 			foreach l_worker in array l_workers_opened
 			loop
 				l_worker_name := l_worker->>'name'
 				;
 			
 				if (l_worker->>'async_mode')::boolean then
-					perform
+					if 
 						${dbms_extension.dblink.schema}.dblink_is_busy(
 							l_worker_name
-						)
-					;
+						) = 1 
+					then
+						continue asking_for_an_error; 	
+					end if;		
 				end if;
 			
 				l_err_msg := 
@@ -152,6 +155,7 @@ begin
 				;
 			
 				if l_err_msg is not null then
+					<<cancelling_the_task>>
 					foreach l_worker in array l_workers_opened
 					loop
 						perform
@@ -159,7 +163,7 @@ begin
 								l_worker->>'name'
 							)
 						;
-					end loop;
+					end loop cancelling_the_task;
 				
 					raise exception 
 						'Parallel worker % failure: %'
@@ -167,7 +171,20 @@ begin
 						, l_err_msg
 					;
 				end if;
-			end loop;
+			end loop asking_for_an_error;
+		
+			-- Listener activity immitation
+			if i_listener_worker is not null then
+				perform 
+					${dbms_extension.dblink.schema}.dblink_exec(
+						i_listener_worker
+						, format(
+							$plpgsql$do $$ begin perform 'Listening the channel %s'; end $$$plpgsql$
+							, i_notification_channel
+						)
+					)
+				;
+			end if;		
 		
 		end loop waiting_for_completion;
 	end if;
