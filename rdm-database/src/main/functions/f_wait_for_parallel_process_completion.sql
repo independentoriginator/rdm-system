@@ -119,8 +119,6 @@ begin
 			
 				return 
 					true;
-			else
-				raise notice 'Have not gotten the notification expected. Will sleep for interval %', i_polling_interval; 
 			end if;
 		
 			call ${mainSchemaName}.p_delay_execution(
