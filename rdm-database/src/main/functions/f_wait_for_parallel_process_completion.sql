@@ -33,26 +33,31 @@ begin
 				'num'
 				, pw.worker_num
 				, 'name'
-				, conn.name
+				, pw.worker_name
 				, 'async_mode'
 				, pw.async_mode
 			)
 		)
 	into 
 		l_workers_opened
-	from 
-		${stagingSchemaName}.parallel_worker pw
-	join unnest(${dbms_extension.dblink.schema}.dblink_get_connections()) conn(name)
-		on conn.name = 
-			${stagingSchemaName}.f_parallel_worker_name(
+	from (
+		select 
+			pw.worker_num
+			, ${stagingSchemaName}.f_parallel_worker_name(
 				i_context_id => pw.context_id
 				, i_operation_instance_id => pw.operation_instance_id
 				, i_worker_num => pw.worker_num
-			)	
-	where
-		pw.context_id = i_context_id
-		and pw.operation_instance_id = i_operation_instance_id
-	;
+			) as worker_name
+			, pw.async_mode
+		from 
+			${stagingSchemaName}.parallel_worker pw
+		where
+			pw.context_id = i_context_id
+			and pw.operation_instance_id = i_operation_instance_id
+	) pw
+	join unnest(${dbms_extension.dblink.schema}.dblink_get_connections()) conn(name)
+		on conn.name = pw.worker_name
+	;	
 	
 	if cardinality(l_workers_opened) > 0 
 	then
