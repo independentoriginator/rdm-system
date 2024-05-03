@@ -294,7 +294,9 @@ begin
 		if l_is_multithreaded_process then
 			-- Launch workers and wait for them to complete
 			<<commands>>
-			for l_command, l_extra_info in execute i_command_list_query using l_context_id, l_operation_instance_id  
+			for l_command, l_extra_info in 
+				execute i_command_list_query 
+					using l_context_id, l_operation_instance_id  
 			loop
 				perform 
 					${stagingSchemaName}.f_launch_parallel_worker(
@@ -312,7 +314,17 @@ begin
 			end loop commands;
 			
 			-- When at least one worker started
-			if l_command is not null then
+			if exists (
+				select 
+					1
+				from 
+					${stagingSchemaName}.parallel_worker
+				where 
+					context_id = i_context_id
+					and operation_instance_id = i_operation_instance_id
+					and start_time is not null			
+			) 
+			then
 				perform
 					${stagingSchemaName}.f_wait_for_parallel_process_completion(
 						i_context_id => l_context_id
@@ -326,17 +338,28 @@ begin
 			end if;
 		else 
 			<<commands>>
-			for l_command, l_extra_info in execute i_command_list_query using l_context_id, l_operation_instance_id
+			for l_command, l_extra_info in 
+				execute i_command_list_query 
+					using l_context_id, l_operation_instance_id
 			loop
-				execute l_command;
+				execute 
+					l_command
+				;
 			end loop commands;
 		end if;		
 	
 		if i_do_while_checking_condition is null then
 			exit main;
 		else
-			execute i_do_while_checking_condition into l_exit_flag;
-			exit main when l_exit_flag;
+			execute 
+				i_do_while_checking_condition 
+			into 
+				l_exit_flag
+			;
+		
+			exit main 
+				when l_exit_flag
+			;
 		end if;
 	end loop main;
 
