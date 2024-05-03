@@ -39,14 +39,12 @@ begin
 				, pw.async_mode
 			)
 		) filter (
-			where 
-				conn.name is not null
+			conn.name is not null
 		)
 		, array_agg(
 			pw.worker_name
 		) filter (
-			where 
-				conn.name is not null
+			conn.name is not null
 		)
 	into 
 		l_workers_opened
