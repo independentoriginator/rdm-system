@@ -82,6 +82,7 @@ begin
 					where 
 						context_id = $1
 						and operation_instance_id = $2
+						and extra_info is not null
 				) refreshable_view
 				join materialized_view v
 					on v.id = refreshable_view.id
