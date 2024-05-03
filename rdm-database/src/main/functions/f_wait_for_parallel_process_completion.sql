@@ -22,7 +22,6 @@ as $function$
 declare 
 	l_workers_opened jsonb[];
 	l_workers_completed jsonb[];
-	l_workers_closed name[];
 	l_worker jsonb;
 	l_worker_name name;
 	l_err_msg text;
@@ -34,49 +33,26 @@ begin
 				'num'
 				, pw.worker_num
 				, 'name'
-				, pw.worker_name
+				, conn.name
 				, 'async_mode'
 				, pw.async_mode
 			)
-		) filter (
-			conn.name is not null
-		)
-		, array_agg(
-			pw.worker_name
-		) filter (
-			conn.name is not null
 		)
 	into 
 		l_workers_opened
-		, l_workers_closed
-	from (
-		select 
-			pw.worker_num
-			, ${stagingSchemaName}.f_parallel_worker_name(
+	from 
+		${stagingSchemaName}.parallel_worker pw
+	join unnest(${dbms_extension.dblink.schema}.dblink_get_connections()) conn(name)
+		on conn.name = 
+			${stagingSchemaName}.f_parallel_worker_name(
 				i_context_id => pw.context_id
 				, i_operation_instance_id => pw.operation_instance_id
 				, i_worker_num => pw.worker_num
-			) as worker_name
-			, pw.async_mode
-		from 
-			${stagingSchemaName}.parallel_worker pw
-		where
-			pw.context_id = i_context_id
-			and pw.operation_instance_id = i_operation_instance_id
-	) pw
-	left join unnest(${dbms_extension.dblink.schema}.dblink_get_connections()) conn(name)
-		on conn.name = pw.worker_name
+			)	
+	where
+		pw.context_id = i_context_id
+		and pw.operation_instance_id = i_operation_instance_id
 	;
-
-	if cardinality(l_workers_closed) > 0 
-	then
-		raise exception 
-			'Lost worker connections found: % (context: %, operation instance: %)'
-			, array_to_string(l_workers_closed, ', ')
-			, i_context_id
-			, i_operation_instance_id
-		;
-	end if;
 	
 	if cardinality(l_workers_opened) > 0 
 	then
