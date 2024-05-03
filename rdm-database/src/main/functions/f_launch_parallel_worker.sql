@@ -235,9 +235,12 @@ begin
 		) != 1 
 		then
 			raise exception 
-				'Error sending command to the worker: %: %'
+				'Error sending command to the worker: %: % (error description: %)'
 				, l_worker_name
 				, i_command
+				, ${dbms_extension.dblink.schema}.dblink_error_message(
+					l_worker_name
+				)
 			;
 		end if;
 	else
