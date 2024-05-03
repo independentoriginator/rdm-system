@@ -323,7 +323,7 @@ begin
 					context_id = i_context_id
 					and operation_instance_id = i_operation_instance_id
 					and start_time is not null		
-					and is_async = true
+					and async_mode = true
 			) 
 			then
 				perform
