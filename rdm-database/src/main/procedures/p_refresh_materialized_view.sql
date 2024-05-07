@@ -8,32 +8,39 @@ declare
 	l_command text;
 begin
 	select
-		concat_ws(
-			'; '
-			, format(
-				'select id from ${mainSchemaName}.meta_view where id = %s for update '
-				, t.id
-			)
-			, case 
-				when t.is_matview_emulation then 
-					format(
-						'call %I.p_refresh_%I()'
-						, t.schema_name
-						, t.internal_name
-					) 
-				else 
-					${mainSchemaName}.f_materialized_view_refresh_command(
+		case 
+			when t.is_matview_emulation then
+				format(
+					E'do $$'
+					'\nbegin'
+					'\n	perform from ng_rdm.meta_view where id = %s for update;'
+					'\n	call %I.p_refresh_%I();'
+					'\n	update ng_rdm.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s;'
+					'\nend $$'
+					, t.id
+					, t.schema_name
+					, t.internal_name
+					, t.id
+				)
+			else 
+				concat_ws(
+					E';\n'
+					, format(
+						'select id from ${mainSchemaName}.meta_view where id = %s for update'
+						, t.id
+					)
+					, ${mainSchemaName}.f_materialized_view_refresh_command(
 						i_schema_name => t.schema_name
 						, i_internal_name => t.internal_name
 						, i_has_unique_index => t.has_unique_index
 						, i_is_populated => t.is_populated
 					)
-			end
-			, format(
-				'update ${mainSchemaName}.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s'
-				, t.id
-			)
-		)
+					, format(
+						'update ${mainSchemaName}.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s'
+						, t.id
+					)
+				)			
+		end
 	into 
 		l_command
 	from 
