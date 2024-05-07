@@ -129,6 +129,7 @@ begin
 				or not ${stagingSchemaName}.f_wait_for_parallel_process_completion(
 					i_context_id => i_context_id
 					, i_operation_instance_id => i_operation_instance_id
+					, i_wait_for_the_first_one_to_complete => true 
 					, i_notification_channel => i_notification_channel
 					, i_listener_worker => i_listener_worker
 					, i_polling_interval => i_polling_interval

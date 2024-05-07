@@ -7,9 +7,19 @@ drop function if exists ${stagingSchemaName}.f_wait_for_parallel_process_complet
 	, interval
 );
 
+drop function if exists ${stagingSchemaName}.f_wait_for_parallel_process_completion(
+	${stagingSchemaName}.parallel_worker.context_id%type
+	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+	, name
+	, name
+	, interval
+	, interval
+);
+
 create or replace function ${stagingSchemaName}.f_wait_for_parallel_process_completion(
 	i_context_id ${stagingSchemaName}.parallel_worker.context_id%type
 	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+	, i_wait_for_the_first_one_to_complete boolean
 	, i_listener_worker name
 	, i_notification_channel name
 	, i_polling_interval interval
@@ -122,8 +132,15 @@ begin
 					end if;
 				end loop;
 			
-				return 
-					true;
+				if i_wait_for_the_first_one_to_complete then
+					return 
+						true;
+				else 
+					if l_workers_opened <@ l_workers_completed then 
+						return 
+							true;
+					end if;
+				end if;
 			end if;
 		
 			call ${mainSchemaName}.p_delay_execution(
@@ -201,6 +218,7 @@ $function$;
 comment on function ${stagingSchemaName}.f_wait_for_parallel_process_completion(
 	${stagingSchemaName}.parallel_worker.context_id%type
 	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+	, boolean
 	, name
 	, name
 	, interval

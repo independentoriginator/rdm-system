@@ -330,6 +330,7 @@ begin
 					${stagingSchemaName}.f_wait_for_parallel_process_completion(
 						i_context_id => l_context_id
 						, i_operation_instance_id => l_operation_instance_id
+						, i_wait_for_the_first_one_to_complete => (i_do_while_checking_condition is not null)
 						, i_notification_channel => l_notification_channel
 						, i_listener_worker => l_listener_worker
 						, i_polling_interval => i_polling_interval
