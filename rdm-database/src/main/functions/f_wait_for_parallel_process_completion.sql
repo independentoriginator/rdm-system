@@ -136,7 +136,18 @@ begin
 					return 
 						true;
 				else 
-					if l_workers_opened <@ l_workers_completed then 
+					if not exists (
+						select 
+							1
+						from 
+							${stagingSchemaName}.parallel_worker
+						where 
+							context_id = i_context_id
+							and operation_instance_id = i_operation_instance_id
+							and start_time is not null		
+							and async_mode = true
+					)  
+					then 
 						return 
 							true;
 					end if;
