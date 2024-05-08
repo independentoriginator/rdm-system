@@ -13,9 +13,9 @@ begin
 				format(
 					E'do $$'
 					'\nbegin'
-					'\n	perform from ng_rdm.meta_view where id = %s for update;'
+					'\n	perform from ${mainSchemaName}.meta_view where id = %s for update;'
 					'\n	call %I.p_refresh_%I();'
-					'\n	update ng_rdm.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s;'
+					'\n	update ${mainSchemaName}.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s;'
 					'\nend $$'
 					, t.id
 					, t.schema_name

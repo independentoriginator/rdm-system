@@ -136,13 +136,13 @@ on conflict (internal_name, schema_id)
 ;
 
 update 
-	ng_rdm.meta_view
+	${mainSchemaName}.meta_view
 set 
 	is_disabled = true
 where 
 	internal_name in (
 		'f_valid_system_name(text)'
 	)
-	and schema_id = (select id from ng_rdm.meta_schema where internal_name = '${mainSchemaName}')
+	and schema_id = (select id from ${mainSchemaName}.meta_schema where internal_name = '${mainSchemaName}')
 	and is_disabled = false
 ;
