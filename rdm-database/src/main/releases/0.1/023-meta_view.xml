@@ -519,5 +519,40 @@
 		</addColumn>
 		
 	</changeSet>
+	
+	<changeSet id="materialized_view_refresh_duration" author="${default_author}">
+	
+		<createTable
+			tableName="materialized_view_refresh_duration" 
+			schemaName="${stagingSchemaName}"
+			remarks="Длительность обновления материализованных представлений">
+			<column name="meta_view_id" type="${type.id}" remarks="Идентификатор метапредставления">
+				<constraints nullable="false" />
+			</column>
+			<column name="start_time" type="datetime" remarks="Время старта">
+				<constraints nullable="false" />
+			</column>
+			<column name="end_time" type="datetime" remarks="Время завершения">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<createIndex 
+			indexName="i_materialized_view_refresh_duration$meta_view_id" 
+			tableName="materialized_view_refresh_duration"
+			schemaName="${stagingSchemaName}">
+			<column name="meta_view_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_materialized_view_refresh_duration$meta_view_id"
+			baseTableName="materialized_view_refresh_duration" 
+			baseTableSchemaName="${stagingSchemaName}"
+			baseColumnNames="meta_view_id" 
+			referencedTableName="meta_view" 
+			referencedTableSchemaName="${mainSchemaName}"
+			referencedColumnNames="id" />
+
+	</changeSet>
             			
 </databaseChangeLog>

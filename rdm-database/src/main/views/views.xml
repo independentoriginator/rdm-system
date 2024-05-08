@@ -158,4 +158,24 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="v_materialized_view_refresh_duration-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_materialized_view_refresh_duration" 
+			path="v_materialized_view_refresh_duration.sql"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="v_materialized_view_refresh_avg_duration-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_materialized_view_refresh_avg_duration" 
+			path="v_materialized_view_refresh_avg_duration.sql"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 </databaseChangeLog>

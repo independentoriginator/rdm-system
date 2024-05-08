@@ -8,39 +8,60 @@ declare
 	l_command text;
 begin
 	select
-		case 
-			when t.is_matview_emulation then
-				format(
-					E'do $$'
-					'\nbegin'
-					'\n	perform from ${mainSchemaName}.meta_view where id = %s for update;'
-					'\n	call %I.p_refresh_%I();'
-					'\n	update ${mainSchemaName}.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s;'
-					'\nend $$'
-					, t.id
-					, t.schema_name
-					, t.internal_name
-					, t.id
-				)
-			else 
-				concat_ws(
-					E';\n'
-					, format(
-						'select id from ${mainSchemaName}.meta_view where id = %s for update'
-						, t.id
+		format(
+			E'do $$'
+			'\ndeclare'
+			'\n	l_start_timestamp timestamp := clock_timestamp();'
+			'\nbegin'
+			'\n	perform'
+			'\n	from'
+			'\n		${mainSchemaName}.meta_view'
+			'\n	where'
+			'\n		id = %s'
+			'\n	for update'
+			'\n	;'
+			'\n	%s'
+			'\n	;'
+			'\n	update'
+			'\n		${mainSchemaName}.meta_view'
+			'\n	set'
+			'\n		is_valid = true'
+			'\n		, refresh_time = current_timestamp'
+			'\n	where'
+			'\n		id = %s'
+			'\n	;'
+			'\n insert into'
+			'\n		${stagingSchemaName}.materialized_view_refresh_duration('
+			'\n			meta_view_id'
+			'\n			, start_time'
+			'\n			, end_time'
+			'\n		)'
+			'\n	values('
+			'\n		%s'
+			'\n		, l_start_timestamp'
+			'\n		, clock_timestamp()'
+			'\n	)'
+			'\n	;'
+			'\nend $$'
+			, t.id
+			, case 
+				when t.is_matview_emulation then
+					format(
+						'call %I.p_refresh_%I()'
+						, t.schema_name
+						, t.internal_name
 					)
-					, ${mainSchemaName}.f_materialized_view_refresh_command(
+				else
+					${mainSchemaName}.f_materialized_view_refresh_command(
 						i_schema_name => t.schema_name
 						, i_internal_name => t.internal_name
 						, i_has_unique_index => t.has_unique_index
 						, i_is_populated => t.is_populated
 					)
-					, format(
-						'update ${mainSchemaName}.meta_view set is_valid = true, refresh_time = current_timestamp where id = %s'
-						, t.id
-					)
-				)			
-		end
+			end
+			, t.id
+			, t.id
+		)
 	into 
 		l_command
 	from 
@@ -49,7 +70,9 @@ begin
 		t.id = i_view_id
 	;
 
-	execute l_command;	
+	execute 
+		l_command
+	;	
 end
 $procedure$;		
 
