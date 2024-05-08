@@ -14,7 +14,7 @@ with
 					partition by 
 						meta_view_id 
 					order by 
-						start_time desc
+						start_time 
 				) as last_duration			
 		from 
 			${mainSchemaName}.v_materialized_view_refresh_duration
