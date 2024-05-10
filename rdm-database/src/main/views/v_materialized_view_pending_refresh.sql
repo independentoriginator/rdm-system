@@ -12,7 +12,8 @@ select
 	, v.refresh_time
 	, v.modification_time
 	, (
-		v.refresh_time is null
+		not v.is_populated
+		or v.refresh_time is null
 		or v.refresh_time < v.modification_time 
 	) as is_recreated
 from
