@@ -1,4 +1,6 @@
-create or replace view v_materialized_view_refresh_avg_duration
+drop view if exists v_materialized_view_refresh_avg_duration;
+
+create view v_materialized_view_refresh_avg_duration
 as
 with 
 	stat as (
@@ -25,6 +27,7 @@ select
 	, schema_name
 	, avg(duration) as avg_duration
 	, max(end_time) as last_time
+	, max(last_duration) as last_duration 
 	, to_char(
 		(
 			extract('epoch' from max(last_duration)) / 
