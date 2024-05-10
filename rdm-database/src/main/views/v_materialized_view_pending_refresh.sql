@@ -12,10 +12,10 @@ select
 	, v.refresh_time
 	, v.modification_time
 	, (
-		not v.is_populated
-		or v.refresh_time is null
-		or v.refresh_time < v.modification_time 
-	) as is_recreated
+		v.is_populated
+		and v.refresh_time is not null
+		and v.refresh_time >= v.modification_time 
+	) as is_filled
 from
 	${mainSchemaName}.v_meta_view v
 where 
