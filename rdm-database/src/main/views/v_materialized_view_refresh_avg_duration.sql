@@ -17,6 +17,9 @@ with
 						meta_view_id 
 					order by 
 						start_time 
+					range between 
+			            unbounded preceding and 
+			            unbounded following						
 				) as last_duration			
 		from 
 			${mainSchemaName}.v_materialized_view_refresh_duration
