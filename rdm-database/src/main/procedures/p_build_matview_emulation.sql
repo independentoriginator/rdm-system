@@ -13,6 +13,7 @@ begin
 				when view_query[1] is not null then
 					concat_ws(
 						E';\n'
+						-- creation of a table that will replace the materialized view  
 						, case 
 							when i_view_rec.mv_emulation_with_partitioning 
 								and i_view_rec.mv_emulation_chunking_field is not null
@@ -54,6 +55,30 @@ begin
 									, view_query[1]
 								)
 						end
+						-- creation of a service table that will contain a list of filled chunks
+						, case 
+							when i_view_rec.is_mv_emulation_chunk_validated then
+								format('
+									create table %I.%I_chunk
+									as 
+									select %s
+									from %I.%I 
+									where false
+									;
+									alter table %I.%I_chunk 
+										add primary key(%s)
+									'
+									, i_view_rec.schema_name
+									, i_view_rec.internal_name
+									, i_view_rec.mv_emulation_chunking_field
+									, i_view_rec.schema_name
+									, i_view_rec.internal_name
+									, i_view_rec.schema_name
+									, i_view_rec.internal_name
+									, i_view_rec.mv_emulation_chunking_field
+								)
+						end
+						-- generation of a refresh procedure for the emulated materialized view 
 						, case 
 							when i_view_rec.mv_emulation_chunking_field is null then
 								format(
@@ -127,13 +152,13 @@ begin
 									'\n							c.%s'
 									'\n							, ((row_number() over(order by c.%s) - 1) / %s) + 1 as bucket_num' 
 									'\n						from ('
-									'\n							%s'
+									'\n							%s%s'
 									'\n						) c'
 									'\n					) c'
 									'\n					group by' 
 									'\n						c.bucket_num'
 									'\n				) c'
-									'\n			$sql$'
+									'\n				$sql$'
 									'\n			, i_context_id => ''%I.%I''::regproc::integer'
 									'\n		);'
 									'\n	else'
@@ -184,6 +209,24 @@ begin
 										i_text => i_view_rec.mv_emulation_chunks_query									
 										, i_indentation_level => 6
 									)
+									, case 
+										when i_view_rec.is_mv_emulation_chunk_validated then
+											${mainSchemaName}.f_indent_text(
+												i_text => 
+													format(
+														E'\nexcept'
+														'\nselect'
+														'\n	%s'
+														'\nfrom'
+														'\n	%I.%I_chunk'
+														, i_view_rec.mv_emulation_chunking_field
+														, i_view_rec.schema_name
+														, i_view_rec.internal_name
+													)
+												, i_indentation_level => 6
+											)
+										else ''
+									end
 									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_refresh_proc_name
 									, ${mainSchemaName}.f_indent_text(
@@ -343,10 +386,123 @@ begin
 														, i_view_rec.mv_emulation_refresh_proc_param												
 														, i_view_rec.mv_emulation_refresh_proc_param												
 													)
-											end																									
+											end			
+											|| case 
+												when i_view_rec.is_mv_emulation_chunk_validated then
+													format(
+														E'\n\ninsert into'
+														'\n	%I.%I_chunk('
+														'\n		%s'
+														'\n	)'
+														'\nselect'
+														'\n	c.id'
+														'\nfrom'
+														'\n	unnest(%s) chunk(id)'
+														'\non conflict (%s)'
+														'\n	do nothing'
+														'\n;'
+														, i_view_rec.schema_name
+														, i_view_rec.internal_name
+														, i_view_rec.mv_emulation_chunking_field
+														, i_view_rec.mv_emulation_refresh_proc_param
+														, i_view_rec.mv_emulation_chunking_field
+													)
+												else ''
+											end
 										, i_indentation_level => 2
 									)
 								)
+						end
+						-- generation of a trigger function for the master table within the registered chunk dependence
+						, case 
+							when i_view_rec.is_mv_emulation_chunk_validated is null then (
+								select 
+									string_agg(
+										format(
+											E'create or replace function %I.trf_%I_%s_invalidate()'
+											'\nreturns trigger'
+											'\nlanguage plpgsql'
+											'\nas $$'
+											'\nbegin'
+											'\n	delete from'
+											'\n		%I.%I_chunk chunk'
+											'\n	where'
+											'\n		exists ('
+											'\n			select'
+											'\n				1'
+											'\n			from'
+											'\n				old_table t'
+											'\n			where'
+											'\n				t.%s = chunk.%s'
+											'\n		)'
+											'\n		or exists ('
+											'\n			select'
+											'\n				1'
+											'\n			from'
+											'\n				new_table t'
+											'\n			where'
+											'\n				t.%s = chunk.%s'
+											'\n		)'
+											'\n	;'
+											'\n	return null'
+											'\n	;'
+											'\nend'
+											'\n$$;'
+											'\ncreate trigger tr_%I_after'
+											'\nafter insert or update or delete'
+											'\non %I.%I'
+											'\nfor each statement'
+											'\nexecute function %I.trf_%I_%s_invalidate();'	
+											, dep.master_table_schema
+											, dep.master_table_name
+											, dep.dependent_view_abbr
+											, i_view_rec.schema_name
+											, i_view_rec.internal_name
+											, dep.master_chunk_field
+											, i_view_rec.mv_emulation_chunking_field
+											, dep.master_chunk_field
+											, i_view_rec.mv_emulation_chunking_field
+											, dep.master_table_name
+											, dep.master_table_schema
+											, dep.master_table_name
+											, dep.master_table_schema
+											, dep.master_table_name
+											, dep.dependent_view_abbr
+										)
+										, E';\n'
+									)
+								from (
+									select 
+										coalesce(mv.schema_name, mt.schema_name) as master_table_schema
+										, coalesce(mv.internal_name, mt.internal_name) as master_table_name
+										, ${mainSchemaName}.f_abbreviate_name(
+											i_name =>
+												format(
+													'%I_%I'													
+													, i_view_rec.schema_name
+													, i_view_rec.internal_name
+												)
+											, i_adjust_to_max_length => true
+											, i_max_length => 
+												${mainSchemaName}.f_system_name_max_length()
+												- length(
+													format(
+														'trf_%I__invalidate'
+														, coalesce(mv.internal_name, mt.internal_name)
+													)
+												)				
+										) as dependent_view_abbr
+										, dep.master_chunk_field
+									from									
+										${mainSchemaName}.meta_view_chunk_dependency dep
+									left join ${mainSchemaName}.v_meta_view mv
+										on mv.id = dep.master_view_id
+									left join ${mainSchemaName}.v_meta_type mt
+										on mt.id = dep.master_type_id
+									where 
+										dep.view_id = i_view_rec.id
+								) dep
+							)
 						end
 					)
 				else
@@ -413,7 +569,7 @@ begin
 	end loop;
 
 	if not l_is_matview_recognized then
-		raise 'The materialized view %.% is not defined as expected', i_view_rec.schema_name, i_view_rec.internal_name; 
+		raise 'The materialized view %.% is not defined as it expected', i_view_rec.schema_name, i_view_rec.internal_name; 
 	end if;
 end
 $procedure$;	

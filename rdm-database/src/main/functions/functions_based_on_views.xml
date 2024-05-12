@@ -62,4 +62,13 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="f_meta_view_id-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_meta_view_id" 
+			dbms="postgresql" 
+			path="f_meta_view_id.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

@@ -326,7 +326,7 @@ begin
 				t.view_id
 				, dep_inherited.master_view_id
 				, dep_inherited.master_type_id
-				, dep_inherited.level + 1 as level
+				, min(dep_inherited.level) + 1 as level
 			from 
 				${mainSchemaName}.meta_view_dependency t
 			join ${mainSchemaName}.meta_view_dependency dep_inherited
@@ -349,6 +349,10 @@ begin
 							or dep.master_type_id = dep_inherited.master_type_id
 						)
 				)
+			group by 
+				t.view_id
+				, dep_inherited.master_view_id
+				, dep_inherited.master_type_id
 			;
 		end loop;
 	end if;	

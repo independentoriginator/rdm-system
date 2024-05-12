@@ -476,6 +476,110 @@
 	
 	</changeSet>
 	
+	<changeSet id="meta_view_dependency deduplication" author="${default_author}">
+	
+		<preConditions onFail="CONTINUE">
+		    <sqlCheck expectedResult="0">
+				select 
+					case when count(*) > 0 then 0 else 1 end
+				from (
+					select 
+						view_id, master_view_id
+			        from 
+			        	${mainSchemaName}.meta_view_dependency
+			        where 
+			        	master_view_id is not null
+			        group by 
+			        	view_id, master_view_id
+			        having 
+			        	count(*) > 1
+			        union all
+					select 
+						view_id, master_type_id
+			        from 
+			        	${mainSchemaName}.meta_view_dependency
+			        where 
+			        	master_type_id is not null
+			        group by 
+			        	view_id, master_type_id
+			        having 
+			        	count(*) > 1
+				) t
+			</sqlCheck>			
+		</preConditions>	
+	
+		<sql dbms="postgresql">
+			create temp table t_meta_view_dependency
+			as 
+			select * 
+			from ${mainSchemaName}.meta_view_dependency
+			;
+			
+			truncate ${mainSchemaName}.meta_view_dependency
+			;
+			
+			insert into
+				${mainSchemaName}.meta_view_dependency(
+					view_id
+					, master_view_id
+					, level
+				)
+			select 
+				view_id
+				, master_view_id
+				, min(level)
+			from 	
+				t_meta_view_dependency
+			where 
+				master_view_id is not null
+			group by 
+				view_id
+				, master_view_id
+			;
+
+			insert into
+				${mainSchemaName}.meta_view_dependency(
+					view_id
+					, master_type_id
+					, level
+				)
+			select 
+				view_id
+				, master_type_id
+				, min(level)
+			from 	
+				t_meta_view_dependency
+			where 
+				master_type_id is not null
+			group by 
+				view_id
+				, master_type_id
+			;
+			
+			drop table t_meta_view_dependency
+			;
+		</sql>
+	
+	</changeSet>	
+	
+	<changeSet id="meta_view_dependency: separate unique constraints" author="${default_author}">
+
+		<dropUniqueConstraint 
+			constraintName="uc_meta_view_dependency" 
+			tableName="meta_view_dependency" />
+
+		<addUniqueConstraint 
+			constraintName="uc_meta_view_dependency$master_view_id" 
+			tableName="meta_view_dependency"
+			columnNames="view_id, master_view_id"/>
+
+		<addUniqueConstraint 
+			constraintName="uc_meta_view_dependency$master_type_id" 
+			tableName="meta_view_dependency"
+			columnNames="view_id, master_type_id"/>
+	
+	</changeSet>
+	
 	<changeSet id="meta_view_dependency description" author="${default_author}">
 	
  		<setTableRemarks
@@ -519,6 +623,85 @@
 		</addColumn>
 		
 	</changeSet>
+	
+	<changeSet id="Meta view chunk dependency" author="${default_author}">
+	
+		<createTable
+			tableName="meta_view_chunk_dependency" 
+			remarks="Meta view chunk dependency used when partially refreshing an emulated materialized view">
+			<column name="view_id" type="${type.id}" remarks="Dependent view identifier">
+				<constraints nullable="false" />
+			</column>
+			<column name="chunking_field" type="${type.internal_name}" remarks="Chunking field">
+				<constraints nullable="false" />
+			</column>
+			<column name="master_view_id" type="${type.id}" remarks="Master view identifier">
+				<constraints nullable="true" />
+			</column>
+			<column name="master_type_id" type="${type.id}" remarks="Master type identifier">
+				<constraints nullable="true" />
+			</column>
+			<column name="master_chunk_field" type="${type.internal_name}" remarks="Master chunk field">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+
+		<createIndex 
+			indexName="i_meta_view_chunk_dependency$view_id" 
+			tableName="meta_view_chunk_dependency">
+			<column name="view_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_view_chunk_dependency$view_id"
+			baseTableName="meta_view_chunk_dependency" 
+			baseColumnNames="view_id" 
+			referencedTableName="meta_view" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_view_chunk_dependency$master_view_id" 
+			tableName="meta_view_chunk_dependency">
+			<column name="master_view_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_view_chunk_dependency$master_view_id"
+			baseTableName="meta_view_chunk_dependency" 
+			baseColumnNames="master_view_id" 
+			referencedTableName="meta_view" 
+			referencedColumnNames="id" />
+			
+		<createIndex 
+			indexName="i_meta_view_chunk_dependency$master_type_id" 
+			tableName="meta_view_chunk_dependency">
+			<column name="master_type_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_view_chunk_dependency$master_type_id"
+			baseTableName="meta_view_chunk_dependency" 
+			baseColumnNames="master_type_id" 
+			referencedTableName="meta_view" 
+			referencedColumnNames="id" />
+			
+		<!-- Check constraint -->
+		<sql dbms="postgresql">
+			alter table meta_view_chunk_dependency
+				add constraint chk_meta_view_chunk_dependency$master_view_type check (((master_view_id is null) = (master_type_id is not null)))		
+		</sql>
+			
+		<addUniqueConstraint 
+			constraintName="uc_meta_view_chunk_dependency$master_view_id" 
+			tableName="meta_view_chunk_dependency"
+			columnNames="view_id, chunking_field, master_view_id"/>
+
+		<addUniqueConstraint 
+			constraintName="uc_meta_view_chunk_dependency$master_type_id" 
+			tableName="meta_view_chunk_dependency"
+			columnNames="view_id, chunking_field, master_type_id"/>
+		
+	</changeSet>     
 	
 	<changeSet id="materialized_view_refresh_duration" author="${default_author}">
 	

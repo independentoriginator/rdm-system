@@ -79,6 +79,11 @@ begin
 					, i_check_existence => true
 				)
 				, v.mv_emulation_refresh_procedures_drop_cmd
+				, format(
+					'drop table if exists %I.%I_chunk'
+					, v.schema_name
+					, v.internal_name
+				)
 			)
 			, E';\n'
 		) filter(

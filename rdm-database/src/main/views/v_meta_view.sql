@@ -98,6 +98,19 @@ select
 	, coalesce(v.mv_emulation_chunks_bucket_size, 1) as mv_emulation_chunks_bucket_size
 	, v.mv_emulation_with_partitioning
 	, 'f_' || v.internal_name as mv_emulation_table_func_name
+	, (
+		v.is_matview_emulation
+		and v.mv_emulation_chunking_field is not null
+		and exists (
+			select 
+				1
+			from 
+				${mainSchemaName}.meta_view_chunk_dependency dep
+			where 
+				dep.view_id = v.id
+				and dep.chunking_field = v.mv_emulation_chunking_field
+		)
+	) as is_mv_emulation_chunk_validated
 from 
 	${mainSchemaName}.meta_view v
 left join ${mainSchemaName}.meta_schema s
