@@ -30,7 +30,7 @@ begin
 			'\n	where'
 			'\n		id = %s'
 			'\n	;'
-			'\n insert into'
+			'\n	insert into'
 			'\n		${stagingSchemaName}.materialized_view_refresh_duration('
 			'\n			meta_view_id'
 			'\n			, start_time'
