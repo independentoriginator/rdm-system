@@ -451,6 +451,7 @@ begin
 											'\ncreate trigger tr_%I_after'
 											'\nafter insert or update or delete'
 											'\non %I.%I'
+											'\nreferencing new table as new_table old table as old_table'
 											'\nfor each statement'
 											'\nexecute function %I.trf_%I_%s_invalidate();'	
 											, dep.master_table_schema
