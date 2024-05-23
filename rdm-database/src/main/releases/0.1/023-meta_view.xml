@@ -614,6 +614,16 @@
 		
 	</changeSet>
 
+	<changeSet id="materialized view emulation: mv_emulation_chunk_row_limit" author="${default_author}">
+
+		<addColumn tableName="meta_view">
+			<column name="mv_emulation_chunk_row_limit" type="integer" remarks="Materialized view emulation chunk row limit">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+		
+	</changeSet>
+
 	<changeSet id="materialized view emulation: mv_emulation_with_partitioning" author="${default_author}">
 
 		<addColumn tableName="meta_view">
@@ -623,7 +633,7 @@
 		</addColumn>
 		
 	</changeSet>
-	
+
 	<changeSet id="Meta view chunk dependency" author="${default_author}">
 	
 		<createTable

@@ -135,6 +135,10 @@
 							<value>10000</value>
 						</property>
 						<property>
+							<name>matview_emulation_chunk_row_limit</name>
+							<value>1000000</value>
+						</property>
+						<property>
 							<name>max_parallel_worker_processes</name>
 							<value>10</value>
 						</property>

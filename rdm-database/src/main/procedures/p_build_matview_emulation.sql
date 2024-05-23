@@ -84,332 +84,539 @@ begin
 								format(
 									E'create or replace procedure %I.%I()'
 									'\nlanguage plpgsql'
-									'\nas $routine$'
+									'\nas $routine$%s'
 									'\nbegin'
 									'\n\t%s'
 									'\nend'
 									'\n$routine$;'
 									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_refresh_proc_name
+									, case 
+										when i_view_rec.mv_emulation_chunk_row_limit is not null then 
+											format(
+												E'\ndeclare'
+												'\n	l_row_limit bigint := %s;'
+												'\n	l_row_offset bigint := 0;'
+												, i_view_rec.mv_emulation_chunk_row_limit
+											)
+										else 
+											''
+									end
 									, ${mainSchemaName}.f_indent_text(
 										i_text => 									
 											format(
 												E'perform pg_catalog.pg_advisory_xact_lock(''%I.%I''::regclass::bigint);'
 												'\n\ntruncate %I.%I;'
-												'\n\ninsert into %I.%I\n%s\n;'
+												'\n\n%s'
 												, i_view_rec.schema_name
 												, i_view_rec.internal_name
 												, i_view_rec.schema_name
 												, i_view_rec.internal_name
-												, i_view_rec.schema_name
-												, i_view_rec.internal_name
-												, view_query[1]
+												, case 
+													when i_view_rec.mv_emulation_chunk_row_limit is not null then
+														format(
+															E'<<insertion_in_parts>>'
+															'\nloop' 
+															'\n	insert into %I.%I\n%s'
+															'\n	;'
+															'\n	exit insertion_in_parts when not found'
+															'\n	;'
+															'\n	l_row_offset := l_row_offset + l_row_limit'
+															'\n	;'
+															'\nend loop insertion_in_parts'
+															'\n;'
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, ${mainSchemaName}.f_indent_text(
+																i_text => view_query[1]
+																, i_indentation_level => 1
+															)																
+														)
+													else
+														format(
+															E'insert into %I.%I\n%s\n;'
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, view_query[1]
+														)
+												end
 											)
 										, i_indentation_level => 1		
 									)
 								)
 							else
-								format(
-									E'create temp view tv_%I_%I as'
-									'\nselect' 
-									'\n	array('
-									'\n		select %s from %I.%I limit 0'
-									'\n	) as arr_%s'
-									'\n;'
-									'\ncreate or replace function %I.%I('
-									'\n	%s tv_%I_%I.arr_%s%%type'
-									'\n)'
-									'\nreturns setof %I.%I'
-									'\nlanguage sql'
-									'\nstable'
-									'\nparallel safe'									
-									'\nas $routine$'
-									'\n	%s'
-									'\n$routine$;'									
-									'\n;'
-									'\ncreate or replace procedure %I.%I('
-									'\n\t%s tv_%I_%I.arr_%s%%type = null'
-									'\n)'
-									'\nlanguage plpgsql'
-									'\nas $routine$%s'
-									'\nbegin'
-									'\n	if %s is null then'
-									'\n		call ${stagingSchemaName}.p_execute_in_parallel('
-									'\n			i_command_list_query => $sql$'
-									'\n				select'
-									'\n					format('
-									'\n						''call %I.%I(%s => %%L)'''
-									'\n						, c.%s'
-									'\n					) as command'
-									'\n					, c.%s::varchar as extra_info'
-									'\n				from ('
-									'\n					select' 
-									'\n						array_agg('
-									'\n							c.%s order by c.%s'
-									'\n						) as %s'
-									'\n					from ('
-									'\n						select' 
-									'\n							c.%s'
-									'\n							, ((row_number() over(order by c.%s) - 1) / %s) + 1 as bucket_num' 
-									'\n						from ('
-									'\n							%s%s'
-									'\n						) c'
-									'\n					) c'
-									'\n					group by' 
-									'\n						c.bucket_num'
-									'\n				) c'
-									'\n				$sql$'
-									'\n			, i_context_id => ''%I.%I''::regproc::integer'
-									'\n		);'
-									'\n	else'
-									'\n		%s'
-									'\n	end if;'
-									'\nend'
-									'\n$routine$;'
-									, i_view_rec.internal_name
-									, i_view_rec.schema_name
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.schema_name
-									, i_view_rec.internal_name
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.schema_name
-									, i_view_rec.mv_emulation_table_func_name
-									, i_view_rec.mv_emulation_refresh_proc_param
-									, i_view_rec.internal_name
-									, i_view_rec.schema_name
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.schema_name
-									, i_view_rec.internal_name
-									, target_query
-									, i_view_rec.schema_name
-									, i_view_rec.mv_emulation_refresh_proc_name
-									, i_view_rec.mv_emulation_refresh_proc_param
-									, i_view_rec.internal_name
-									, i_view_rec.schema_name
-									, i_view_rec.mv_emulation_chunking_field
-									, case 
-										when i_view_rec.mv_emulation_with_partitioning then
-											E'\ndeclare\n\tl_chunk_rec record;'
-										else 
-											''
-									end									
-									, i_view_rec.mv_emulation_refresh_proc_param
-									, i_view_rec.schema_name
-									, i_view_rec.mv_emulation_refresh_proc_name
-									, i_view_rec.mv_emulation_refresh_proc_param
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.mv_emulation_chunks_bucket_size
-									, ${mainSchemaName}.f_indent_text(
-										i_text => i_view_rec.mv_emulation_chunks_query									
-										, i_indentation_level => 6
+								concat_ws(
+									E'\n'
+									, format(
+										E'create temp view tv_%I_%I as'
+										'\nselect' 
+										'\n	array('
+										'\n		select %s from %I.%I limit 0'
+										'\n	) as arr_%s'
+										'\n;'
+										, i_view_rec.internal_name
+										, i_view_rec.schema_name
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.schema_name
+										, i_view_rec.internal_name
+										, i_view_rec.mv_emulation_chunking_field
 									)
-									, case 
-										when i_view_rec.is_mv_emulation_chunk_validated then
-											${mainSchemaName}.f_indent_text(
-												i_text => 
-													format(
-														E'\nexcept'
-														'\nselect'
-														'\n	%s'
-														'\nfrom'
-														'\n	%I.%I_chunk'
-														, i_view_rec.mv_emulation_chunking_field
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-													)
-												, i_indentation_level => 6
-											)
-										else ''
-									end
-									, i_view_rec.schema_name
-									, i_view_rec.mv_emulation_refresh_proc_name
-									, ${mainSchemaName}.f_indent_text(
-										i_text =>
-											format(
-												E'perform '
-												'\n	pg_catalog.pg_advisory_xact_lock('
-												'\n		''%I.%I''::regclass::integer'
-												'\n		, hashtext(c::text)'
-												'\n	)'
-												'\nfrom '
-												'\n	unnest(%s) c'
-												'\n;'
-												, i_view_rec.schema_name
-												, i_view_rec.internal_name
-												, i_view_rec.mv_emulation_refresh_proc_param
-											)
-											|| case 
-												when i_view_rec.mv_emulation_with_partitioning then
-													format(
-														E'\n\nselect'
-														'\n	string_agg('
-														'\n		format($ddl$'
-														'\n			create table %I.%I_%%s'
-														'\n				(like %I.%I including defaults including constraints)'
-														'\n			;'
-														'\n			alter table %I.%I_%%s add constraint chk_%%s$%s'
-														'\n				check (%s in (%%L::%%s))'
-														'\n			;'
-														'\n			insert into %I.%I_%%s'
-														'\n			select * from %I.%I(%s => %%L::%%s[])'
-														'\n			;'
-														'\n			alter table %I.%I attach partition %I.%I_%%s'
-														'\n				for values in (%%L::%%s)'	
-														'\n			;'
-														'\n			alter table %I.%I_%%s drop constraint chk_%%s$%s'
-														'\n			;'
-														'\n			$ddl$'
-														'\n			, chunk.sys_name'
-														'\n			, chunk.sys_name'
-														'\n			, chunk.sys_name'
-														'\n			, chunk.id'
-														'\n			, pg_catalog.pg_typeof(chunk.id)'
-														'\n			, chunk.sys_name'
-														'\n			, array[chunk.id]'
-														'\n			, pg_catalog.pg_typeof(chunk.id)'
-														'\n			, chunk.sys_name'
-														'\n			, chunk.id'
-														'\n			, pg_catalog.pg_typeof(chunk.id)'
-														'\n			, chunk.sys_name'
-														'\n			, chunk.sys_name'
-														'\n		)'
-														'\n		, E'';\\n'''
-														'\n	) filter ('
-														'\n		where '
-														'\n			p.partition_table_name is null'
-														'\n	) as new_partition_ddl_cmds'
-														'\n	, array_agg('
-														'\n		chunk.id'
-														'\n	) filter ('
-														'\n		where '
-														'\n			p.partition_table_name is not null'
-														'\n	) as existing_partition_chunks'
-														'\n	, string_agg('
-														'\n		format('''
-														'\n			truncate %I.%I_%%s'
-														'\n			'''
-														'\n			, chunk.sys_name'
-														'\n		)'
-														'\n		, E'';\\n'''
-														'\n	) filter ('
-														'\n		where '
-														'\n			p.partition_table_name is not null'
-														'\n	) as existing_partition_truncate_cmds'
-														'\ninto'
-														'\n	l_chunk_rec'
-														'\nfrom ('
-														'\n	select'
-														'\n		chunk.id'
-														'\n		, ${mainSchemaName}.f_valid_system_name('
-														'\n			i_raw_name => chunk.id::text'
-														'\n			, i_is_considered_as_whole_name => false'
-														'\n		) as sys_name'
-														'\n	from'
-														'\n		unnest(%s) chunk(id)'
-														'\n) chunk'
-														'\nleft join ${mainSchemaName}.v_sys_table_partition p'
-														'\n	on p.schema_name = ''%I'''
-														'\n	and p.table_name = ''%I'''
-														'\n	and p.partition_table_name = ''%I_''::name || chunk.sys_name' 
-														'\n	and p.partition_schema_name = ''%I'''
-														'\n;'
-														'\n'
-														'\nif l_chunk_rec.new_partition_ddl_cmds is not null then '
-														'\n execute'
-														'\n 	l_chunk_rec.new_partition_ddl_cmds'
-														'\n ;'
-														'\nend if;'
-														'\n'
-														'\nif l_chunk_rec.existing_partition_truncate_cmds is not null then '
-														'\n execute'
-														'\n 	l_chunk_rec.existing_partition_truncate_cmds'
-														'\n ;'
-														'\nend if;'
-														'\n'
-														'\nif l_chunk_rec.existing_partition_chunks is not null then '
-														'\n	insert into %I.%I'
-														'\n		select * from %I.%I(%s => l_chunk_rec.existing_partition_chunks)'
-														'\n	;'
-														'\nend if;'
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.mv_emulation_chunking_field
-														, i_view_rec.mv_emulation_chunking_field
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.mv_emulation_table_func_name
-														, i_view_rec.mv_emulation_refresh_proc_param
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.mv_emulation_chunking_field
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.mv_emulation_refresh_proc_param
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.mv_emulation_table_func_name
-														, i_view_rec.mv_emulation_refresh_proc_param
-													)												
-												else
-													format(
-														E'\n\ndelete from %I.%I where %s = any(%s);'
-														'\n\ninsert into %I.%I'
-														'\nselect * from %I.%I(%s => %s);'														
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.mv_emulation_chunking_field
-														, i_view_rec.mv_emulation_refresh_proc_param												
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.schema_name
-														, i_view_rec.mv_emulation_table_func_name
-														, i_view_rec.mv_emulation_refresh_proc_param												
-														, i_view_rec.mv_emulation_refresh_proc_param												
-													)
-											end			
-											|| case 
-												when i_view_rec.is_mv_emulation_chunk_validated then
-													format(
-														E'\n\ninsert into'
-														'\n	%I.%I_chunk('
-														'\n		%s'
-														'\n	)'
-														'\nselect'
-														'\n	c.id'
-														'\nfrom'
-														'\n	unnest(%s) chunk(id)'
-														'\non conflict (%s)'
-														'\n	do nothing'
-														'\n;'
-														, i_view_rec.schema_name
-														, i_view_rec.internal_name
-														, i_view_rec.mv_emulation_chunking_field
-														, i_view_rec.mv_emulation_refresh_proc_param
-														, i_view_rec.mv_emulation_chunking_field
-													)
-												else ''
-											end
-										, i_indentation_level => 2
+									, format(
+										E'create or replace function %I.%I('
+										'\n	%s tv_%I_%I.arr_%s%%type%s'
+										'\n)'
+										'\nreturns setof %I.%I'
+										'\nlanguage sql'
+										'\nstable'
+										'\nparallel safe'									
+										'\nas $routine$'
+										'\n	%s'
+										'\n$routine$'
+										'\n;'
+										, i_view_rec.schema_name
+										, i_view_rec.mv_emulation_table_func_name
+										, i_view_rec.mv_emulation_refresh_proc_param
+										, i_view_rec.internal_name
+										, i_view_rec.schema_name
+										, i_view_rec.mv_emulation_chunking_field
+										, case 
+											when i_view_rec.mv_emulation_chunk_row_limit is not null then 
+												format(
+													E'\n	, i_row_limit bigint = %s'
+													'\n	, i_row_offset bigint = 0'
+													, i_view_rec.mv_emulation_chunk_row_limit
+												)
+											else 
+												''
+										end
+										, i_view_rec.schema_name
+										, i_view_rec.internal_name
+										, target_query
+ 									)
+									, format(
+										E'create or replace procedure %I.%I('
+										'\n\t%s tv_%I_%I.arr_%s%%type = null'
+										'\n)'
+										'\nlanguage plpgsql'
+										'\nas $routine$%s'
+										'\nbegin'
+										'\n	if %s is null then'
+										'\n		call'
+										'\n			${stagingSchemaName}.p_execute_in_parallel('
+										'\n				i_command_list_query => $sql$'
+										'\n					select'
+										'\n						format('
+										'\n							''call %I.%I(%s => %%L)'''
+										'\n							, c.%s'
+										'\n						) as command'
+										'\n						, c.%s::varchar as extra_info'
+										'\n					from ('
+										'\n						select' 
+										'\n							array_agg('
+										'\n								c.%s order by c.%s'
+										'\n							) as %s'
+										'\n						from ('
+										'\n							select' 
+										'\n								c.%s'
+										'\n								, ((row_number() over(order by c.%s) - 1) / %s) + 1 as bucket_num' 
+										'\n							from ('
+										'\n								%s%s'
+										'\n							) c'
+										'\n						) c'
+										'\n						group by' 
+										'\n							c.bucket_num'
+										'\n					) c'
+										'\n					$sql$'
+										'\n				, i_context_id => ''%I.%I''::regproc::integer'
+										'\n			)'
+										'\n		;'
+										'\n	else'
+										'\n		%s'
+										'\n	end if'
+										'\n	;'
+										'\nend'
+										'\n$routine$'
+										'\n;'
+										, i_view_rec.schema_name
+										, i_view_rec.mv_emulation_refresh_proc_name
+										, i_view_rec.mv_emulation_refresh_proc_param
+										, i_view_rec.internal_name
+										, i_view_rec.schema_name
+										, i_view_rec.mv_emulation_chunking_field
+										, case 
+											when i_view_rec.mv_emulation_with_partitioning
+												or i_view_rec.mv_emulation_chunk_row_limit is not null
+											then
+												E'\ndeclare'
+												|| case 
+													when i_view_rec.mv_emulation_with_partitioning then
+														E'\n	l_chunk_rec record;'
+													else 
+														''
+												end
+												|| case 
+													when i_view_rec.mv_emulation_chunk_row_limit is not null then
+														format(
+															E'\n	l_row_limit bigint := %s;'
+															'\n	l_row_offset bigint := 0;'
+															, i_view_rec.mv_emulation_chunk_row_limit
+														)
+													else 
+														''
+												end
+											else 
+												''
+										end					
+										, i_view_rec.mv_emulation_refresh_proc_param
+										, i_view_rec.schema_name
+										, i_view_rec.mv_emulation_refresh_proc_name
+										, i_view_rec.mv_emulation_refresh_proc_param
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.mv_emulation_chunking_field
+										, i_view_rec.mv_emulation_chunks_bucket_size
+										, ${mainSchemaName}.f_indent_text(
+											i_text => i_view_rec.mv_emulation_chunks_query									
+											, i_indentation_level => 6
+										)
+										, case 
+											when i_view_rec.is_mv_emulation_chunk_validated then
+												${mainSchemaName}.f_indent_text(
+													i_text => 
+														format(
+															E'\nexcept'
+															'\nselect'
+															'\n	%s'
+															'\nfrom'
+															'\n	%I.%I_chunk'
+															, i_view_rec.mv_emulation_chunking_field
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+														)
+													, i_indentation_level => 6
+												)
+											else ''
+										end
+										, i_view_rec.schema_name
+										, i_view_rec.mv_emulation_refresh_proc_name
+										, ${mainSchemaName}.f_indent_text(
+											i_text =>
+												format(
+													E'perform '
+													'\n	pg_catalog.pg_advisory_xact_lock('
+													'\n		''%I.%I''::regclass::integer'
+													'\n		, hashtext(c::text)'
+													'\n	)'
+													'\nfrom '
+													'\n	unnest(%s) c'
+													'\n;'
+													, i_view_rec.schema_name
+													, i_view_rec.internal_name
+													, i_view_rec.mv_emulation_refresh_proc_param
+												)
+												|| case 
+													when i_view_rec.mv_emulation_with_partitioning then
+														format(
+															E'\n\nselect'
+															'\n	string_agg('
+															'\n		format($ddl$'
+															'\n			create table %I.%I_%%s'
+															'\n				(like %I.%I including defaults including constraints)'
+															'\n			;'
+															'\n			alter table %I.%I_%%s add constraint chk_%%s$%s'
+															'\n				check (%s in (%%L::%%s))'
+															'\n			;'
+															'\n			%s'
+															'\n			;'
+															'\n			alter table %I.%I attach partition %I.%I_%%s'
+															'\n				for values in (%%L::%%s)'	
+															'\n			;'
+															'\n			alter table %I.%I_%%s drop constraint chk_%%s$%s'
+															'\n			;'
+															'\n			$ddl$'
+															'\n			, chunk.sys_name'
+															'\n			, chunk.sys_name'
+															'\n			, chunk.sys_name'
+															'\n			, chunk.id'
+															'\n			, pg_catalog.pg_typeof(chunk.id)%s'
+															'\n			, chunk.sys_name'
+															'\n			, array[chunk.id]'
+															'\n			, pg_catalog.pg_typeof(chunk.id)'
+															'\n			, chunk.sys_name'
+															'\n			, chunk.id'
+															'\n			, pg_catalog.pg_typeof(chunk.id)'
+															'\n			, chunk.sys_name'
+															'\n			, chunk.sys_name'
+															'\n		)'
+															'\n		, E'';\\n'''
+															'\n	) filter ('
+															'\n		where '
+															'\n			p.partition_table_name is null'
+															'\n	) as new_partition_ddl_cmds'
+															'\n	, array_agg('
+															'\n		chunk.id'
+															'\n	) filter ('
+															'\n		where '
+															'\n			p.partition_table_name is not null'
+															'\n	) as existing_partition_chunks'
+															'\n	, string_agg('
+															'\n		format('''
+															'\n			truncate %I.%I_%%s'
+															'\n			'''
+															'\n			, chunk.sys_name'
+															'\n		)'
+															'\n		, E'';\\n'''
+															'\n	) filter ('
+															'\n		where '
+															'\n			p.partition_table_name is not null'
+															'\n	) as existing_partition_truncate_cmds'
+															'\ninto'
+															'\n	l_chunk_rec'
+															'\nfrom ('
+															'\n	select'
+															'\n		chunk.id'
+															'\n		, ${mainSchemaName}.f_valid_system_name('
+															'\n			i_raw_name => chunk.id::text'
+															'\n			, i_is_considered_as_whole_name => false'
+															'\n		) as sys_name'
+															'\n	from'
+															'\n		unnest(%s) chunk(id)'
+															'\n) chunk'
+															'\nleft join ${mainSchemaName}.v_sys_table_partition p'
+															'\n	on p.schema_name = ''%I'''
+															'\n	and p.table_name = ''%I'''
+															'\n	and p.partition_table_name = ''%I_''::name || chunk.sys_name' 
+															'\n	and p.partition_schema_name = ''%I'''
+															'\n;'
+															'\n'
+															'\nif l_chunk_rec.new_partition_ddl_cmds is not null then '
+															'\n execute'
+															'\n 	l_chunk_rec.new_partition_ddl_cmds'
+															'\n ;'
+															'\nend if;'
+															'\n'
+															'\nif l_chunk_rec.existing_partition_truncate_cmds is not null then '
+															'\n execute'
+															'\n 	l_chunk_rec.existing_partition_truncate_cmds'
+															'\n ;'
+															'\nend if;'
+															'\n'
+															'\nif l_chunk_rec.existing_partition_chunks is not null then '
+															'\n	%s'
+															'\n	;'
+															'\nend if;'
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.mv_emulation_chunking_field
+															, i_view_rec.mv_emulation_chunking_field
+															, ${mainSchemaName}.f_indent_text(
+																i_text =>
+																	case 
+																		when i_view_rec.mv_emulation_chunk_row_limit is not null then
+																			format(
+																				E'do $$'
+																				'\ndeclare'
+																				'\n	l_row_limit bigint := %%s;'
+																				'\n	l_row_offset bigint := 0;'
+																				'\nbegin'
+																				'\n	<<insertion_in_parts>>'
+																				'\n	loop' 
+																				'\n		insert into'
+																				'\n			%I.%I_%%s'
+																				'\n		select'
+																				'\n			*'
+																				'\n		from'
+																				'\n			%I.%I('
+																				'\n				%s => %%L::%%s[]'
+																				'\n				, i_row_limit => l_row_limit'
+																				'\n				, i_row_offset => l_row_offset'
+																				'\n			)'
+																				'\n		;'
+																				'\n		exit insertion_in_parts when not found'
+																				'\n		;'
+																				'\n		l_row_offset := l_row_offset + l_row_limit'
+																				'\n		;'
+																				'\n	end loop insertion_in_parts'
+																				'\n	;'
+																				'\nend'
+																				'\n$$'
+																				, i_view_rec.schema_name
+																				, i_view_rec.internal_name
+																				, i_view_rec.schema_name
+																				, i_view_rec.mv_emulation_table_func_name
+																				, i_view_rec.mv_emulation_refresh_proc_param
+																			)
+																		else
+																			format(
+																				E'insert into %I.%I_%%s'
+																				'\nselect * from %I.%I(%s => %%L::%%s[])'
+																				, i_view_rec.schema_name
+																				, i_view_rec.internal_name
+																				, i_view_rec.schema_name
+																				, i_view_rec.mv_emulation_table_func_name
+																				, i_view_rec.mv_emulation_refresh_proc_param
+																			)
+																	end
+																, i_indentation_level => 3
+															)
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.mv_emulation_chunking_field
+															, case 
+																when i_view_rec.mv_emulation_chunk_row_limit is not null then
+																	${mainSchemaName}.f_indent_text(
+																		i_text =>
+																			E'\n, l_row_limit'
+																		, i_indentation_level => 3
+																	)
+																else
+																	''
+															end																		
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.mv_emulation_refresh_proc_param
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.internal_name
+															, i_view_rec.schema_name
+															, ${mainSchemaName}.f_indent_text(
+																i_text =>
+																	case 
+																		when i_view_rec.mv_emulation_chunk_row_limit is not null then
+																			format(
+																				E'<<insertion_in_parts>>'
+																				'\nloop' 
+																				'\n	insert into'
+																				'\n		%I.%I'
+																				'\n	select'
+																				'\n		*'
+																				'\n	from'
+																				'\n		%I.%I('
+																				'\n			%s => l_chunk_rec.existing_partition_chunks'
+																				'\n			, i_row_limit => l_row_limit'
+																				'\n			, i_row_offset => l_row_offset'
+																				'\n		)'
+																				'\n	;'
+																				'\n	exit insertion_in_parts when not found'
+																				'\n	;'
+																				'\n	l_row_offset := l_row_offset + l_row_limit'
+																				'\n	;'
+																				'\nend loop insertion_in_parts'
+																				, i_view_rec.schema_name
+																				, i_view_rec.internal_name
+																				, i_view_rec.schema_name
+																				, i_view_rec.mv_emulation_table_func_name
+																				, i_view_rec.mv_emulation_refresh_proc_param
+																			)
+																		else
+																			format(
+																				E'insert into %I.%I'
+																				'\nselect * from %I.%I(%s => l_chunk_rec.existing_partition_chunks)'
+																				, i_view_rec.schema_name
+																				, i_view_rec.internal_name
+																				, i_view_rec.schema_name
+																				, i_view_rec.mv_emulation_table_func_name
+																				, i_view_rec.mv_emulation_refresh_proc_param
+																			)
+																	end
+																, i_indentation_level => 1
+															)																	
+														)												
+													else
+														format(
+															E'\n\ndelete from %I.%I where %s = any(%s)'	
+															'\n;'
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.mv_emulation_chunking_field
+															, i_view_rec.mv_emulation_refresh_proc_param												
+														) 
+														|| E'\n\n'
+														|| case 
+															when i_view_rec.mv_emulation_chunk_row_limit is not null then
+																format(	
+																	E'<<insertion_in_parts>>'
+																	'\nloop' 
+																	'\n	insert into'
+																	'\n		%I.%I'
+																	'\n	select'
+																	'\n		*'
+																	'\n	from'
+																	'\n		%I.%I('
+																	'\n			%s => %s'
+																	'\n			, i_row_limit => l_row_limit'
+																	'\n			, i_row_offset => l_row_offset'
+																	'\n		)'
+																	'\n	;'
+																	'\n	exit insertion_in_parts when not found'
+																	'\n	;'
+																	'\n	l_row_offset := l_row_offset + l_row_limit'
+																	'\n	;'
+																	'\nend loop insertion_in_parts'
+																	'\n;'
+																	, i_view_rec.schema_name
+																	, i_view_rec.internal_name
+																	, i_view_rec.schema_name
+																	, i_view_rec.mv_emulation_table_func_name
+																	, i_view_rec.mv_emulation_refresh_proc_param												
+																	, i_view_rec.mv_emulation_refresh_proc_param
+																)																	
+															else 
+																format(		
+																	E'insert into'
+																	'\n	%I.%I'
+																	'\nselect'
+																	'\n	*'
+																	'\nfrom'
+																	'\n	%I.%I('
+																	'\n		%s => %s'
+																	'\n	)'
+																	'\n;'
+																	, i_view_rec.schema_name
+																	, i_view_rec.internal_name
+																	, i_view_rec.schema_name
+																	, i_view_rec.mv_emulation_table_func_name
+																	, i_view_rec.mv_emulation_refresh_proc_param												
+																	, i_view_rec.mv_emulation_refresh_proc_param
+																)
+														end
+												end			
+												|| case 
+													when i_view_rec.is_mv_emulation_chunk_validated then
+														format(
+															E'\n\ninsert into'
+															'\n	%I.%I_chunk('
+															'\n		%s'
+															'\n	)'
+															'\nselect'
+															'\n	c.id'
+															'\nfrom'
+															'\n	unnest(%s) chunk(id)'
+															'\non conflict (%s)'
+															'\n	do nothing'
+															'\n;'
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
+															, i_view_rec.mv_emulation_chunking_field
+															, i_view_rec.mv_emulation_refresh_proc_param
+															, i_view_rec.mv_emulation_chunking_field
+														)
+													else ''
+												end
+											, i_indentation_level => 2
+										)
 									)
 								)
 						end
@@ -528,7 +735,7 @@ begin
 			) as view_query
 			, regexp_match(
 				view_query[1]
-				, '\/\*\s*\#chunking_filter\:\s*.+?\s*\*\/' 
+				, '(\/\*\s*\#chunking_filter\:\s*.+?\s*\*\/){1,1}?' 
 				, 'i'
 			) as chunking_filter_marker
 			, regexp_match(
@@ -536,6 +743,16 @@ begin
 				, '\/\*\s*\#chunking_filter\:\s*(.+?)\s*\*\/' 
 				, 'i'
 			) as chunking_filter_expr
+			, regexp_match(
+				view_query[1]
+				, '(\/\*\s*\#chunk_row_limit\:\s*.+?\s*\*\/){1,1}?' 
+				, 'i'
+			) as chunk_row_limit_marker
+			, regexp_match(
+				chunk_row_limit_marker[1]
+				, '\/\*\s*\#chunk_row_limit\:\s*(.+?)\s*\*\/' 
+				, 'i'
+			) as chunk_row_limit_expr
 			, coalesce(
 				replace(
 					view_query[1]
@@ -557,6 +774,36 @@ begin
 						)
 					, i_indentation_level => 1
 				)
+			) as query_with_chunking_filter
+			, coalesce(
+				replace(
+					query_with_chunking_filter
+					, chunk_row_limit_marker[1]
+					, chunk_row_limit_expr[1]
+				)
+				, query_with_chunking_filter
+				|| case 
+					when i_view_rec.has_unique_index and view_query[1] not ilike '%order by%' then 
+						format(
+							E'\norder by'
+							'\n	%s'
+							, i_view_rec.unique_index_columns
+						)
+						|| case 
+							when i_view_rec.mv_emulation_chunking_field is null then
+								E'\nlimit'
+								'\n	l_row_limit'
+								'\noffset'
+								'\n	l_row_offset'
+							else
+								E'\nlimit'
+								'\n	i_row_limit'
+								'\noffset'
+								'\n	i_row_offset'
+						end
+					else 
+						''
+				end
 			) as target_query
 	) 
 	loop
