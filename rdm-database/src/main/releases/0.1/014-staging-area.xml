@@ -414,9 +414,9 @@
 
 	</changeSet>
 	
-	<changeSet id="etlUserRole parallel_worker table permissions" author="${default_author}">
+	<changeSet id="etl user role parallel_worker table permissions" author="${default_author}">
 		<sql dbms="postgresql">
-			grant select, insert, update on ${stagingSchemaName}.parallel_worker to ${etlUserRole}; 
+			grant select, insert, update, delete on ${stagingSchemaName}.parallel_worker to ${etlUserRole}; 
 		</sql>
 	</changeSet>
 	
