@@ -11,13 +11,13 @@ drop function if exists ${stagingSchemaName}.f_launch_parallel_worker(
 
 create or replace function ${stagingSchemaName}.f_launch_parallel_worker(
 	i_command text
-	, i_extra_info ${stagingSchemaName}.parallel_worker.extra_info%type
-	, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type
-	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, i_notification_channel name
-	, i_max_worker_processes integer
-	, i_polling_interval interval
-	, i_max_run_time interval
+	, i_extra_info ${stagingSchemaName}.parallel_worker.extra_info%type = null
+	, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0
+	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = 0
+	, i_notification_channel name = null
+	, i_max_worker_processes integer = ${max_parallel_worker_processes}
+	, i_polling_interval interval = '10 seconds'
+	, i_max_run_time interval = '8 hours'
 	, i_listener_worker name = null
 	, i_is_async boolean = true
 	, i_is_onetime_executor boolean = true
