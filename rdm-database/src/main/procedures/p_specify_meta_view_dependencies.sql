@@ -31,6 +31,12 @@ declare
 	l_view_ids ${type.id}[];
 	l_view_id ${type.id};
 begin
+	if i_views is null or jsonb_array_length(i_views) = 0 then
+		return
+		;
+	end if
+	;
+
 	select 
 		array_agg(v.id)
 	into 
