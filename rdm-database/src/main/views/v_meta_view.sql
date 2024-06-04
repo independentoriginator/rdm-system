@@ -11,7 +11,10 @@ select
 	, v.is_materialized
 	, v.is_created
 	, v.query
-	, v.is_valid  
+	, (
+		v.is_valid 
+		and v.is_populated
+	) as is_valid  
 	, v.refresh_time	
 	, v.creation_order
 	, v.is_disabled
@@ -65,14 +68,7 @@ from (
 			)
 		) as is_created
 		, v.query
-		, (
-			v.is_valid 
-			and case
-				when v.is_matview_emulation then (target_view.obj_id is not null)
-				when 'is_populated' = any(target_view.flags) then true 
-				else false 
-			end		
-		) as is_valid  
+		, v.is_valid 
 		, v.refresh_time	
 		, v.creation_order
 		, v.is_disabled
@@ -127,8 +123,13 @@ from (
  				and a.attnum = any(unique_index.indkey)
  		) as unique_index_columns
 		, case
-			when v.is_matview_emulation then (target_view.obj_id is not null)
-			when 'is_populated' = any(target_view.flags) then true 
+			when 
+				v.is_matview_emulation 
+				and target_view.obj_id is not null
+				and v.refresh_time >= v.modification_time
+			then true
+			when 'is_populated' = any(target_view.flags) 
+			then true 
 			else false 
 		end as is_populated
 		, v.modification_time
