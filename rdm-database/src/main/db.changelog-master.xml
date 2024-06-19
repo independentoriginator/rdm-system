@@ -41,7 +41,7 @@
 	
 	<include file="functions/target_sys_layer_functions.xml" relativeToChangelogFile="true" />
 	
-	<changeSet id="build target views (in main schema only)" author="${default_author}" runAlways="true">
+	<changeSet id="build target views (in the main schema only)" author="${default_author}" runAlways="true">
 		<sql>
 			call p_build_target_views(i_schema_name => '${mainSchemaName}');
 		</sql>
