@@ -16,11 +16,13 @@ select
 	end as is_built
 	, 0 as ordinal_num
 	, s.is_external
+	, s.is_disabled
 from ( 
 	select
 		s.id
 		, s.internal_name
 		, s.is_external
+		, s.is_disabled
 	from 
 		${mainSchemaName}.meta_schema s
 	union
@@ -28,11 +30,13 @@ from (
 		(select id from ${mainSchemaName}.meta_schema where internal_name = '${mainSchemaName}') as id
 		, '${mainSchemaName}' as internal_name
 		, false as is_external
+		, false as is_disabled
 	union
 	select 
 		(select id from ${mainSchemaName}.meta_schema where internal_name = '${stagingSchemaName}') as id
 		, '${stagingSchemaName}' as internal_name
 		, false as is_external
+		, false as is_disabled
 ) s
 left join pg_catalog.pg_namespace target_schema
 	on target_schema.nspname = s.internal_name

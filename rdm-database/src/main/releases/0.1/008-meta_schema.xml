@@ -220,5 +220,15 @@
 		</insert>
 
 	</changeSet>
+	
+	<changeSet id="meta_schema-is_disabled" author="${default_author}">
+
+		<addColumn tableName="meta_schema">
+			<column name="is_disabled" type="boolean" remarks="Is disabled" defaultValueBoolean="false">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+
+	</changeSet>
 
 </databaseChangeLog>

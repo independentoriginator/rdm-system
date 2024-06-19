@@ -13,6 +13,7 @@ begin
 		where 
 			not s.is_built
 			and not s.is_external
+			and not s.is_disabled
 		order by 
 			s.ordinal_num
 	) 
