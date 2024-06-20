@@ -122,7 +122,7 @@ select
 	, (chk_constraint.conname is not null) as is_check_constraint_exists
 	, pg_catalog.pg_get_constraintdef(chk_constraint.oid) as target_check_constraint_expr
 	, a.is_non_nullable
-	, (target_column.is_nullable = 'NO') as is_notnull_constraint_exists
+	, coalesce(target_column.is_nullable = 'NO', false) as is_notnull_constraint_exists
 	, a.is_unique
 	, a.unique_constraint_name
 	, (u_constraint.constraint_name is not null) as is_unique_constraint_exists
@@ -138,7 +138,7 @@ select
 		, i_numeric_scale => target_staging_table_column.numeric_scale	
 		, i_datetime_precision => target_staging_table_column.datetime_precision	
 	) as staging_table_column_data_type
-	, (target_staging_table_column.is_nullable = 'NO') as is_staging_table_column_notnull_constraint_exists
+	, coalesce(target_staging_table_column.is_nullable = 'NO', false) as is_staging_table_column_notnull_constraint_exists
 	, target_staging_table_column.column_default as staging_table_column_default
 	, a.attr_type_schema 
 	, a.ancestor_type_id
@@ -146,7 +146,7 @@ select
 	, target_column_descr.description target_column_description
 	, target_staging_table_column_descr.description staging_column_description
 	, a.fk_on_delete_cascade
-	, (fk_constraint.confdeltype = 'f'::"char") as target_fk_on_delete_cascade 
+	, coalesce(fk_constraint.confdeltype = 'f'::"char", false) as target_fk_on_delete_cascade 
 from (
 	select
 		a.id

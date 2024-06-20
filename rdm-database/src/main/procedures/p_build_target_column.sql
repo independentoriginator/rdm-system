@@ -10,28 +10,25 @@ begin
 			if i_attr_rec.is_referenced_type_temporal = true then 
 				execute format('
 					alter table %I.%I
-						add column %I %s %snull,
-						add column %I %s %snull
+						add column %I %s,
+						add column %I %s
 					'
 					, i_attr_rec.schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 					, i_attr_rec.target_attr_type				
-					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
 					, i_attr_rec.version_ref_name
 					, i_attr_rec.target_attr_type				
-					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
 				);
 			else
 				execute format('
 					alter table %I.%I
-						add column %I %s %snull
+						add column %I %s
 					'
 					, i_attr_rec.schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 					, i_attr_rec.target_attr_type				
-					, case when i_attr_rec.is_non_nullable = true then 'not ' else '' end
 				);
 			end if;
 		else
@@ -161,6 +158,29 @@ begin
 				, i_attr_rec.check_constraint_expr
 			);
 		end if;
+	
+		if i_attr_rec.default_value is not null 
+			and lower(i_attr_rec.default_value) <> coalesce(lower(i_attr_rec.column_default), '') 
+		then
+			execute format('
+				alter table %I.%I
+					alter column %s set default %s
+				'
+				, i_attr_rec.schema_name
+				, i_attr_rec.meta_type_name 
+				, i_attr_rec.internal_name 
+				, i_attr_rec.default_value
+			);
+		elsif i_attr_rec.default_value is null and i_attr_rec.column_default is not null then
+			execute format('
+				alter table %I.%I
+					alter column %s drop default
+				'
+				, i_attr_rec.schema_name
+				, i_attr_rec.meta_type_name 
+				, i_attr_rec.internal_name 
+			);
+		end if;
 		
 		if i_attr_rec.is_non_nullable = true and i_attr_rec.is_notnull_constraint_exists = false then
 			if i_attr_rec.is_referenced_type_temporal = true then 
@@ -175,6 +195,20 @@ begin
 					, i_attr_rec.version_ref_name
 				);
 			else
+				if i_attr_rec.default_value is not null then
+					execute format('
+						update %I.%I
+						set %s = %s
+						where %s is null
+						'
+						, i_attr_rec.schema_name
+						, i_attr_rec.meta_type_name 
+						, i_attr_rec.internal_name 
+						, i_attr_rec.default_value
+						, i_attr_rec.internal_name 
+					);
+				end if;
+			
 				execute format('
 					alter table %I.%I
 						alter column %s set not null
@@ -229,29 +263,6 @@ begin
 			);
 		end if;
 		
-		if i_attr_rec.default_value is not null 
-			and lower(i_attr_rec.default_value) <> coalesce(lower(i_attr_rec.column_default), '') 
-		then
-			execute format('
-				alter table %I.%I
-					alter column %s set default %s
-				'
-				, i_attr_rec.schema_name
-				, i_attr_rec.meta_type_name 
-				, i_attr_rec.internal_name 
-				, i_attr_rec.default_value
-			);
-		elsif i_attr_rec.default_value is null and i_attr_rec.column_default is not null then
-			execute format('
-				alter table %I.%I
-					alter column %s drop default
-				'
-				, i_attr_rec.schema_name
-				, i_attr_rec.meta_type_name 
-				, i_attr_rec.internal_name 
-			);
-		end if;
-
 		if nullif(i_attr_rec.column_description, i_attr_rec.target_column_description) is not null then
 			execute format($$
 				comment on column %I.%I.%s is $comment$%s$comment$
