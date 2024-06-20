@@ -8,3 +8,5 @@ ToDO list
 - Integration of a full user role permissions model 
 - Materialized views incremental refresh: https://github.com/sraoss/pg_ivm
 - Set application_name process attribute  
+- mv emulation: truncation of an existing partition locks a reading process (an idea: create new partition and delete an old one instead truncation)
+- mv emulation: the main refreshing process is killed after some time interval because of it being non-active (an activity imitation is needed)  
