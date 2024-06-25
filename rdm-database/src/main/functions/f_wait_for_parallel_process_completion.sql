@@ -204,7 +204,7 @@ begin
 				end if;
 			end loop asking_for_an_error;
 		
-			-- Listener activity immitation
+			-- Listener activity imitation
 			if i_listener_worker is not null then
 				perform 
 					${dbms_extension.dblink.schema}.dblink_exec(
@@ -217,6 +217,10 @@ begin
 				;
 			end if;		
 		
+			-- The main process additional activity imitation
+			perform 
+				'Waiting for the parallel processes to complete...'
+			;
 		end loop waiting_for_completion;
 	end if;
 
