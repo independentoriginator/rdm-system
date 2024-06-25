@@ -11,6 +11,7 @@ from
 	${stagingSchemaName}.materialized_view_refresh_duration t
 join ${mainSchemaName}.v_meta_view v
 	on t.meta_view_id = v.id
+	and not v.is_disabled
 order by 
 	duration desc
 ;
