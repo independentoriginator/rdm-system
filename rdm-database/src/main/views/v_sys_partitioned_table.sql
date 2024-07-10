@@ -3,6 +3,7 @@ as
 select 
 	n.nspname as schema_name
 	, t.relname as table_name
+	, t.oid as table_id
 from 
 	pg_catalog.pg_class t
 join pg_catalog.pg_namespace n

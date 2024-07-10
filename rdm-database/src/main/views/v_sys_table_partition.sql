@@ -5,7 +5,9 @@ select
 	, t.relname as table_name
 	, pn.nspname as partition_schema_name
 	, p.relname as partition_table_name
-	, pg_catalog.pg_get_expr(p.relpartbound, p.oid, true) as partition_expression	
+	, pg_catalog.pg_get_expr(p.relpartbound, p.oid, true) as partition_expression
+	, p.oid as partition_table_id
+	, t.oid as table_id
 from 
 	pg_catalog.pg_class t
 join pg_catalog.pg_namespace n

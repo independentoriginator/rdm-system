@@ -11,7 +11,8 @@ select
 	, t.indexes_size as n_indexes_size
 	, pg_catalog.pg_size_pretty(t.indexes_size) as s_indexes_size
 	, t.total_relation_size as n_total_relation_size
-	, pg_catalog.pg_size_pretty(t.total_relation_size) as s_total_relation_size	
+	, pg_catalog.pg_size_pretty(t.total_relation_size) as s_total_relation_size
+	, t.table_id
 from (
 	select 
 		n.nspname as schema_name
@@ -24,6 +25,7 @@ from (
 		, pg_catalog.pg_table_size(t.oid) as table_size
 		, pg_catalog.pg_indexes_size(t.oid) as indexes_size
 		, pg_catalog.pg_total_relation_size(t.oid) as total_relation_size
+		, t.oid as table_id
 	from 
 		pg_catalog.pg_class t
 	join pg_catalog.pg_namespace n
