@@ -481,7 +481,7 @@ begin
 															'\n) chunk'															
 															'\n;'
 															'\n'
-															'\nif l_chunk_rec.new_partition_table_creation is not null then '
+															'\nif l_chunk_rec.new_partition_table_creating is not null then '
 															'\n execute'
 															'\n 	l_chunk_rec.new_partition_table_creating'
 															'\n ;'
