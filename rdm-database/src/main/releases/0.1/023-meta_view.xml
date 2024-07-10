@@ -747,5 +747,52 @@
 			referencedColumnNames="id" />
 
 	</changeSet>
+
+	<changeSet id="emulated materialized view partition" author="${default_author}">
+	
+		<createTable
+			tableName="materialized_view_partition" 
+			schemaName="${stagingSchemaName}"
+			remarks="Секция эмулируемого материализованного представления">
+			<column name="meta_view_id" type="${type.id}" remarks="Идентификатор метапредставления">
+				<constraints nullable="false" />
+			</column>
+			<column name="partition_id" type="${type.description}" remarks="Идентификатор секции">
+				<constraints nullable="false" />
+			</column>
+			<column name="current_table_id" type="${type.system_object_id}" remarks="Идентификатор текущей физической таблицы">
+				<constraints nullable="false" />
+			</column>
+			<column name="shadow_table_id" type="${type.system_object_id}" remarks="Идентификатор теневой физической таблицы">
+				<constraints nullable="true" />
+			</column>
+			<column name="partition_bound_spec" type="${type.name}" remarks="Выражение, задающее границы секции">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		<addPrimaryKey 
+			constraintName="pk_materialized_view_partition" 
+			tableName="materialized_view_partition"
+			schemaName="${stagingSchemaName}"
+			columnNames="meta_view_id, partition_id"/>
+
+		<createIndex 
+			indexName="i_materialized_view_partition$meta_view_id" 
+			tableName="materialized_view_partition"
+			schemaName="${stagingSchemaName}">
+			<column name="meta_view_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_materialized_view_partition$meta_view_id"
+			baseTableName="materialized_view_partition" 
+			baseTableSchemaName="${stagingSchemaName}"
+			baseColumnNames="meta_view_id" 
+			referencedTableName="meta_view" 
+			referencedTableSchemaName="${mainSchemaName}"
+			referencedColumnNames="id" />
+
+	</changeSet>
             			
 </databaseChangeLog>
