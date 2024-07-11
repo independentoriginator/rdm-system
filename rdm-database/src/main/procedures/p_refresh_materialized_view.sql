@@ -18,7 +18,7 @@ begin
 			'\n		${mainSchemaName}.meta_view'
 			'\n	where'
 			'\n		id = %s'
-			'\n	for update'
+			'\n	for share'
 			'\n	;'
 			'\n	%s'
 			'\n	;'
