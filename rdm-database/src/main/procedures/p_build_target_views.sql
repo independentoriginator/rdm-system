@@ -79,6 +79,7 @@ begin
 					, i_check_existence => true
 				)
 				, v.mv_emulation_refresh_procedures_drop_cmd
+				, v.mv_emulation_shadow_tables_drop_cmd
 				, format(
 					'drop table if exists %I.%I_chunk'
 					, v.schema_name
@@ -122,6 +123,23 @@ begin
 					p.obj_schema = v.schema_name
 					and p.unqualified_name = v.mv_emulation_refresh_proc_name
 			) as mv_emulation_refresh_procedures_drop_cmd
+			, (
+				select 
+					string_agg(
+						${mainSchemaName}.f_sys_obj_drop_command(
+							i_obj_class => shadow_table.obj_class
+							, i_obj_id => shadow_table.obj_id
+							, i_check_existence => true							
+						)		
+						, E';\n'
+					)	
+				from 
+					${stagingSchemaName}.materialized_view_partition p
+				join ${mainSchemaName}.v_sys_obj shadow_table
+					on shadow_table.obj_id = p.shadow_table_id
+				where 
+					p.meta_view_id = v.id
+			) as mv_emulation_shadow_tables_drop_cmd
 		from
 			${mainSchemaName}.v_meta_view v
 		join ${mainSchemaName}.meta_view mv 
