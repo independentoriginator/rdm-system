@@ -124,6 +124,15 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="f_execute_autonomously-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_execute_autonomously" 
+			dbms="postgresql" 
+			path="f_execute_autonomously.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 
 	<changeSet id="f_wait_for_parallel_process_completion-function" author="${default_author}" runOnChange="true">
 		<createProcedure 

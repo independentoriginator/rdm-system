@@ -1,27 +1,45 @@
-drop function if exists ${stagingSchemaName}.f_launch_parallel_worker(
-	text
-	, ${stagingSchemaName}.parallel_worker.context_id%type
-	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, name
-	, integer
-	, interval
-	, interval
-)
+drop function if exists 
+	${stagingSchemaName}.f_launch_parallel_worker(
+		text
+		, ${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, name
+		, integer
+		, interval
+		, interval
+	)
 ;
 
-create or replace function ${stagingSchemaName}.f_launch_parallel_worker(
-	i_command text
-	, i_extra_info ${stagingSchemaName}.parallel_worker.extra_info%type = null
-	, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0
-	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = 0
-	, i_notification_channel name = null
-	, i_max_worker_processes integer = ${max_parallel_worker_processes}
-	, i_polling_interval interval = '10 seconds'
-	, i_max_run_time interval = '8 hours'
-	, i_listener_worker name = null
-	, i_is_async boolean = true
-	, i_is_onetime_executor boolean = true
-)
+drop function if exists 
+	${stagingSchemaName}.f_launch_parallel_worker(
+		text
+		, ${stagingSchemaName}.parallel_worker.extra_info%type
+		, ${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, name
+		, integer
+		, interval
+		, interval
+		, name
+		, boolean
+		, boolean
+	)
+;
+
+create or replace function 
+	${stagingSchemaName}.f_launch_parallel_worker(
+		i_command text
+		, i_async_mode boolean = true
+		, i_extra_info ${stagingSchemaName}.parallel_worker.extra_info%type = null
+		, i_context_id ${stagingSchemaName}.parallel_worker.context_id%type = 0
+		, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type = 0
+		, i_use_notifications boolean = true
+		, i_notification_channel name = null
+		, i_notification_listener_worker name = null
+		, i_max_worker_processes integer = ${max_parallel_worker_processes}
+		, i_polling_interval interval = '10 seconds'
+		, i_max_run_time interval = '8 hours'
+	)
 returns name
 language plpgsql
 volatile
@@ -80,7 +98,7 @@ begin
 				, worker_num
 				, current_timestamp			
 				, i_extra_info
-				, i_is_async
+				, i_async_mode
 			from (
 				select (
 						select 
@@ -101,14 +119,15 @@ begin
 				l_worker_num
 			;
 		else
-			l_is_new_worker := false;
+			l_is_new_worker := false
+			;
 		
 			update 
 				${stagingSchemaName}.parallel_worker
 			set 
 				start_time = current_timestamp
 				, extra_info = i_extra_info
-				, async_mode = i_is_async
+				, async_mode = i_async_mode
 			where 
 				context_id = i_context_id
 				and operation_instance_id = i_operation_instance_id
@@ -118,31 +137,34 @@ begin
 	
 		if l_worker_num is not null 
 		then 
-			if l_is_new_worker then
-				raise notice 'New worker registered: %', l_worker_num;
-			else
-				raise notice 'Available worker found: %', l_worker_num;
-			end if;
-			exit waiting_for_available_worker;
+			exit waiting_for_available_worker
+			;
 		else	
-			if i_listener_worker is null 
+			if (
+					i_notification_listener_worker is null
+					and i_use_notifications
+				)
 				or not ${stagingSchemaName}.f_wait_for_parallel_process_completion(
 					i_context_id => i_context_id
 					, i_operation_instance_id => i_operation_instance_id
-					, i_wait_for_the_first_one_to_complete => true 
+					, i_wait_for_the_first_one_to_complete => true
+					, i_use_notifications => i_use_notifications 
 					, i_notification_channel => i_notification_channel
-					, i_listener_worker => i_listener_worker
+					, i_notification_listener_worker => i_notification_listener_worker
 					, i_polling_interval => i_polling_interval
 					, i_max_run_time => i_max_run_time
 				)
 			then 
 				raise exception 
-					'There are no available parallel workers'
+					'No parallel workers available'
 				;		
-			end if;
-		end if;
+			end if
+			;
+		end if
+		;
 	
-	end loop waiting_for_available_worker;
+	end loop waiting_for_available_worker
+	;
 
 	l_worker_name := 
 		${stagingSchemaName}.f_parallel_worker_name(
@@ -150,7 +172,7 @@ begin
 			, i_operation_instance_id => i_operation_instance_id
 			, i_worker_num => l_worker_num
 		)
-		;
+	;
 	
 	if (
 		select 
@@ -169,20 +191,15 @@ begin
 					l_worker_name
 				) = 1 
 			loop
-				raise notice 
-					'The worker is busy...'
-				;		
-				
-				call ${mainSchemaName}.p_delay_execution(
-					i_delay_interval => i_polling_interval
-					, i_max_run_time => i_max_run_time
-					, i_start_timestamp => l_start_timestamp
-				);	
-			end loop;		
-	
-			raise notice 
-				'Waiting for completion...'
-				;		
+				call 
+					${mainSchemaName}.p_delay_execution(
+						i_delay_interval => i_polling_interval
+						, i_max_run_time => i_max_run_time
+						, i_start_timestamp => l_start_timestamp
+					)
+				;	
+			end loop
+			;		
 	
 			-- Request the result of the previous async query twice to use the existing connection again 
 			for i in 1..2 loop
@@ -192,8 +209,10 @@ begin
 						l_worker_name
 					) as res(val text)
 				;
-			end loop;
-		end if;
+			end loop
+			;
+		end if
+		;
 	else
 		perform 
 			${dbms_extension.dblink.schema}.dblink_connect_u(
@@ -204,18 +223,19 @@ begin
 					, l_user
 				)
 			)
-			;
-	end if;
+		;
+	end if
+	;
 
 	l_command := 
 		case 
-			when i_is_onetime_executor then
+			when i_use_notifications then
 				concat_ws(
 					E';\n'
 					, i_command
 					, format(
 						case 
-							when i_is_async then 
+							when i_async_mode then 
 								'select pg_catalog.pg_notify(%L, %L)'
 							else 
 								'do $$ begin perform pg_catalog.pg_notify(%L, %L); end $$'
@@ -229,7 +249,7 @@ begin
 		end
 	;
 
-	if i_is_async then
+	if i_async_mode then
 		if ${dbms_extension.dblink.schema}.dblink_send_query(
 			l_worker_name
 			, l_command
@@ -243,7 +263,8 @@ begin
 					l_worker_name
 				)
 			;
-		end if;
+		end if
+		;
 	else
 		perform 
 			${dbms_extension.dblink.schema}.dblink_exec(
@@ -251,7 +272,8 @@ begin
 				, l_command
 			)
 		;
-	end if;
+	end if
+	;
 
 	return
 		l_worker_name
@@ -259,17 +281,18 @@ begin
 end
 $function$;	
 
-comment on function ${stagingSchemaName}.f_launch_parallel_worker(
-	text
-	, ${stagingSchemaName}.parallel_worker.extra_info%type
-	, ${stagingSchemaName}.parallel_worker.context_id%type
-	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, name
-	, integer
-	, interval
-	, interval
-	, name
-	, boolean
-	, boolean
-) is 'Параллельная обработка. Запустить рабочий процесс многопоточной операции'
+comment on function 
+	${stagingSchemaName}.f_launch_parallel_worker(
+		text
+		, boolean
+		, ${stagingSchemaName}.parallel_worker.extra_info%type
+		, ${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, boolean
+		, name
+		, name
+		, integer
+		, interval
+		, interval
+	) is 'Параллельная обработка. Запустить рабочий процесс многопоточной операции'
 ;

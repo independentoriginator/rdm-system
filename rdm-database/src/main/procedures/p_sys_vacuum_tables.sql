@@ -1,61 +1,83 @@
-create or replace procedure p_sys_vacuum_tables(
-	i_schema_name name 
-	, i_table_name name = null
-	, i_vacuum_full boolean = false
-	, i_thread_max_count integer = 10
-	, i_scheduler_type_name text = null
-	, i_scheduled_task_name text = null
-	, i_scheduled_task_stage_ord_pos integer = 0
-	, i_wait_for_delay_in_seconds integer = 1
-)
+drop procedure if exists 
+	p_sys_vacuum_tables(
+		name 
+		, name
+		, boolean
+		, integer
+		, text
+		, text
+		, integer
+		, integer
+	)
+;
+
+create or replace procedure 
+	p_sys_vacuum_tables(
+		i_schema_name name[] = null
+		, i_vacuum_full boolean = false
+		, i_max_worker_processes integer = ${max_parallel_worker_processes}
+		, i_polling_interval interval = '10 seconds'
+		, i_max_run_time interval = '24 hours'
+	)
 language plpgsql
 as $procedure$
 declare 
-	l_commands text[];
-	l_vacuum_full text := case when i_vacuum_full then 'full, ' else '' end;
+	l_schema_name name[] := i_schema_name;
 begin
-	select
-		array_agg(
-			format(
-				'vacuum (%sanalyze) %I.%I'
-				, l_vacuum_full 
-				, t.schema_name
-				, t.table_name
-			)
-			order by 
-				t.n_total_relation_size desc
-		)			
-	into 
-		l_commands
-	from 
-		${mainSchemaName}.v_sys_table_size t
-	where 
-		t.schema_name = i_schema_name
-		and (t.table_name = i_table_name or i_table_name is null)
+	if l_schema_name is null or cardinality(l_schema_name) = 0 then
+		select 
+			array_agg(internal_name)
+		into
+			l_schema_name	
+		from 
+			ng_rdm.meta_schema
+		where
+			not is_external 
+			and not is_disabled			
+		;
+	end if
 	;
 
-	if l_commands is not null 
-	then 
-		call ${stagingSchemaName}.p_execute_in_parallel(
-			i_commands => l_commands
-			, i_thread_max_count => i_thread_max_count
-			, i_scheduler_type_name => i_scheduler_type_name
-			, i_scheduled_task_name => i_scheduled_task_name
-			, i_scheduled_task_stage_ord_pos => i_scheduled_task_stage_ord_pos
-			, i_iteration_number => 0
-			, i_wait_for_delay_in_seconds => i_wait_for_delay_in_seconds 
-		);	
-	end if;
+	call 
+		${stagingSchemaName}.p_execute_in_parallel(
+			i_command_list_query => 
+				format(
+					$sql$
+					select
+						format(
+							'vacuum (%sanalyze) %%I.%%I'
+							, t.schema_name
+							, t.table_name
+						)
+					from 
+						${mainSchemaName}.v_sys_table_size t
+					where 
+						t.schema_name = any(string_to_array(%L, ','))
+					order by 
+						t.n_total_relation_size desc
+					$sql$
+					, case when i_vacuum_full then 'full, ' else '' end
+					, array_to_string(l_schema_name, ',')
+				)
+			, i_context_id => '${mainSchemaName}.p_sys_vacuum_tables'::regproc
+			, i_use_notifications => false
+			, i_max_worker_processes => i_max_worker_processes
+			, i_polling_interval => i_polling_interval
+			, i_max_run_time => i_max_run_time
+			, i_close_process_pool_on_completion => true
+		)
+	;
 end
-$procedure$;
+$procedure$
+;
 
-comment on procedure p_sys_vacuum_tables(
-	name 
-	, name
-	, boolean
-	, integer
-	, text
-	, text
-	, integer
-	, integer
-) is 'Вакуумирование таблиц';
+comment on procedure 
+	p_sys_vacuum_tables(
+		name[]
+		, boolean
+		, integer
+		, interval
+		, interval
+	) 
+	is 'Вакуумирование таблиц'
+;

@@ -1,8 +1,9 @@
-create or replace function ${stagingSchemaName}.f_parallel_worker_name(
-	i_context_id ${stagingSchemaName}.parallel_worker.context_id%type
-	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, i_worker_num ${stagingSchemaName}.parallel_worker.worker_num%type
-)
+create or replace function 
+	${stagingSchemaName}.f_parallel_worker_name(
+		i_context_id ${stagingSchemaName}.parallel_worker.context_id%type
+		, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, i_worker_num ${stagingSchemaName}.parallel_worker.worker_num%type
+	)
 returns name
 language sql
 immutable
@@ -18,10 +19,13 @@ select
 				, i_worker_num
 			)
 	)
-$function$;	
+$function$
+;	
 
-comment on function ${stagingSchemaName}.f_parallel_worker_name(
-	${stagingSchemaName}.parallel_worker.context_id%type
-	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, ${stagingSchemaName}.parallel_worker.worker_num%type
-) is 'Параллельная обработка. Наименование рабочего процесса';
+comment on function 
+	${stagingSchemaName}.f_parallel_worker_name(
+		${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, ${stagingSchemaName}.parallel_worker.worker_num%type
+	) is 'Параллельная обработка. Наименование рабочего процесса'
+;

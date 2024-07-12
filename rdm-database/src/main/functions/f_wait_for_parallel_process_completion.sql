@@ -1,30 +1,48 @@
-drop function if exists ${stagingSchemaName}.f_wait_for_parallel_process_completion(
-	${stagingSchemaName}.parallel_worker.context_id%type
-	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, name
-	, text
-	, interval
-	, interval
-);
+drop function if exists 
+	${stagingSchemaName}.f_wait_for_parallel_process_completion(
+		${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, name
+		, text
+		, interval
+		, interval
+	)
+;
 
-drop function if exists ${stagingSchemaName}.f_wait_for_parallel_process_completion(
-	${stagingSchemaName}.parallel_worker.context_id%type
-	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, name
-	, name
-	, interval
-	, interval
-);
+drop function if exists 
+	${stagingSchemaName}.f_wait_for_parallel_process_completion(
+		${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, name
+		, name
+		, interval
+		, interval
+	)
+;
 
-create or replace function ${stagingSchemaName}.f_wait_for_parallel_process_completion(
-	i_context_id ${stagingSchemaName}.parallel_worker.context_id%type
-	, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, i_wait_for_the_first_one_to_complete boolean
-	, i_listener_worker name
-	, i_notification_channel name
-	, i_polling_interval interval
-	, i_max_run_time interval
-)
+drop function if exists 
+	${stagingSchemaName}.f_wait_for_parallel_process_completion(
+		${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, boolean
+		, name
+		, name
+		, interval
+		, interval
+	)
+;
+
+create or replace function 
+	${stagingSchemaName}.f_wait_for_parallel_process_completion(
+		i_context_id ${stagingSchemaName}.parallel_worker.context_id%type
+		, i_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, i_wait_for_the_first_one_to_complete boolean
+		, i_use_notifications boolean
+		, i_notification_listener_worker name
+		, i_notification_channel name
+		, i_polling_interval interval
+		, i_max_run_time interval
+	)
 returns boolean
 language plpgsql
 volatile
@@ -73,53 +91,57 @@ begin
 	then
 		<<waiting_for_completion>>
 		loop
-			with 
-				workers_completed as (
-					update 
-						${stagingSchemaName}.parallel_worker
-					set 
-						start_time = null
-					where
-						context_id = i_context_id
-						and operation_instance_id = i_operation_instance_id
-						and worker_num in (
-							select 
-								worker.num
-							from 
-								unnest(l_workers_opened) worker_obj
-							join lateral jsonb_to_record(worker_obj) worker(num integer, name text) on true 
-							join ${dbms_extension.dblink.schema}.dblink_get_notify(i_listener_worker) n
-								on n.notify_name = i_notification_channel
-								and n.extra = worker.num::text
-						)
-					returning 
-						worker_num
-						, async_mode
-				)
-			select 
-				array_agg(
-					jsonb_build_object(
-						'num'
-						, worker_num
-						, 'name'
-						, ${stagingSchemaName}.f_parallel_worker_name(
-							i_context_id => i_context_id
-							, i_operation_instance_id => i_operation_instance_id
-							, i_worker_num => worker_num
-						)
-						, 'async_mode'
-						, async_mode
+			if i_use_notifications then 
+				with 
+					workers_completed as (
+						update 
+							${stagingSchemaName}.parallel_worker
+						set 
+							start_time = null
+						where
+							context_id = i_context_id
+							and operation_instance_id = i_operation_instance_id
+							and worker_num in (
+								select 
+									worker.num
+								from 
+									unnest(l_workers_opened) worker_obj
+								join lateral jsonb_to_record(worker_obj) worker(num integer, name text) on true 
+								join ${dbms_extension.dblink.schema}.dblink_get_notify(i_notification_listener_worker) n
+									on n.notify_name = i_notification_channel
+									and n.extra = worker.num::text
+							)
+						returning 
+							worker_num
+							, async_mode
 					)
-				)
-			into 
-				l_workers_completed
-			from 
-				workers_completed
+				select 
+					array_agg(
+						jsonb_build_object(
+							'num'
+							, worker_num
+							, 'name'
+							, ${stagingSchemaName}.f_parallel_worker_name(
+								i_context_id => i_context_id
+								, i_operation_instance_id => i_operation_instance_id
+								, i_worker_num => worker_num
+							)
+							, 'async_mode'
+							, async_mode
+						)
+					)
+				into 
+					l_workers_completed
+				from 
+					workers_completed
+				;
+			else
+				l_workers_completed := l_workers_opened
+				;
+			end if
 			;
 		
 			if cardinality(l_workers_completed) > 0 then
-				raise notice 'Have gotten the completion notification';
-				
 				foreach l_worker in array l_workers_completed
 				loop
 					if (l_worker->>'async_mode')::boolean then
@@ -129,12 +151,28 @@ begin
 								l_worker->>'name'
 							) as res(val text)
 						;
-					end if;
-				end loop;
+					
+						if not i_use_notifications then
+							update 
+								${stagingSchemaName}.parallel_worker
+							set 
+								start_time = null
+							where
+								context_id = i_context_id
+								and operation_instance_id = i_operation_instance_id
+								and worker_num = (l_worker->>'num')::integer
+							;
+						end if
+						;					
+					end if
+					;
+				end loop
+				;
 			
 				if i_wait_for_the_first_one_to_complete then
 					return 
-						true;
+						true
+					;
 				else 
 					if not exists (
 						select 
@@ -149,16 +187,22 @@ begin
 					)  
 					then 
 						return 
-							true;
-					end if;
-				end if;
-			end if;
+							true
+						;
+					end if
+					;
+				end if
+				;
+			end if
+			;
 		
-			call ${mainSchemaName}.p_delay_execution(
-				i_delay_interval => i_polling_interval
-				, i_max_run_time => i_max_run_time
-				, i_start_timestamp => l_start_timestamp
-			);	
+			call 
+				${mainSchemaName}.p_delay_execution(
+					i_delay_interval => i_polling_interval
+					, i_max_run_time => i_max_run_time
+					, i_start_timestamp => l_start_timestamp
+				)
+			;	
 		
 			<<asking_for_an_error>>
 			foreach l_worker in array l_workers_opened
@@ -172,9 +216,12 @@ begin
 							l_worker_name
 						) = 1 
 					then
-						continue asking_for_an_error; 	
-					end if;		
-				end if;
+						continue asking_for_an_error
+						; 	
+					end if
+					;		
+				end if
+				;
 			
 				l_err_msg := 
 					nullif(
@@ -194,49 +241,58 @@ begin
 								l_worker->>'name'
 							)
 						;
-					end loop cancelling_the_task;
+					end loop cancelling_the_task
+					;
 				
 					raise exception 
 						'Parallel worker % failure: %'
 						, l_worker_name
 						, l_err_msg
 					;
-				end if;
-			end loop asking_for_an_error;
+				end if
+				;
+			end loop asking_for_an_error
+			;
 		
 			-- Listener activity imitation
-			if i_listener_worker is not null then
+			if i_notification_listener_worker is not null then
 				perform 
 					${dbms_extension.dblink.schema}.dblink_exec(
-						i_listener_worker
+						i_notification_listener_worker
 						, format(
 							$plpgsql$do $$ begin perform 'Listening the channel %s'; end $$$plpgsql$
 							, i_notification_channel
 						)
 					)
 				;
-			end if;		
+			end if
+			;		
 		
 			-- The main process additional activity imitation
 			perform 
 				'Waiting for the parallel processes to complete...'
 			;
-		end loop waiting_for_completion;
-	end if;
+		end loop waiting_for_completion
+		;
+	end if
+	;
 
 	return 
 		false
 	;
 end
-$function$;	
+$function$
+;	
 
-comment on function ${stagingSchemaName}.f_wait_for_parallel_process_completion(
-	${stagingSchemaName}.parallel_worker.context_id%type
-	, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
-	, boolean
-	, name
-	, name
-	, interval
-	, interval
-) is 'Параллельная обработка. Ожидать завершения рабочего процесса'
+comment on function 
+	${stagingSchemaName}.f_wait_for_parallel_process_completion(
+		${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, boolean
+		, boolean
+		, name
+		, name
+		, interval
+		, interval
+	) is 'Параллельная обработка. Ожидать завершения рабочего процесса'
 ;
