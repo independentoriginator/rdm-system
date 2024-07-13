@@ -53,6 +53,7 @@ begin
 						${mainSchemaName}.v_sys_table_size t
 					where 
 						t.schema_name = any(string_to_array(%L, ','))
+						and (t.schema_name, t.table_name) <> ('ng_staging', 'parallel_worker')
 					order by 
 						t.n_total_relation_size desc
 					$sql$
