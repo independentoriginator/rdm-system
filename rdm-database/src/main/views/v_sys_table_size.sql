@@ -21,17 +21,73 @@ from (
 			when 'm'::"char" then 'materialized view'
 			else 'table'			
 		end as sys_obj_type
-		, pg_catalog.pg_relation_size(t.oid) as relation_size
-		, pg_catalog.pg_table_size(t.oid) as table_size
-		, pg_catalog.pg_indexes_size(t.oid) as indexes_size
-		, pg_catalog.pg_total_relation_size(t.oid) as total_relation_size
+		, t.relation_size
+		, t.table_size
+		, t.indexes_size
+		, t.total_relation_size
 		, t.oid as table_id
-	from 
-		pg_catalog.pg_class t
+	from (
+		select 
+			t.relnamespace
+			, t.oid
+			, t.relname
+			, t.relkind
+			, pg_catalog.pg_relation_size(t.oid) as relation_size
+			, pg_catalog.pg_table_size(t.oid) as table_size
+			, pg_catalog.pg_indexes_size(t.oid) as indexes_size
+			, pg_catalog.pg_total_relation_size(t.oid) as total_relation_size
+		from (
+			select 
+				t.relnamespace
+				, t.oid
+				, t.relname
+				, t.relkind
+			from 
+				pg_catalog.pg_class t
+			where
+				t.relkind = any('{r, m}'::"char"[])
+			except 
+			select 
+				p.relnamespace
+				, p.oid
+				, p.relname
+				, p.relkind
+			from 
+				pg_catalog.pg_class p
+			join pg_catalog.pg_inherits i 
+				on i.inhrelid = p.oid	
+			join pg_catalog.pg_class t
+				on t.oid = i.inhparent
+				and t.relkind = 'p'::"char"
+			where 
+				t.relkind = 'r'::"char"
+		) t 
+		union all
+		select 
+			t.relnamespace
+			, t.oid
+			, t.relname
+			, t.relkind
+			, sum(pg_catalog.pg_relation_size(p.oid))::bigint as relation_size
+			, sum(pg_catalog.pg_table_size(p.oid))::bigint as table_size
+			, sum(pg_catalog.pg_indexes_size(p.oid))::bigint as indexes_size
+			, sum(pg_catalog.pg_total_relation_size(p.oid))::bigint as total_relation_size
+		from 
+			pg_catalog.pg_class t
+		join pg_catalog.pg_inherits i 
+			on i.inhparent = t.oid	
+		join pg_catalog.pg_class p
+			on p.oid = i.inhrelid
+		where
+			t.relkind = 'p'::"char"
+		group by
+			t.relnamespace
+			, t.oid
+			, t.relname
+			, t.relkind
+	) t
 	join pg_catalog.pg_namespace n
 		on n.oid = t.relnamespace
-	where
-		t.relkind in ('r'::"char", 'p'::"char", 'm'::"char")
 ) t
 ;
 
