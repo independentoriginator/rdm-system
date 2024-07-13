@@ -58,7 +58,21 @@ begin
 						${mainSchemaName}.v_sys_table_size t
 					where 
 						t.schema_name = any(string_to_array(%L, ','))
-						and (t.schema_name, t.table_name) <> ('ng_staging', 'parallel_worker')						
+						and t.table_id not in (
+							select 
+								o.obj_id							
+							from 
+								${mainSchemaName}.v_sys_obj o
+							where 
+								(
+									o.obj_schema = '${mainSchemaName}'
+									and o.obj_name = 'meta_schema'
+								)
+								or (
+									o.obj_schema = '${stagingSchemaName}'
+									and o.obj_name = 'parallel_worker'
+								) 
+						)
 					order by 
 						t.n_total_relation_size desc
 					$sql$
