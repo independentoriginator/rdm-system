@@ -335,6 +335,7 @@ begin
 															'\n	select'
 															'\n		current_table.obj_name as current_table_name'
 															'\n		, shadow_table.obj_name as shadow_table_name'
+															'\n		, old_partition.obj_name as old_partition_name'
 															'\n		, p.partition_bound_spec'
 															'\n	from'
 															'\n		${stagingSchemaName}.materialized_view_partition p'
@@ -342,10 +343,14 @@ begin
 															'\n		on current_table.obj_id = p.current_table_id'
 															'\n	left join ${mainSchemaName}.v_sys_obj shadow_table'
 															'\n		on shadow_table.obj_id = p.shadow_table_id'
+															'\n	left join ${mainSchemaName}.v_sys_table_partition old_partition'
+															'\n		on old_partition.schema_name = %L'
+															'\n		and old_partition.table_name = %L'
+															'\n		and old_partition.partition_table_id = p.shadow_table_id'
 															'\n	where'
 															'\n		p.meta_view_id = l_meta_view_id'
 															'\n) loop'
-															'\n	if l_partition.shadow_table_name is not null then'
+															'\n	if l_partition.old_partition_name is not null then'
 															'\n		execute'
 															'\n			format($ddl$'
 															'\n				alter table'
@@ -354,9 +359,12 @@ begin
 															'\n					%I.%%I'
 															'\n				;'
 															'\n				$ddl$'
-															'\n				, l_partition.shadow_table_name'
+															'\n				, l_partition.old_partition_name'
 															'\n			)'
 															'\n		;'
+															'\n	end if'
+															'\n	;'
+															'\n	if l_partition.shadow_table_name is not null then'
 															'\n		execute'
 															'\n			format($ddl$'
 															'\n				truncate'
@@ -384,6 +392,8 @@ begin
 															'\n	;'
 															'\nend loop'
 															'\n;'
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
 															, i_view_rec.schema_name
 															, i_view_rec.internal_name
 															, i_view_rec.schema_name
