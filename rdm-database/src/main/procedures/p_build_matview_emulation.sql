@@ -335,7 +335,7 @@ begin
 															'\n	select'
 															'\n		current_table.obj_name as current_table_name'
 															'\n		, shadow_table.obj_name as shadow_table_name'
-															'\n		, old_partition.obj_name as old_partition_name'
+															'\n		, old_partition.partition_table_name as old_partition_name'
 															'\n		, p.partition_bound_spec'
 															'\n	from'
 															'\n		${stagingSchemaName}.materialized_view_partition p'
