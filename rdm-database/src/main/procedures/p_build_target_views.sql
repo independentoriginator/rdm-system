@@ -125,20 +125,29 @@ begin
 			) as mv_emulation_refresh_procedures_drop_cmd
 			, (
 				select 
-					string_agg(
-						${mainSchemaName}.f_sys_obj_drop_command(
-							i_obj_class => shadow_table.obj_class
-							, i_obj_id => shadow_table.obj_id
-							, i_check_existence => true							
-						)		
-						, E';\n'
-					)	
+					concat_ws(
+						E';\n'
+						, string_agg(
+							${mainSchemaName}.f_sys_obj_drop_command(
+								i_obj_class => shadow_table.obj_class
+								, i_obj_id => shadow_table.obj_id
+								, i_check_existence => true							
+							)		
+							, E';\n'
+						)
+						, format(
+							'delete from ${stagingSchemaName}.materialized_view_partition where meta_view_id = %s'
+							, p.meta_view_id
+						)
+					)
 				from 
 					${stagingSchemaName}.materialized_view_partition p
 				join ${mainSchemaName}.v_sys_obj shadow_table
 					on shadow_table.obj_id = p.shadow_table_id
 				where 
 					p.meta_view_id = v.id
+				group by 
+					p.meta_view_id
 			) as mv_emulation_shadow_tables_drop_cmd
 		from
 			${mainSchemaName}.v_meta_view v
