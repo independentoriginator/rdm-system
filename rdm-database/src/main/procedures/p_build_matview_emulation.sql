@@ -331,6 +331,10 @@ begin
 													i_text =>
 														format(
 															E'\n\n-- partitioned table composing/recomposing'
+															'\nlock table'
+															'\n	%I.%I'
+															'\nin access exclusive mode'
+															'\n;'
 															'\nfor l_partition in ('
 															'\n	select'
 															'\n		current_table.obj_name as current_table_name'
@@ -392,6 +396,8 @@ begin
 															'\n	;'
 															'\nend loop'
 															'\n;'
+															, i_view_rec.schema_name
+															, i_view_rec.internal_name
 															, i_view_rec.schema_name
 															, i_view_rec.internal_name
 															, i_view_rec.schema_name
