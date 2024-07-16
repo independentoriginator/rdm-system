@@ -54,6 +54,18 @@ declare
 	l_user name := session_user;
 	l_start_timestamp timestamp := clock_timestamp();
 begin
+	delete from 	
+		ng_staging.parallel_worker
+	where 
+		context_id = i_context_id
+		and operation_instance_id = i_operation_instance_id
+		and worker_num > i_max_worker_processes
+		and (
+			start_time is null
+			or clock_timestamp() - start_time >= i_max_run_time
+		)
+	;		
+	
 	<<waiting_for_available_worker>>
 	loop
 		l_is_new_worker := true;
