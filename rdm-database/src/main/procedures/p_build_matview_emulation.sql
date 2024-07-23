@@ -10,7 +10,7 @@ begin
 	for l_sttmnt in (
 		select 
 			case 
-				when view_query[1] is not null then
+				when t.view_query is not null then
 					concat_ws(
 						E';\n'
 						-- creation of a table that will replace the materialized view  
@@ -33,7 +33,7 @@ begin
 									'
 									, i_view_rec.internal_name
 									, i_view_rec.schema_name
-									, view_query[1]
+									, t.view_query
 									, i_view_rec.schema_name
 									, i_view_rec.internal_name
 									, i_view_rec.internal_name
@@ -52,7 +52,7 @@ begin
 									'
 									, i_view_rec.schema_name
 									, i_view_rec.internal_name
-									, view_query[1]
+									, t.view_query
 								)
 						end
 						-- creation of a service table that will contain a list of filled chunks
@@ -133,7 +133,7 @@ begin
 															, i_view_rec.schema_name
 															, i_view_rec.internal_name
 															, ${mainSchemaName}.f_indent_text(
-																i_text => view_query[1]
+																i_text => t.view_query
 																, i_indentation_level => 1
 															)																
 														)
@@ -142,7 +142,7 @@ begin
 															E'insert into %I.%I\n%s\n;'
 															, i_view_rec.schema_name
 															, i_view_rec.internal_name
-															, view_query[1]
+															, t.view_query
 														)
 												end
 											)
@@ -895,96 +895,120 @@ begin
 					)
 				else
 					regexp_replace(
-						sttmnt[1]
+						t.sttmnt
 					 	, 'materialized view'
 					 	, 'table'
 					 	, 'i'
 					)
 			end as ddl_sttmnt
-			, (view_query[1] is not null) is_matview_query
-		from 
-			regexp_matches(
-				i_view_rec.query
-				, '(.+?);'  
-				, 'g'
-			) as sttmnt
-			, regexp_match(
-				sttmnt[1]
-				, '\s*create materialized view\s+.+?as\s+(.+?)(?:\s*(?:with\s+no\s+data|with\s+data)\s*)?' 
-				, 'i'
-			) as view_query
-			, regexp_match(
-				view_query[1]
-				, '(\/\*\s*\#chunking_filter\:\s*.+?\s*\*\/){1,1}?' 
-				, 'i'
-			) as chunking_filter_marker
-			, regexp_match(
-				chunking_filter_marker[1]
-				, '\/\*\s*\#chunking_filter\:\s*(.+?)\s*\*\/' 
-				, 'i'
-			) as chunking_filter_expr
-			, regexp_match(
-				view_query[1]
-				, '(\/\*\s*\#chunk_row_limit\:\s*.+?\s*\*\/){1,1}?' 
-				, 'i'
-			) as chunk_row_limit_marker
-			, regexp_match(
-				chunk_row_limit_marker[1]
-				, '\/\*\s*\#chunk_row_limit\:\s*(.+?)\s*\*\/' 
-				, 'i'
-			) as chunk_row_limit_expr
-			, coalesce(
-				replace(
-					view_query[1]
-				 	, chunking_filter_marker[1]
-				 	, chunking_filter_expr[1]
-				)
-				, ${mainSchemaName}.f_indent_text(
-					i_text => 
-						format(
-							E'select *'
-							'\nfrom ('
-							'\n\t%s'
-							'\n) t'
-							'\nwhere'
-							'\n\t%s = any(%s)'
-							, view_query[1]
-							, i_view_rec.mv_emulation_chunking_field
-							, i_view_rec.mv_emulation_refresh_proc_param
-						)
-					, i_indentation_level => 1
-				)
-			) as query_with_chunking_filter
-			, coalesce(
-				replace(
-					query_with_chunking_filter
-					, chunk_row_limit_marker[1]
-					, chunk_row_limit_expr[1]
-				)
-				, query_with_chunking_filter
-				|| case 
-					when i_view_rec.has_unique_index and view_query[1] not ilike '%order by%' then 
-						format(
-							E'\norder by'
-							'\n	%s'
-							, i_view_rec.unique_index_columns
-						)
-						|| case 
-							when i_view_rec.mv_emulation_chunking_field is null then
-								E'\nlimit'
-								'\n	l_row_limit'
-								'\noffset'
-								'\n	l_row_offset'
-							else
-								E'\nlimit'
-								'\n	i_row_limit'
-								'\noffset'
-								'\n	i_row_offset'
-						end
-					else 
-						''
-				end
-			) as target_query
+			, (t.view_query is not null) is_matview_query
+		from (
+			select 
+				t.sttmnt
+				, t.view_query
+			 	, array_agg(t.chunking_filter_marker) as chunking_filter_marker
+			 	, array_agg(t.chunking_filter_expr) as chunking_filter_expr
+				, t.chunk_row_limit_marker
+				, t.chunk_row_limit_expr
+			from (
+				select 
+					sttmnt[1] as sttmnt
+					, view_query[1] as view_query
+				 	, chunking_filter_marker[1] as chunking_filter_marker
+				 	, chunking_filter_expr[1] as chunking_filter_expr
+					, chunk_row_limit_marker[1] as chunk_row_limit_marker
+					, chunk_row_limit_expr[1] as chunk_row_limit_expr
+				from  
+					regexp_matches(
+						i_view_rec.query
+						, '(.+?);'  
+						, 'g'
+					) as sttmnt
+					, regexp_match(
+						sttmnt[1]
+						, '\s*create materialized view\s+.+?as\s+(.+?)(?:\s*(?:with\s+no\s+data|with\s+data)\s*)?' 
+						, 'i'
+					) as view_query
+					, regexp_matches(
+						view_query[1]
+						, '(\/\*\s*\#chunking_filter\:\s*.+?\s*\*\/){1,1}?' 
+						, 'ig'
+					) as chunking_filter_marker
+					, regexp_match(
+						chunking_filter_marker[1]
+						, '\/\*\s*\#chunking_filter\:\s*(.+?)\s*\*\/' 
+						, 'i'
+					) as chunking_filter_expr
+					, regexp_match(
+						view_query[1]
+						, '(\/\*\s*\#chunk_row_limit\:\s*.+?\s*\*\/){1,1}?' 
+						, 'i'
+					) as chunk_row_limit_marker
+					, regexp_match(
+						chunk_row_limit_marker[1]
+						, '\/\*\s*\#chunk_row_limit\:\s*(.+?)\s*\*\/' 
+						, 'i'
+					) as chunk_row_limit_expr
+			) t
+			group by 
+				t.sttmnt
+				, t.view_query
+				, t.chunk_row_limit_marker
+				, t.chunk_row_limit_expr
+		) t
+		, coalesce(
+			${stagingSchemaName}.f_substitute(
+				i_text => t.view_query
+				, i_keys => t.chunking_filter_marker
+				, i_values => t.chunking_filter_expr
+				, i_quote_value => false
+			)
+			, ${mainSchemaName}.f_indent_text(
+				i_text => 
+					format(
+						E'select *'
+						'\nfrom ('
+						'\n\t%s'
+						'\n) t'
+						'\nwhere'
+						'\n\t%s = any(%s)'
+						, t.view_query
+						, i_view_rec.mv_emulation_chunking_field
+						, i_view_rec.mv_emulation_refresh_proc_param
+					)
+				, i_indentation_level => 1
+			)
+		) as query_with_chunking_filter
+		, coalesce(
+			replace(
+				query_with_chunking_filter
+				, chunk_row_limit_marker
+				, chunk_row_limit_expr
+			)
+			, query_with_chunking_filter
+			|| case 
+				when i_view_rec.has_unique_index and view_query not ilike '%order by%' then 
+					format(
+						E'\norder by'
+						'\n	%s'
+						, i_view_rec.unique_index_columns
+					)
+					|| case 
+						when i_view_rec.mv_emulation_chunking_field is null then
+							E'\nlimit'
+							'\n	l_row_limit'
+							'\noffset'
+							'\n	l_row_offset'
+						else
+							E'\nlimit'
+							'\n	i_row_limit'
+							'\noffset'
+							'\n	i_row_offset'
+					end
+				else 
+					''
+			end
+		) as target_query
 	) 
 	loop
 		raise notice 
