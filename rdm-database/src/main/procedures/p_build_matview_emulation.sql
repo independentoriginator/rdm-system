@@ -905,6 +905,7 @@ begin
 		from (
 			select 
 				t.sttmnt
+				, t.ordinal_num
 				, t.view_query
 			 	, array_agg(t.chunking_filter_marker) as chunking_filter_marker
 			 	, array_agg(t.chunking_filter_expr) as chunking_filter_expr
@@ -912,7 +913,8 @@ begin
 				, t.chunk_row_limit_expr
 			from (
 				select 
-					sttmnt[1] as sttmnt
+					sttmnt.expr[1] as sttmnt
+					, sttmnt.ordinal_num
 					, view_query[1] as view_query
 				 	, chunking_filter_marker[1] as chunking_filter_marker
 				 	, chunking_filter_expr[1] as chunking_filter_expr
@@ -923,35 +925,42 @@ begin
 						i_view_rec.query
 						, '(.+?);'  
 						, 'g'
-					) as sttmnt
-					, regexp_match(
-						sttmnt[1]
-						, '\s*create materialized view\s+.+?as\s+(.+?)(?:\s*(?:with\s+no\s+data|with\s+data)\s*)?' 
-						, 'i'
-					) as view_query
-					, regexp_matches(
-						view_query[1]
-						, '(\/\*\s*\#chunking_filter\:\s*.+?\s*\*\/){1,1}?' 
-						, 'ig'
-					) as chunking_filter_marker
-					, regexp_match(
-						chunking_filter_marker[1]
-						, '\/\*\s*\#chunking_filter\:\s*(.+?)\s*\*\/' 
-						, 'i'
-					) as chunking_filter_expr
-					, regexp_match(
-						view_query[1]
-						, '(\/\*\s*\#chunk_row_limit\:\s*.+?\s*\*\/){1,1}?' 
-						, 'i'
-					) as chunk_row_limit_marker
-					, regexp_match(
-						chunk_row_limit_marker[1]
-						, '\/\*\s*\#chunk_row_limit\:\s*(.+?)\s*\*\/' 
-						, 'i'
-					) as chunk_row_limit_expr
+					) with ordinality as sttmnt(expr, ordinal_num)
+					cross join lateral 
+						regexp_match(
+							sttmnt.expr[1]
+							, '\s*create materialized view\s+.+?as\s+(.+?)(?:\s*(?:with\s+no\s+data|with\s+data)\s*)?' 
+							, 'i'
+						) as view_query
+					left join lateral 
+						regexp_matches(
+							view_query[1]
+							, '(\/\*\s*\#chunking_filter\:\s*.+?\s*\*\/){1,1}?' 
+							, 'ig'
+						) as chunking_filter_marker
+							on true
+					cross join lateral
+						regexp_match(
+							chunking_filter_marker[1]
+							, '\/\*\s*\#chunking_filter\:\s*(.+?)\s*\*\/' 
+							, 'i'
+						) as chunking_filter_expr
+					cross join lateral
+						regexp_match(
+							view_query[1]
+							, '(\/\*\s*\#chunk_row_limit\:\s*.+?\s*\*\/){1,1}?' 
+							, 'i'
+						) as chunk_row_limit_marker
+					cross join lateral
+						regexp_match(
+							chunk_row_limit_marker[1]
+							, '\/\*\s*\#chunk_row_limit\:\s*(.+?)\s*\*\/' 
+							, 'i'
+						) as chunk_row_limit_expr
 			) t
 			group by 
 				t.sttmnt
+				, t.ordinal_num
 				, t.view_query
 				, t.chunk_row_limit_marker
 				, t.chunk_row_limit_expr
@@ -1009,6 +1018,8 @@ begin
 					''
 			end
 		) as target_query
+		order by 
+			t.ordinal_num
 	) 
 	loop
 		raise notice 
