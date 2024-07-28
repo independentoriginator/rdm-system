@@ -18,7 +18,7 @@ drop procedure if exists p_sys_reindex_tables(
 
 create or replace procedure 
 	p_sys_reindex_tables(
-		i_schema_name name[] 
+		i_schema_name name[] = null
 		, i_concurrently boolean = false
 		, i_max_worker_processes integer = ${max_parallel_worker_processes}
 		, i_max_run_time interval = '8 hours'
