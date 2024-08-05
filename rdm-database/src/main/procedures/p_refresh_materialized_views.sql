@@ -123,7 +123,7 @@ begin
 			, i_max_worker_processes => i_max_worker_processes
 			, i_polling_interval => i_polling_interval
 			, i_max_run_time => i_max_run_time
-			, i_close_process_pool_on_completion => false
+			, i_close_process_pool_on_completion => true
 		)
 	;
 end
