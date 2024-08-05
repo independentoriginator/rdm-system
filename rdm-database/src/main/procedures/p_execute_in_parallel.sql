@@ -421,16 +421,22 @@ begin
 		if i_close_process_pool_on_completion then 
 			for l_worker in (
 				select 
-					${stagingSchemaName}.f_parallel_worker_name(
-						i_context_id => i_context_id
-						, i_operation_instance_id => i_operation_instance_id
-						, i_worker_num => worker_num
-					)
-				from 
-					${stagingSchemaName}.parallel_worker
-				where 
-					context_id = i_context_id
-					and operation_instance_id = i_operation_instance_id
+					pw.worker_name
+				from (
+					select 
+						${stagingSchemaName}.f_parallel_worker_name(
+							i_context_id => i_context_id
+							, i_operation_instance_id => i_operation_instance_id
+							, i_worker_num => worker_num
+						) as worker_name
+					from 
+						${stagingSchemaName}.parallel_worker
+					where 
+						context_id = i_context_id
+						and operation_instance_id = i_operation_instance_id
+				) pw
+				join unnest(${dbms_extension.dblink.schema}.dblink_get_connections()) conn(name)
+					on conn.name = pw.worker_name
 			)
 			loop
 				perform
