@@ -310,7 +310,7 @@ begin
 														i_text => 
 															format(
 																E'\nexcept'
-																'\nselect'
+																'\nselect distinct'
 																'\n	%s'
 																'\nfrom'
 																'\n	%I.%I_chunk'
@@ -318,7 +318,7 @@ begin
 																, i_view_rec.schema_name
 																, i_view_rec.internal_name
 															)
-														, i_indentation_level => 7
+														, i_indentation_level => 8
 													)
 												)
 											else ''
@@ -780,7 +780,7 @@ begin
 															'\n		%s'
 															'\n	)'
 															'\nselect'
-															'\n	c.id'
+															'\n	id'
 															'\nfrom'
 															'\n	unnest(%s) chunk(id)'
 															'\non conflict (%s)'
@@ -801,61 +801,160 @@ begin
 						end
 						-- generation of a trigger function for the master table within the registered chunk dependence
 						, case 
-							when i_view_rec.is_mv_emulation_chunk_validated is null then (
+							when i_view_rec.is_mv_emulation_chunk_validated then (
 								select 
 									string_agg(
-										format(
-											E'create or replace function %I.trf_%I_%s_invalidate()'
-											'\nreturns trigger'
-											'\nlanguage plpgsql'
-											'\nas $$'
-											'\nbegin'
-											'\n	delete from'
-											'\n		%I.%I_chunk chunk'
-											'\n	where'
-											'\n		exists ('
-											'\n			select'
-											'\n				1'
-											'\n			from'
-											'\n				old_table t'
-											'\n			where'
-											'\n				t.%s = chunk.%s'
-											'\n		)'
-											'\n		or exists ('
-											'\n			select'
-											'\n				1'
-											'\n			from'
-											'\n				new_table t'
-											'\n			where'
-											'\n				t.%s = chunk.%s'
-											'\n		)'
-											'\n	;'
-											'\n	return'
-											'\n		null'
-											'\n	;'
-											'\nend'
-											'\n$$;'
-											'\ncreate trigger tr_%I_after'
-											'\nafter insert or update or delete'
-											'\non %I.%I'
-											'\nreferencing new table as new_table old table as old_table'
-											'\nfor each statement'
-											'\nexecute function %I.trf_%I_%s_invalidate();'	
-											, dep.master_table_schema
-											, dep.master_table_name
-											, dep.dependent_view_abbr
-											, i_view_rec.schema_name
-											, i_view_rec.internal_name
-											, dep.master_chunk_field
-											, i_view_rec.mv_emulation_chunking_field
-											, dep.master_chunk_field
-											, i_view_rec.mv_emulation_chunking_field
-											, dep.master_table_name
-											, dep.master_table_schema
-											, dep.master_table_name
-											, dep.master_table_schema
-											, dep.master_table_name
-											, dep.dependent_view_abbr
+										concat_ws(
+											E';\n'
+											, format(
+												E'create or replace function %I.trf_%I_%s_on_ins()'
+												'\nreturns trigger'
+												'\nlanguage plpgsql'
+												'\nas $$'
+												'\nbegin'
+												'\n	delete from'
+												'\n		%I.%I_chunk chunk'
+												'\n	where'
+												'\n		exists ('
+												'\n			select'
+												'\n				1'
+												'\n			from'
+												'\n				new_table t'
+												'\n			where'
+												'\n				t.%s %s chunk.%s'
+												'\n		)'
+												'\n	;'
+												'\n	return'
+												'\n		null'
+												'\n	;'
+												'\nend'
+												'\n$$'
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.dependent_view_abbr
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, dep.master_chunk_field
+												, dep.comparison_operator
+												, i_view_rec.mv_emulation_chunking_field
+											)
+											, format(
+												E'create trigger tr_%I_on_ins'
+												'\nafter insert'
+												'\non %I.%I'
+												'\nreferencing new table as new_table'
+												'\nfor each statement'
+												'\nexecute function %I.trf_%I_%s_on_ins()'
+												, dep.master_table_name
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.dependent_view_abbr
+											)
+											, format(
+												E'create or replace function %I.trf_%I_%s_on_upd()'
+												'\nreturns trigger'
+												'\nlanguage plpgsql'
+												'\nas $$'
+												'\nbegin'
+												'\n	delete from'
+												'\n		%I.%I_chunk chunk'
+												'\n	where'
+												'\n		exists ('
+												'\n			select'
+												'\n				1'
+												'\n			from'
+												'\n				old_table t'
+												'\n			where'
+												'\n				t.%s %s chunk.%s'
+												'\n		)'
+												'\n		or exists ('
+												'\n			select'
+												'\n				1'
+												'\n			from'
+												'\n				new_table t'
+												'\n			where'
+												'\n				t.%s %s chunk.%s'
+												'\n		)'
+												'\n	;'
+												'\n	return'
+												'\n		null'
+												'\n	;'
+												'\nend'
+												'\n$$'
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.dependent_view_abbr
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, dep.master_chunk_field
+												, dep.comparison_operator
+												, i_view_rec.mv_emulation_chunking_field
+												, dep.master_chunk_field
+												, dep.comparison_operator
+												, i_view_rec.mv_emulation_chunking_field
+											)
+											, format(
+												E'create trigger tr_%I_on_upd'
+												'\nafter update'
+												'\non %I.%I'
+												'\nreferencing new table as new_table old table as old_table'
+												'\nfor each statement'
+												'\nexecute function %I.trf_%I_%s_on_upd()'
+												, dep.master_table_name
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.dependent_view_abbr
+											)
+											, format(
+												E'create or replace function %I.trf_%I_%s_on_del()'
+												'\nreturns trigger'
+												'\nlanguage plpgsql'
+												'\nas $$'
+												'\nbegin'
+												'\n	delete from'
+												'\n		%I.%I_chunk chunk'
+												'\n	where'
+												'\n		exists ('
+												'\n			select'
+												'\n				1'
+												'\n			from'
+												'\n				old_table t'
+												'\n			where'
+												'\n				t.%s %s chunk.%s'
+												'\n		)'
+												'\n	;'
+												'\n	return'
+												'\n		null'
+												'\n	;'
+												'\nend'
+												'\n$$'
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.dependent_view_abbr
+												, i_view_rec.schema_name
+												, i_view_rec.internal_name
+												, dep.master_chunk_field
+												, dep.comparison_operator
+												, i_view_rec.mv_emulation_chunking_field
+											)
+											, format(
+												E'create trigger tr_%I_on_del'
+												'\nafter delete'
+												'\non %I.%I'
+												'\nreferencing old table as old_table'
+												'\nfor each statement'
+												'\nexecute function %I.trf_%I_%s_on_del()'	
+												, dep.master_table_name
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.master_table_schema
+												, dep.master_table_name
+												, dep.dependent_view_abbr
+											)
 										)
 										, E';\n'
 									)
@@ -863,24 +962,27 @@ begin
 									select 
 										coalesce(mv.schema_name, mt.schema_name) as master_table_schema
 										, coalesce(mv.internal_name, mt.internal_name) as master_table_name
-										, ${mainSchemaName}.f_abbreviate_name(
-											i_name =>
-												format(
-													'%I_%I'													
-													, i_view_rec.schema_name
-													, i_view_rec.internal_name
-												)
-											, i_adjust_to_max_length => true
-											, i_max_length => 
-												${mainSchemaName}.f_system_name_max_length()
-												- length(
+										, lower(
+											${mainSchemaName}.f_abbreviate_name(
+												i_name =>
 													format(
-														'trf_%I__invalidate'
-														, coalesce(mv.internal_name, mt.internal_name)
+														'%I_%I'													
+														, i_view_rec.schema_name
+														, i_view_rec.internal_name
 													)
-												)				
+												, i_adjust_to_max_length => true
+												, i_max_length => 
+													${mainSchemaName}.f_system_name_max_length()
+													- length(
+														format(
+															'trf_%I__on_ins'
+															, coalesce(mv.internal_name, mt.internal_name)
+														)
+													)				
+											)
 										) as dependent_view_abbr
 										, dep.master_chunk_field
+										, dep.comparison_operator
 									from									
 										${mainSchemaName}.meta_view_chunk_dependency dep
 									left join ${mainSchemaName}.v_meta_view mv

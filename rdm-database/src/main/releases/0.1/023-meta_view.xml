@@ -713,6 +713,16 @@
 		
 	</changeSet>     
 	
+	<changeSet id="meta_view_chunk_dependency: comparison_operator" author="${default_author}">
+
+		<addColumn tableName="meta_view_chunk_dependency">
+			<column name="comparison_operator" type="${type.internal_name}" remarks="Comparison operator" defaultValue="=">
+				<constraints nullable="false" />
+			</column>
+		</addColumn>
+		
+	</changeSet>
+	
 	<changeSet id="materialized_view_refresh_duration" author="${default_author}">
 	
 		<createTable
