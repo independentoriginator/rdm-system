@@ -26,6 +26,22 @@ drop function if exists
 	)
 ;
 
+drop function if exists 
+	${stagingSchemaName}.f_launch_parallel_worker(
+		text
+		, boolean
+		, ${stagingSchemaName}.parallel_worker.extra_info%type
+		, ${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, boolean
+		, name
+		, name
+		, integer
+		, interval
+		, interval
+	)
+;
+
 create or replace function 
 	${stagingSchemaName}.f_launch_parallel_worker(
 		i_command text
@@ -39,6 +55,7 @@ create or replace function
 		, i_max_worker_processes integer = ${max_parallel_worker_processes}
 		, i_polling_interval interval = '10 seconds'
 		, i_max_run_time interval = '8 hours'
+		, i_application_name name = '${project_internal_name}'
 	)
 returns name
 language plpgsql
@@ -230,9 +247,10 @@ begin
 			${dbms_extension.dblink.schema}.dblink_connect_u(
 				l_worker_name
 				, format(
-					'dbname=%s user=%s'
+					'dbname=%s user=%s application_name=%s'
 					, l_db
 					, l_user
+					, i_application_name
 				)
 			)
 		;
@@ -306,5 +324,6 @@ comment on function
 		, integer
 		, interval
 		, interval
+		, name
 	) is 'Параллельная обработка. Запустить рабочий процесс многопоточной операции'
 ;

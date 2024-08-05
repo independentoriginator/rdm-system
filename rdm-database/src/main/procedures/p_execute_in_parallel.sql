@@ -210,6 +210,20 @@ drop procedure if exists
 	)
 ;
 
+drop procedure if exists 
+	${stagingSchemaName}.p_execute_in_parallel(
+		text
+		, text
+		, ${stagingSchemaName}.parallel_worker.context_id%type 
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, boolean
+		, integer
+		, interval
+		, interval
+		, boolean
+	)
+;
+
 create or replace procedure 
 	${stagingSchemaName}.p_execute_in_parallel(
 		i_command_list_query text
@@ -221,6 +235,7 @@ create or replace procedure
 		, i_polling_interval interval = '10 seconds'
 		, i_max_run_time interval = '8 hours'
 		, i_close_process_pool_on_completion boolean = true
+		, i_application_name name = '${project_internal_name}' 
 	)
 language plpgsql
 as $procedure$
@@ -292,6 +307,7 @@ begin
 					, i_max_worker_processes => i_max_worker_processes
 					, i_polling_interval => i_polling_interval
 					, i_max_run_time => i_max_run_time
+					, i_application_name => i_application_name
 				)
 			;
 		
@@ -333,6 +349,7 @@ begin
 						, i_max_worker_processes => i_max_worker_processes
 						, i_polling_interval => i_polling_interval
 						, i_max_run_time => i_max_run_time
+						, i_application_name => i_application_name
 					)
 				;
 			end loop commands
@@ -470,6 +487,7 @@ comment on procedure
 		, interval
 		, interval
 		, boolean
+		, name
 	) is 'Исполнение набора команд в параллельном режиме'
 ;
 
