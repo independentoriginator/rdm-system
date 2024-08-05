@@ -220,6 +220,14 @@ begin
 						; 	
 					end if
 					;		
+				
+					perform
+					from
+						${dbms_extension.dblink.schema}.dblink_get_result(
+							l_worker_name
+							, false
+						) as res(val text)
+					;
 				end if
 				;
 			
@@ -236,9 +244,19 @@ begin
 					<<cancelling_the_task>>
 					foreach l_worker in array l_workers_opened
 					loop
+						l_worker_name := l_worker->>'name'
+						;
+					
 						perform
 							${dbms_extension.dblink.schema}.dblink_cancel_query(
-								l_worker->>'name'
+								l_worker_name
+							)
+						;
+					
+						perform
+						from
+							${dbms_extension.dblink.schema}.dblink_disconnect(
+								l_worker_name
 							)
 						;
 					end loop cancelling_the_task
