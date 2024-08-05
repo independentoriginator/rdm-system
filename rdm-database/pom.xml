@@ -23,6 +23,7 @@
 		
 		<databaseStagingSchemaName>etl_staging</databaseStagingSchemaName>
 		<databaseStagingTableSpace></databaseStagingTableSpace>
+		<databaseEtlRepositorySchemaName>etl_reporitory</databaseEtlRepositorySchemaName>
 		<databaseEtlUserRole></databaseEtlUserRole>
 		<databaseMainEndUserRole></databaseMainEndUserRole>
 	</properties>
@@ -81,6 +82,10 @@
 						<property>
 							<name>stagingTableSpace</name>
 							<value>${databaseStagingTableSpace}</value>
+						</property>
+						<property>
+							<name>etlRepositorySchemaName</name>
+							<value>${databaseEtlRepositorySchemaName}</value>
 						</property>
 						<property>
 							<name>etlUserRole</name>

@@ -66,8 +66,9 @@ begin
 							where 
 								(
 									o.obj_schema = '${mainSchemaName}'
-									and o.obj_name = 'meta_schema'
+									and o.obj_name like 'meta\_%'
 								)
+								or o.obj_schema = '${etlRepositorySchemaName}'
 								or (
 									o.obj_schema = '${stagingSchemaName}'
 									and o.obj_name = 'parallel_worker'
