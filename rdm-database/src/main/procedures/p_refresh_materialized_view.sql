@@ -46,10 +46,18 @@ begin
 			, t.id
 			, case 
 				when t.is_matview_emulation then
-					format(
-						'call %I.p_refresh_%I()'
-						, t.schema_name
-						, t.internal_name
+					concat_ws(
+						E'\n;'
+						, format(
+							'call %I.p_refresh_%I()'
+							, t.schema_name
+							, t.internal_name
+						)
+						, format(
+							'analyze %I.%I'
+							, t.schema_name
+							, t.internal_name
+						)
 					)
 				else
 					${mainSchemaName}.f_materialized_view_refresh_command(
