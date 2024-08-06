@@ -839,7 +839,7 @@ begin
 												, i_view_rec.mv_emulation_chunking_field
 											)
 											, format(
-												E'create trigger tr_%I_on_ins'
+												E'create or replace trigger tr_%I_on_ins'
 												'\nafter insert'
 												'\non %I.%I'
 												'\nreferencing new table as new_table'
@@ -896,14 +896,13 @@ begin
 												, i_view_rec.mv_emulation_chunking_field
 											)
 											, format(
-												E'create trigger tr_%I_on_upd'
-												'\nafter update of %s'
+												E'create or replace trigger tr_%I_on_upd'
+												'\nafter update'
 												'\non %I.%I'
 												'\nreferencing new table as new_table old table as old_table'
 												'\nfor each statement'
 												'\nexecute function %I.trf_%I_%s_on_upd()'
 												, dep.master_table_name
-												, dep.master_chunk_field
 												, dep.master_table_schema
 												, dep.master_table_name
 												, dep.master_table_schema
@@ -943,7 +942,7 @@ begin
 												, i_view_rec.mv_emulation_chunking_field
 											)
 											, format(
-												E'create trigger tr_%I_on_del'
+												E'create or replace trigger tr_%I_on_del'
 												'\nafter delete'
 												'\non %I.%I'
 												'\nreferencing old table as old_table'
