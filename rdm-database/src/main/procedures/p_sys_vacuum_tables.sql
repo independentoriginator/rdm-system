@@ -11,6 +11,16 @@ drop procedure if exists
 	)
 ;
 
+drop procedure if exists 
+	p_sys_vacuum_tables(
+		name[]
+		, boolean
+		, integer
+		, interval
+		, interval
+	)
+;
+
 create or replace procedure 
 	p_sys_vacuum_tables(
 		i_schema_name name[] = null
@@ -18,6 +28,7 @@ create or replace procedure
 		, i_max_worker_processes integer = ${max_parallel_worker_processes}
 		, i_polling_interval interval = '10 seconds'
 		, i_max_run_time interval = '24 hours'
+		, i_exclude_emulated_matviews boolean = false
 	)
 language plpgsql
 as $procedure$
@@ -68,12 +79,25 @@ begin
 									o.obj_schema = '${stagingSchemaName}'
 									and o.obj_name = 'parallel_worker'
 								) 
+								or (
+									%L::boolean
+									and o.obj_id in (
+										select 	
+											v.view_oid
+										from 	
+											${mainSchemaName}.v_meta_view v
+										where
+											v.is_matview_emulation
+											and v.view_oid is not null
+									)
+								)
 						)
 					order by 
 						t.n_total_relation_size desc
 					$sql$
 					, case when i_vacuum_full then 'full, ' else '' end
 					, array_to_string(l_schema_name, ',')
+					, coalesce(i_exclude_emulated_matviews, false)::varchar
 				)
 			, i_context_id => '${mainSchemaName}.p_sys_vacuum_tables'::regproc
 			, i_use_notifications => false
@@ -94,6 +118,7 @@ comment on procedure
 		, integer
 		, interval
 		, interval
+		, boolean
 	) 
 	is 'Вакуумирование таблиц'
 ;
