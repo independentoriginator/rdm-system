@@ -79,7 +79,7 @@ begin
 					, i_check_existence => true
 				)
 				, v.mv_emulation_refresh_procedures_drop_cmd
-				, v.mv_emulation_shadow_tables_drop_cmd
+				, v.mv_emulation_partition_tables_drop_cmd
 				, format(
 					'drop table if exists %I.%I_chunk'
 					, v.schema_name
@@ -128,11 +128,25 @@ begin
 					concat_ws(
 						E';\n'
 						, string_agg(
-							${mainSchemaName}.f_sys_obj_drop_command(
-								i_obj_class => shadow_table.obj_class
-								, i_obj_id => shadow_table.obj_id
-								, i_check_existence => true							
-							)		
+							case 
+								when current_table.obj_id is not null then
+									${mainSchemaName}.f_sys_obj_drop_command(
+										i_obj_class => current_table.obj_class
+										, i_obj_id => current_table.obj_id
+										, i_check_existence => true							
+									)
+							end
+							, E';\n'
+						)
+						, string_agg(
+							case 
+								when shadow_table.obj_id is not null then
+									${mainSchemaName}.f_sys_obj_drop_command(
+										i_obj_class => shadow_table.obj_class
+										, i_obj_id => shadow_table.obj_id
+										, i_check_existence => true							
+									)
+							end
 							, E';\n'
 						)
 						, format(
@@ -142,13 +156,15 @@ begin
 					)
 				from 
 					${stagingSchemaName}.materialized_view_partition p
-				join ${mainSchemaName}.v_sys_obj shadow_table
+				left join ${mainSchemaName}.v_sys_obj current_table
+					on current_table.obj_id = p.current_table_id
+				left join ${mainSchemaName}.v_sys_obj shadow_table
 					on shadow_table.obj_id = p.shadow_table_id
 				where 
 					p.meta_view_id = v.id
 				group by 
 					p.meta_view_id
-			) as mv_emulation_shadow_tables_drop_cmd
+			) as mv_emulation_partition_tables_drop_cmd
 		from
 			${mainSchemaName}.v_meta_view v
 		join ${mainSchemaName}.meta_view mv 
