@@ -199,7 +199,7 @@ begin
 				, true as is_external
 				, d.is_routine
 				, d.is_routine
-				, current_timestamp
+				, ${mainSchemaName}.f_current_timestamp()
 			from 
 				dependency d 
 			left join new_external_schema ns 
@@ -219,7 +219,7 @@ begin
 			set 
 				query = d.external_view_def
 				, is_disabled = false
-				, modification_time = current_timestamp
+				, modification_time = ${mainSchemaName}.f_current_timestamp()
 			from 
 				dependency d
 			where 

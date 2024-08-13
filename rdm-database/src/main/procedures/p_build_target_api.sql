@@ -688,7 +688,7 @@ begin
 		as $procedure$
 		declare 
 			l_data_package record;
-			l_state_change_date timestamp without time zone := current_timestamp;
+			l_state_change_date timestamp without time zone := ${mainSchemaName}.f_current_timestamp();
 			l_data_package_row_count bigint;
 			l_row_limit bigint := ${mainSchemaName}.f_operation_row_limit();
 			l_row_offset bigint;

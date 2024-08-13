@@ -8,7 +8,7 @@ from
 	${mainSchemaName}.databasechangeloglock l 
 where 
 	l.locked 
-	and extract(day from current_timestamp - l.lockgranted) < 1.0
+	and extract(day from ${mainSchemaName}.f_current_timestamp() - l.lockgranted) < 1.0
 union all
 select 
 	'Materialized views refreshing'::text as process_name

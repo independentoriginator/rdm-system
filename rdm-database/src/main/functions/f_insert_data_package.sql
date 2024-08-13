@@ -29,9 +29,9 @@ begin
 			, ${mainSchemaName}.f_default_language_id()
 		)
 		, i_is_deletion
-		, current_timestamp
+		, ${mainSchemaName}.f_current_timestamp()
 		, (select ps.id from ${mainSchemaName}.data_package_state ps where ps.internal_name = 'loaded')
-		, current_timestamp
+		, ${mainSchemaName}.f_current_timestamp()
 	from 
 		${mainSchemaName}.meta_type t
 		, ${mainSchemaName}.source s

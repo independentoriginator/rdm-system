@@ -314,7 +314,7 @@ begin
 						-- an external object must be recreated within the current transaction only, during current dependencies recreation
 						-- (if the object is deleted from the outside, then it should not be recreated)
 						l_view_rec.is_external 
-						and l_view_rec.modification_time = current_timestamp 
+						and l_view_rec.modification_time = ${mainSchemaName}.f_current_timestamp() 
 					)
 				)
 			)
@@ -401,7 +401,7 @@ begin
 							${mainSchemaName}.meta_view 
 						set 
 							is_disabled = true
-							, modification_time = current_timestamp
+							, modification_time = ${mainSchemaName}.f_current_timestamp()
 						where 
 							id = l_view_rec.id
 						;
@@ -443,7 +443,7 @@ begin
 		
 		elsif l_view_rec.is_external 
 			and not l_view_rec.is_view_exists
-			and (l_view_rec.modification_time <> current_timestamp or l_view_rec.modification_time is null)	
+			and (l_view_rec.modification_time <> ${mainSchemaName}.f_current_timestamp() or l_view_rec.modification_time is null)	
 		then
 			raise notice 
 				'Disabling non-actual external view %.%...'
@@ -455,7 +455,7 @@ begin
 				${mainSchemaName}.meta_view 
 			set 
 				is_disabled = true
-				, modification_time = current_timestamp
+				, modification_time = ${mainSchemaName}.f_current_timestamp()
 			where 
 				id = l_view_rec.id
 			;
@@ -500,7 +500,7 @@ begin
 				)
 				, 0
 			)
-		, modification_time = current_timestamp
+		, modification_time = ${mainSchemaName}.f_current_timestamp()
 	where 
 		id = any(l_view_ids)
 	;

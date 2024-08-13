@@ -79,6 +79,15 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="f_current_timestamp-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_current_timestamp" 
+			dbms="postgresql" 
+			path="f_current_timestamp.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 
 	<changeSet id="f_default_language_id-function" author="${default_author}" runOnChange="true">
 		<createProcedure 

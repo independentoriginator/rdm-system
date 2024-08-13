@@ -26,7 +26,7 @@ begin
 			'\n		${mainSchemaName}.meta_view'
 			'\n	set'
 			'\n		is_valid = true'
-			'\n		, refresh_time = current_timestamp'
+			'\n		, refresh_time = ${mainSchemaName}.f_current_timestamp()'
 			'\n	where'
 			'\n		id = %s'
 			'\n	;'

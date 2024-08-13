@@ -164,7 +164,7 @@ begin
 					l_context_id 
 					, l_operation_instance_id
 					, worker_num
-					, current_timestamp			
+					, ${mainSchemaName}.f_current_timestamp()			
 					, i_extra_info
 					, l_async_mode
 				from (
@@ -193,7 +193,7 @@ begin
 				update 
 					${stagingSchemaName}.parallel_worker
 				set 
-					start_time = current_timestamp
+					start_time = ${mainSchemaName}.f_current_timestamp()
 					, extra_info = i_extra_info
 					, async_mode = l_async_mode
 				where 
