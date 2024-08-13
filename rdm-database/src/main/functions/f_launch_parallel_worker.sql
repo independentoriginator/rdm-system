@@ -42,6 +42,23 @@ drop function if exists
 	)
 ;
 
+drop function if exists 
+	${stagingSchemaName}.f_launch_parallel_worker(
+		text
+		, boolean
+		, ${stagingSchemaName}.parallel_worker.extra_info%type
+		, ${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, boolean
+		, name
+		, name
+		, integer
+		, interval
+		, interval
+		, name
+	)
+;
+
 create or replace function 
 	${stagingSchemaName}.f_launch_parallel_worker(
 		i_command text
@@ -56,14 +73,19 @@ create or replace function
 		, i_polling_interval interval = '10 seconds'
 		, i_max_run_time interval = '8 hours'
 		, i_application_name name = '${project_internal_name}'
+		, i_is_oneoff boolean = false
 	)
-returns name
+returns text
 language plpgsql
 volatile
 as $function$
 declare
+	l_context_id ${stagingSchemaName}.parallel_worker.context_id%type := coalesce(i_context_id, 0);
+	l_operation_instance_id ${stagingSchemaName}.parallel_worker.operation_instance_id%type := coalesce(i_operation_instance_id, 0);
+	l_async_mode boolean := coalesce(i_async_mode, true);
 	l_worker_num ${stagingSchemaName}.parallel_worker.worker_num%type;
 	l_worker_name name;
+	l_result_value text;
 	l_is_new_worker boolean;
 	l_prev_mode_async boolean;
 	l_command text;
@@ -71,134 +93,153 @@ declare
 	l_user name := session_user;
 	l_start_timestamp timestamp := clock_timestamp();
 begin
-	delete from 	
-		ng_staging.parallel_worker
-	where 
-		context_id = i_context_id
-		and operation_instance_id = i_operation_instance_id
-		and worker_num > i_max_worker_processes
-		and (
-			start_time is null
-			or clock_timestamp() - start_time >= i_max_run_time
+	-- Make sure of start possibility
+	perform 
+		pg_catalog.pg_advisory_xact_lock(
+			l_context_id::integer
+			, l_operation_instance_id::integer
 		)
-	;		
+	;
 	
-	<<waiting_for_available_worker>>
-	loop
-		l_is_new_worker := true;
-
-		-- Get available worker if any
-		select 
-			worker_num
-			, async_mode
-		into 
-			l_worker_num
-			, l_prev_mode_async
-		from 
-			${stagingSchemaName}.parallel_worker
+	if i_is_oneoff then
+		if l_async_mode then 
+			raise exception 
+				'One-off command must be executed in synchronous mode'
+			;
+		end if
+		;
+		l_worker_num := 0;
+	else
+		delete from 	
+			ng_staging.parallel_worker
 		where 
-			context_id = i_context_id
-			and operation_instance_id = i_operation_instance_id
+			context_id = l_context_id
+			and operation_instance_id = l_operation_instance_id
+			and worker_num > i_max_worker_processes
 			and (
 				start_time is null
 				or clock_timestamp() - start_time >= i_max_run_time
 			)
-		order by 
-			worker_num
-			, start_time
-		limit 1
-		for update skip locked
-		;
+		;		
 		
-		if l_worker_num is null then
-			-- Create new worker within the total worker count limit
-			insert into 
-				${stagingSchemaName}.parallel_worker(
-					context_id
-					, operation_instance_id
-					, worker_num
-					, start_time
-					, extra_info
-					, async_mode
-				)
-			select
-				i_context_id 
-				, i_operation_instance_id
-				, worker_num
-				, current_timestamp			
-				, i_extra_info
-				, i_async_mode
-			from (
-				select (
-						select 
-							count(*)
-						from 
-							${stagingSchemaName}.parallel_worker
-						where 
-							context_id = i_context_id
-							and operation_instance_id = i_operation_instance_id
-					) + 1 
-					as worker_num
-			) w 
-			where 
-				worker_num <= i_max_worker_processes 
-			returning 
-				worker_num		
+		<<waiting_for_available_worker>>
+		loop
+			l_is_new_worker := true;
+	
+			-- Get available worker if any
+			select 
+				worker_num
+				, async_mode
 			into 
 				l_worker_num
-			;
-		else
-			l_is_new_worker := false
-			;
-		
-			update 
+				, l_prev_mode_async
+			from 
 				${stagingSchemaName}.parallel_worker
-			set 
-				start_time = current_timestamp
-				, extra_info = i_extra_info
-				, async_mode = i_async_mode
 			where 
-				context_id = i_context_id
-				and operation_instance_id = i_operation_instance_id
-				and worker_num = l_worker_num
-			;
-		end if;
-	
-		if l_worker_num is not null 
-		then 
-			exit waiting_for_available_worker
-			;
-		else	
-			if (
-					i_notification_listener_worker is null
-					and i_use_notifications
+				context_id = l_context_id
+				and operation_instance_id = l_operation_instance_id
+				and (
+					start_time is null
+					or clock_timestamp() - start_time >= i_max_run_time
 				)
-				or not ${stagingSchemaName}.f_wait_for_parallel_process_completion(
-					i_context_id => i_context_id
-					, i_operation_instance_id => i_operation_instance_id
-					, i_wait_for_the_first_one_to_complete => true
-					, i_use_notifications => i_use_notifications 
-					, i_notification_channel => i_notification_channel
-					, i_notification_listener_worker => i_notification_listener_worker
-					, i_polling_interval => i_polling_interval
-					, i_max_run_time => i_max_run_time
-				)
+			order by 
+				worker_num
+				, start_time
+			limit 1
+			for update skip locked
+			;
+			
+			if l_worker_num is null then
+				-- Create new worker within the total worker count limit
+				insert into 
+					${stagingSchemaName}.parallel_worker(
+						context_id
+						, operation_instance_id
+						, worker_num
+						, start_time
+						, extra_info
+						, async_mode
+					)
+				select
+					l_context_id 
+					, l_operation_instance_id
+					, worker_num
+					, current_timestamp			
+					, i_extra_info
+					, l_async_mode
+				from (
+					select (
+							select 
+								count(*)
+							from 
+								${stagingSchemaName}.parallel_worker
+							where 
+								context_id = l_context_id
+								and operation_instance_id = l_operation_instance_id
+						) + 1 
+						as worker_num
+				) w 
+				where 
+					worker_num <= i_max_worker_processes 
+				returning 
+					worker_num		
+				into 
+					l_worker_num
+				;
+			else
+				l_is_new_worker := false
+				;
+			
+				update 
+					${stagingSchemaName}.parallel_worker
+				set 
+					start_time = current_timestamp
+					, extra_info = i_extra_info
+					, async_mode = l_async_mode
+				where 
+					context_id = l_context_id
+					and operation_instance_id = l_operation_instance_id
+					and worker_num = l_worker_num
+				;
+			end if;
+		
+			if l_worker_num is not null 
 			then 
-				raise exception 
-					'No parallel workers available'
-				;		
+				exit waiting_for_available_worker
+				;
+			else	
+				if (
+						i_notification_listener_worker is null
+						and i_use_notifications
+					)
+					or not ${stagingSchemaName}.f_wait_for_parallel_process_completion(
+						i_context_id => l_context_id
+						, i_operation_instance_id => l_operation_instance_id
+						, i_wait_for_the_first_one_to_complete => true
+						, i_use_notifications => i_use_notifications 
+						, i_notification_channel => i_notification_channel
+						, i_notification_listener_worker => i_notification_listener_worker
+						, i_polling_interval => i_polling_interval
+						, i_max_run_time => i_max_run_time
+					)
+				then 
+					raise exception 
+						'No parallel workers available'
+					;		
+				end if
+				;
 			end if
 			;
-		end if
+		
+		end loop waiting_for_available_worker
 		;
-	
-	end loop waiting_for_available_worker
+	end if
 	;
 
 	l_worker_name := 
 		${stagingSchemaName}.f_parallel_worker_name(
-			i_context_id => i_context_id
-			, i_operation_instance_id => i_operation_instance_id
+			i_context_id => l_context_id
+			, i_operation_instance_id => l_operation_instance_id
 			, i_worker_num => l_worker_num
 		)
 	;
@@ -265,7 +306,7 @@ begin
 					, i_command
 					, format(
 						case 
-							when i_async_mode then 
+							when l_async_mode then 
 								'select pg_catalog.pg_notify(%L, %L)'
 							else 
 								'do $$ begin perform pg_catalog.pg_notify(%L, %L); end $$'
@@ -279,31 +320,57 @@ begin
 		end
 	;
 
-	if i_async_mode then
-		if ${dbms_extension.dblink.schema}.dblink_send_query(
-			l_worker_name
-			, l_command
-		) != 1 
-		then
-			raise exception 
-				'Error sending command to the worker: %: % (error description: %)'
-				, l_worker_name
-				, i_command
-				, ${dbms_extension.dblink.schema}.dblink_error_message(
+	if i_is_oneoff then
+		select
+			res.val
+		into
+			l_result_value
+		from
+			${dbms_extension.dblink.schema}.dblink(
+				l_worker_name
+				, l_command
+			)
+			as res(val text)
+		;
+		
+		perform
+			from
+				${dbms_extension.dblink.schema}.dblink_disconnect(
 					l_worker_name
+				)
+			;
+		
+		return 
+			l_result_value
+		;
+	else
+		if l_async_mode then
+			if ${dbms_extension.dblink.schema}.dblink_send_query(
+				l_worker_name
+				, l_command
+			) != 1 
+			then
+				raise exception 
+					'Error sending command to the worker: %: % (error description: %)'
+					, l_worker_name
+					, i_command
+					, ${dbms_extension.dblink.schema}.dblink_error_message(
+						l_worker_name
+					)
+				;
+			end if
+			;
+		else
+			perform 
+				${dbms_extension.dblink.schema}.dblink_exec(
+					l_worker_name
+					, l_command
 				)
 			;
 		end if
 		;
-	else
-		perform 
-			${dbms_extension.dblink.schema}.dblink_exec(
-				l_worker_name
-				, l_command
-			)
-		;
 	end if
-	;
+	;	
 
 	return
 		l_worker_name
@@ -325,5 +392,6 @@ comment on function
 		, interval
 		, interval
 		, name
+		, boolean
 	) is 'Параллельная обработка. Запустить рабочий процесс многопоточной операции'
 ;

@@ -285,8 +285,8 @@ begin
 			start_time = null
 			, extra_info = null
 		where 
-			context_id = i_context_id
-			and operation_instance_id = i_operation_instance_id
+			context_id = l_context_id
+			and operation_instance_id = l_operation_instance_id
 		;
 	
 		if i_use_notifications then
@@ -308,7 +308,7 @@ begin
 					, i_polling_interval => i_polling_interval
 					, i_max_run_time => i_max_run_time
 					, i_application_name => i_application_name
-				)
+				)::name
 			;
 		
 			raise notice 
@@ -362,8 +362,8 @@ begin
 				from 
 					${stagingSchemaName}.parallel_worker
 				where 
-					context_id = i_context_id
-					and operation_instance_id = i_operation_instance_id
+					context_id = l_context_id
+					and operation_instance_id = l_operation_instance_id
 					and start_time is not null		
 					and async_mode = true
 			) 
@@ -425,15 +425,15 @@ begin
 				from (
 					select 
 						${stagingSchemaName}.f_parallel_worker_name(
-							i_context_id => i_context_id
-							, i_operation_instance_id => i_operation_instance_id
+							i_context_id => l_context_id
+							, i_operation_instance_id => l_operation_instance_id
 							, i_worker_num => worker_num
 						) as worker_name
 					from 
 						${stagingSchemaName}.parallel_worker
 					where 
-						context_id = i_context_id
-						and operation_instance_id = i_operation_instance_id
+						context_id = l_context_id
+						and operation_instance_id = l_operation_instance_id
 				) pw
 				join unnest(${dbms_extension.dblink.schema}.dblink_get_connections()) conn(name)
 					on conn.name = pw.worker_name
@@ -451,8 +451,8 @@ begin
 			delete from 
 				${stagingSchemaName}.parallel_worker
 			where 
-				context_id = i_context_id
-				and operation_instance_id = i_operation_instance_id
+				context_id = l_context_id
+				and operation_instance_id = l_operation_instance_id
 			;
 		else 
 			perform 
@@ -471,8 +471,8 @@ begin
 				start_time = null
 				, extra_info = null
 			where 
-				context_id = i_context_id
-				and operation_instance_id = i_operation_instance_id
+				context_id = l_context_id
+				and operation_instance_id = l_operation_instance_id
 			;
 		end if
 		;
