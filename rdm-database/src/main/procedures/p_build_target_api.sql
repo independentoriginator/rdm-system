@@ -1,6 +1,7 @@
-create or replace procedure p_build_target_api(
-	i_type_rec record
-)
+create or replace procedure 
+	p_build_target_api(
+		i_type_rec record
+	)
 language plpgsql
 as $$
 declare
@@ -13,7 +14,7 @@ declare
 			then 'materialized ' 
 			else '' 
 		end
-		;
+	;
 begin
 	if i_type_rec.is_staging_table_generated = false then
 		return;
@@ -737,7 +738,7 @@ begin
 				else
 					%s
 				end if;
-				%s		
+				%s
 			end if;
 		
 			update 
@@ -793,13 +794,35 @@ begin
 			)
 			else ''
 		end
+		|| format(
+			$analyze$
+				analyze
+					%I.%I
+				;
+			$analyze$
+			, i_type_rec.schema_name
+			, i_type_rec.internal_name
+		) 
+		|| case 
+			when i_type_rec.is_localization_table_generated then
+				format(
+					E'\n\t\t\t\tanalyze\n\t\t\t\t\t%I.%I_lc\n\t\t\t\t;'
+					, i_type_rec.schema_name
+					, i_type_rec.internal_name
+				) 
+			else ''
+		end
 		, i_type_rec.schema_name
 		, i_type_rec.internal_name
 		, i_type_rec.table_description
-	);
+	)
+	;
 end
-$$;
+$$
+;
 
-comment on procedure p_build_target_api(
-	record
-) is 'Генерация целевого API сущности';
+comment on procedure 
+	p_build_target_api(
+		record
+	) is 'Генерация целевого API сущности'
+;
