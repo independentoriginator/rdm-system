@@ -288,6 +288,46 @@ begin
 									t.data_package_id = i_data_package_id
 									and t.data_package_rn between l_row_offset + 1 and l_row_offset + l_row_limit									
 							)
+							, closed_old_external_versions as %s(
+								update
+									%I.%I dest
+								set 
+									valid_to = src.valid_from
+								from 
+									package_data src
+								where 
+									l_row_offset = 0
+									and dest.valid_to = ng_rdm.f_undefined_max_date()
+									and src.data_package_id = i_data_package_id
+									and dest.external_id = src.external_id								
+									and src.version_ordinal_num = 1
+									and src.external_version is not null 
+									and dest.external_version is not null 
+									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+								returning 
+									dest.id
+									, dest.version
+							)
+							, closed_old_meta_versions as %s(
+								update
+									%I.%I dest
+								set 
+									valid_to = src.valid_from
+								from 
+									package_data src
+								where 
+									l_row_offset = 0
+									and dest.valid_to = ng_rdm.f_undefined_max_date()
+									and src.data_package_id = i_data_package_id
+									and dest.meta_id = src.meta_id								
+									and src.version_ordinal_num = 1
+									and src.meta_version is not null 
+									and dest.meta_version is not null 
+									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+								returning 
+									dest.id
+									, dest.version
+							)
 							, initial_versions as %s(
 								insert into 
 									%I.%I(
@@ -355,6 +395,10 @@ begin
 									, %s
 								from 
 									package_data t
+								left join closed_old_external_versions oev
+									on false
+								left join closed_old_meta_versions omv
+									on false
 								where 
 									t.version_ordinal_num = 1
 								on conflict (id, version) do update set
@@ -454,6 +498,12 @@ begin
 				, i_type_rec.internal_name
 				, l_cte_option
 				, i_type_rec.non_localisable_attributes
+				, i_type_rec.internal_name
+				, l_cte_option
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
+				, l_cte_option
+				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, l_cte_option
 				, i_type_rec.schema_name
