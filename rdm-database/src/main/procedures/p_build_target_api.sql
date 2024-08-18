@@ -304,6 +304,7 @@ begin
 									and src.external_version is not null 
 									and dest.external_version is not null 
 									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+									and src.valid_from is not null
 								returning 
 									dest.id
 									, dest.version
@@ -321,9 +322,12 @@ begin
 									and src.data_package_id = i_data_package_id
 									and dest.meta_id = src.meta_id								
 									and src.version_ordinal_num = 1
-									and src.meta_version is not null 
-									and dest.meta_version is not null 
+									and src.meta_version is not null
+									and src.external_id is null 
+									and dest.meta_version is not null
+									and dest.external_id is null
 									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+									and src.valid_from is not null
 								returning 
 									dest.id
 									, dest.version
