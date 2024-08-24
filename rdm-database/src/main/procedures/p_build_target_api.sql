@@ -305,6 +305,7 @@ begin
 									and dest.external_version is not null 
 									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
 									and src.valid_from is not null
+									and dest.valid_from < src.valid_from 
 								returning 
 									dest.id
 									, dest.version
@@ -328,6 +329,7 @@ begin
 									and dest.external_id is null
 									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
 									and src.valid_from is not null
+									and dest.valid_from < src.valid_from
 								returning 
 									dest.id
 									, dest.version
