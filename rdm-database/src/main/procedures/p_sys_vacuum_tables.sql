@@ -77,7 +77,10 @@ begin
 								or o.obj_schema = '${etlRepositorySchemaName}'
 								or (
 									o.obj_schema = '${stagingSchemaName}'
-									and o.obj_name = 'parallel_worker'
+									and o.obj_name in (
+										'parallel_worker'
+										, 'scheduled_task_subjob'
+									)
 								) 
 								or (
 									%L::boolean
