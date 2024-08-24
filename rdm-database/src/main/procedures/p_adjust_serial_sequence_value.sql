@@ -50,8 +50,19 @@ begin
 								%%I.%%I
 						) t
 						where 
-							t.sequence_last_value < t.max_id
-							or (t.sequence_last_value > t.max_id and %%L::boolean)
+							(
+								t.sequence_last_value < t.max_id
+								or (t.sequence_last_value > t.max_id and %%L::boolean)
+							)
+							and t.max_id >= (
+								select 
+									min_value
+								from
+									pg_catalog.pg_sequences
+								where 
+									schemaname = '%%I'
+									and sequencename = '%%I'													
+							)
 						$sql$
 						, l_sequence_name
 						, l_sequence_name
@@ -59,6 +70,8 @@ begin
 						, '%I'
 						, '%I' 
 						, '%s'
+						, '%I'
+						, l_sequence_name
 					);
 			 	
 				execute l_sql_expr;
