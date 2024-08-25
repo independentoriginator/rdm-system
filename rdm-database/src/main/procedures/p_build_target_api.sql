@@ -289,50 +289,78 @@ begin
 									and t.data_package_rn between l_row_offset + 1 and l_row_offset + l_row_limit									
 							)
 							, closed_old_external_versions as %s(
+								with 
+									external_versions as (
+										select 
+											dest.id
+											, dest.version
+											, src.valid_from as valid_to
+										from 
+											%I.%I dest
+										join package_data src
+											on src.data_package_id = i_data_package_id
+											and src.external_id = dest.external_id								
+											and src.version_ordinal_num = 1
+											and src.external_version is not null 
+											and src.valid_from is not null
+											and src.valid_from > dest.valid_from 
+										where 
+											l_row_offset = 0
+											and dest.valid_to = ng_rdm.f_undefined_max_date()
+											and dest.external_version is not null 
+											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+										for update of dest
+									)
 								update
-									%I.%I dest
+									%I.%I t
 								set 
-									valid_to = src.valid_from
+									valid_to = ev.valid_to
 								from 
-									package_data src
+									external_versions ev
 								where 
-									l_row_offset = 0
-									and dest.valid_to = ng_rdm.f_undefined_max_date()
-									and src.data_package_id = i_data_package_id
-									and dest.external_id = src.external_id								
-									and src.version_ordinal_num = 1
-									and src.external_version is not null 
-									and dest.external_version is not null 
-									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
-									and src.valid_from is not null
-									and dest.valid_from < src.valid_from 
+									t.id = ev.id
+									and t.version = ev.version
 								returning 
-									dest.id
-									, dest.version
+									t.id
+									, t.version
 							)
 							, closed_old_meta_versions as %s(
+								with 
+									meta_versions as (
+										select 
+											dest.id
+											, dest.version
+											, src.valid_from as valid_to
+										from 
+											%I.%I dest
+										join package_data src
+											on src.data_package_id = i_data_package_id
+											and src.meta_id = dest.meta_id								
+											and src.version_ordinal_num = 1
+											and src.meta_version is not null 
+											and src.external_id is null 
+											and src.valid_from is not null
+											and src.valid_from > dest.valid_from 
+										where 
+											l_row_offset = 0
+											and dest.valid_to = ng_rdm.f_undefined_max_date()
+											and dest.meta_version is not null
+											and dest.external_id is null
+											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+										for update of dest
+									)
 								update
-									%I.%I dest
+									%I.%I t
 								set 
-									valid_to = src.valid_from
+									valid_to = mv.valid_to
 								from 
-									package_data src
+									meta_versions mv
 								where 
-									l_row_offset = 0
-									and dest.valid_to = ng_rdm.f_undefined_max_date()
-									and src.data_package_id = i_data_package_id
-									and dest.meta_id = src.meta_id								
-									and src.version_ordinal_num = 1
-									and src.meta_version is not null
-									and src.external_id is null 
-									and dest.meta_version is not null
-									and dest.external_id is null
-									and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
-									and src.valid_from is not null
-									and dest.valid_from < src.valid_from
+									t.id = mv.id
+									and t.version = mv.version
 								returning 
-									dest.id
-									, dest.version
+									t.id
+									, t.version
 							)
 							, initial_versions as %s(
 								insert into 
@@ -508,7 +536,11 @@ begin
 				, l_cte_option
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
 				, l_cte_option
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, l_cte_option
