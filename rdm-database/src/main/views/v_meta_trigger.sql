@@ -1,6 +1,22 @@
 drop view if exists v_meta_trigger
 ;
 
+create or replace function ${mainSchemaName}.f_abbreviate_name(
+	i_name text
+	, i_adjust_to_max_length boolean = false
+	, i_max_length integer = ${mainSchemaName}.f_system_name_max_length()
+	, i_leave_last_characters integer = 0
+)
+returns text
+language sql
+immutable
+parallel safe
+as $function$
+select 
+	null::text
+$function$
+;
+
 create view v_meta_trigger
 as
 select
