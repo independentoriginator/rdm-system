@@ -41,6 +41,42 @@ select
 	, v.is_mv_emulation_chunk_validated
 	, v.unique_index_columns
 	, v.mv_emulation_chunk_row_limit
+	, case
+		when v.is_mv_emulation_chunk_validated 
+			and not v.is_mv_emulation_filled_chunk_table_exists
+		then
+			-- creation of a service table that will contain a list of filled chunks
+			format('
+				create table %I.%I
+				as 
+				select %s
+				from %I.%I 
+				where false
+				;
+				alter table %I.%I
+					add primary key(%s)
+				'
+				, v.schema_name
+				, v.mv_emulation_filled_chunk_table_name
+				, v.mv_emulation_chunking_field
+				, v.schema_name
+				, v.internal_name
+				, v.schema_name
+				, v.mv_emulation_filled_chunk_table_name
+				, v.mv_emulation_chunking_field
+			)
+	end as mv_emulation_filled_chunk_table_creation_cmd
+	, case
+		when v.is_mv_emulation_chunk_validated 
+			and v.is_mv_emulation_filled_chunk_table_exists
+		then
+			format('
+				truncate %I.%I
+				'
+				, v.schema_name
+				, v.mv_emulation_filled_chunk_table_name
+			)
+	end as mv_emulation_filled_chunk_table_truncation_cmd
 from (
 	select
 		v.id
@@ -163,6 +199,8 @@ from (
 					and dep.chunking_field = v.mv_emulation_chunking_field
 			)
 		) as is_mv_emulation_chunk_validated
+		, v.internal_name || '_chunk' as mv_emulation_filled_chunk_table_name
+		, (target_chunk_table.oid is not null) as is_mv_emulation_filled_chunk_table_exists
 		, v.mv_emulation_chunk_row_limit
 	from 
 		${mainSchemaName}.meta_view v
@@ -189,6 +227,10 @@ from (
 				and mve_target_proc.proargnames = array['i_' || v.mv_emulation_chunking_field]::text[]
 			)
 		)
+	left join pg_catalog.pg_class target_chunk_table
+		on target_chunk_table.relnamespace = target_schema.obj_id 
+		and target_chunk_table.relname = v.internal_name || '_chunk'
+		and target_chunk_table.relkind = 'r'::"char"
 ) v
 ;
 

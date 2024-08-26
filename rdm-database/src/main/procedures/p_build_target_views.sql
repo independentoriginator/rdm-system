@@ -1,13 +1,18 @@
-drop procedure if exists p_build_target_view(
-	record
-);
+drop procedure if exists 
+	p_build_target_view(
+		record
+	)
+;
 
-drop procedure if exists p_build_target_views(
-);
+drop procedure if exists 
+	p_build_target_views(
+	)
+;
 
-create or replace procedure p_build_target_views(
-	i_schema_name ${mainSchemaName}.meta_schema.internal_name%type = null
-)
+create or replace procedure 
+	p_build_target_views(
+		i_schema_name ${mainSchemaName}.meta_schema.internal_name%type = null
+	)
 language plpgsql
 as $procedure$
 declare 
@@ -24,6 +29,7 @@ declare
 	l_exception_context text;
 	l_timestamp timestamp;
 	l_start_timestamp timestamp := clock_timestamp();
+	l_trigger_rec record;
 begin
 	select 
 		array_agg(
@@ -177,8 +183,10 @@ begin
 	;
 
 	if l_view_ids is null then
-		return;
-	end if;
+		return
+		;
+	end if
+	;
 
 	perform
 	from 
@@ -191,21 +199,26 @@ begin
 	if l_schemas_to_create is not null then
 		raise notice 
 			'Creating schemas...'
-			;
-		execute l_schemas_to_create;
-	end if;
+		;
+		execute 
+			l_schemas_to_create
+		;	
+	end if
+	;
 
 	if l_views is not null then
 		raise notice 
 			'Detecting and saving dependants before them dropping cascadly...'
-			;
+		;
 		
 		l_timestamp := clock_timestamp();
 	
-		call ${mainSchemaName}.p_specify_meta_view_dependencies(
-			i_views => l_views
-			, i_treat_the_obj_as_dependent => false -- treat the object as master 
-		);
+		call 
+			${mainSchemaName}.p_specify_meta_view_dependencies(
+				i_views => l_views
+				, i_treat_the_obj_as_dependent => false -- treat the object as master 
+			)
+		;
 	
 		raise notice 
 			'Done in %.'
@@ -215,8 +228,8 @@ begin
 
 	if l_existing_view_ids is not null then
 		raise notice 
-			'Invalidating of the creation flag for dependent views (matters for functions, that are not cascadly dropped)...'
-			;
+			'Invalidating of the creation flag for dependent views (this matters for functions, that are not cascadly dropped)...'
+		;
 		with 
 			dependent_view as (
 				select 
@@ -246,9 +259,10 @@ begin
 		raise notice 
 			E'Dropping views that will be recreated... \n%'
 			, l_drop_command
-			;
+		;
 		
-		l_timestamp := clock_timestamp();
+		l_timestamp := clock_timestamp()
+		;
 	
 		execute 
 			l_drop_command
@@ -258,16 +272,20 @@ begin
 			'Done in %.'
 			, clock_timestamp() - l_timestamp
 		;
-	end if;
+	end if
+	;
 
-	l_view_ids := array[]::${type.id}[];
-	l_views := '[]'::jsonb;
+	l_view_ids := array[]::${type.id}[]
+	;
+	l_views := '[]'::jsonb
+	;
 
 	raise notice 
 		'Building target views...'
-		;
+	;
 	
-	l_timestamp := clock_timestamp();
+	l_timestamp := clock_timestamp()
+	;
 
 	<<build_views>>
 	loop
@@ -290,7 +308,8 @@ begin
 		for update of meta_view
 		;
 		
-		exit build_views when l_view_rec is null;
+		exit build_views when l_view_rec is null
+		;
 		
 		if l_prev_view_id is not null and l_view_rec.id = l_prev_view_id 
 		then
@@ -300,9 +319,11 @@ begin
 				, l_view_rec.schema_name
 				, l_view_rec.internal_name
 			;
-		end if;
+		end if
+		;
 		
-		l_prev_view_id = l_view_rec.id;
+		l_prev_view_id = l_view_rec.id
+		;
 	
 		if not l_view_rec.is_external 
 			or not l_view_rec.is_routine
@@ -325,60 +346,100 @@ begin
 					, l_view_rec.view_type
 					, l_view_rec.schema_name
 					, l_view_rec.internal_name
-					;
+				;
 				
 				if l_view_rec.is_matview_emulation then
-					call ${mainSchemaName}.p_build_matview_emulation(
-						i_view_rec => l_view_rec  
-					);
+					call 
+						${mainSchemaName}.p_build_matview_emulation(
+							i_view_rec => l_view_rec  
+						)
+					;
 				
 					l_views := 
-							l_views
-							|| jsonb_build_object(
-								'obj_name' 
-								, l_view_rec.internal_name
-								, 'obj_schema'			
-								, l_view_rec.schema_name
-								, 'obj_class'
-								, l_view_rec.obj_class
-								, 'attendants'
-								, json_build_array((
-									select 
-										jsonb_build_object(
-											'obj_name' 
-											, p.obj_name
-											, 'obj_schema'			
-											, p.obj_schema
-											, 'obj_class'
-											, p.obj_class
-										)
-									from 
-										${mainSchemaName}.v_meta_view v
-									join ${mainSchemaName}.v_sys_obj p
-										on p.obj_id = v.mv_emulation_refresh_proc_oid
-									where
-										v.id = l_view_rec.id									
-								))
+						l_views
+						|| jsonb_build_object(
+							'obj_name' 
+							, l_view_rec.internal_name
+							, 'obj_schema'			
+							, l_view_rec.schema_name
+							, 'obj_class'
+							, l_view_rec.obj_class
+							, 'attendants'
+							, json_build_array((
+								select 
+									jsonb_build_object(
+										'obj_name' 
+										, p.obj_name
+										, 'obj_schema'			
+										, p.obj_schema
+										, 'obj_class'
+										, p.obj_class
+									)
+								from 
+									${mainSchemaName}.v_meta_view v
+								join ${mainSchemaName}.v_sys_obj p
+									on p.obj_id = v.mv_emulation_refresh_proc_oid
+								where
+									v.id = l_view_rec.id									
+							))
+						)
+					;
+				
+					for l_trigger_rec in (
+						select
+							t.*
+						from 
+							${mainSchemaName}.v_meta_trigger t
+						where 
+							t.meta_view_id = l_view_rec.id
+						union all
+						select 
+							t.*
+						from									
+							${mainSchemaName}.meta_view_chunk_dependency dep
+						join ${mainSchemaName}.v_meta_trigger t
+							on t.meta_type_id = dep.master_type_id
+						where 
+							dep.view_id = l_view_rec.id
+						union all
+						select 
+							t.*
+						from									
+							${mainSchemaName}.meta_view_chunk_dependency dep
+						join ${mainSchemaName}.v_meta_trigger t
+							on t.meta_view_id = dep.master_view_id
+						where 
+							dep.view_id = l_view_rec.id							
+					) 
+					loop
+						call 
+							${mainSchemaName}.p_build_target_trigger(
+								i_trigger_rec => l_trigger_rec
 							)
-							;
+						;
+					end loop
+					;
 				else
 					execute 
-						l_view_rec.query;
+						l_view_rec.query
+					;
 					
 					l_views := 
-							l_views
-							|| jsonb_build_object(
-								'obj_name' 
-								, l_view_rec.internal_name
-								, 'obj_schema'			
-								, l_view_rec.schema_name
-								, 'obj_class'
-								, l_view_rec.obj_class
-							)
-							;
-				end if;
+						l_views
+						|| jsonb_build_object(
+							'obj_name' 
+							, l_view_rec.internal_name
+							, 'obj_schema'			
+							, l_view_rec.schema_name
+							, 'obj_class'
+							, l_view_rec.obj_class
+						)
+					;
+				end if
+				;
 			
-				l_view_ids := l_view_ids || l_view_rec.id;					
+				l_view_ids := l_view_ids || l_view_rec.id
+				;					
 			exception
 				when others then
 					get stacked diagnostics
@@ -386,7 +447,7 @@ begin
 						, l_exception_detail = PG_EXCEPTION_DETAIL
 						, l_exception_hint = PG_EXCEPTION_HINT
 						, l_exception_context = PG_EXCEPTION_CONTEXT
-						;
+					;
 					if l_view_rec.is_external then 
 						raise notice 
 							'External view %.% creation error: %: % (hint: %, context: %). The view will be disabled.'
@@ -396,7 +457,7 @@ begin
 							, l_exception_detail
 							, l_exception_hint
 							, l_exception_context
-							;
+						;
 						update 
 							${mainSchemaName}.meta_view 
 						set 
@@ -414,9 +475,11 @@ begin
 							, l_exception_detail
 							, l_exception_hint
 							, l_exception_context
-							;
-					end if;	
-			end;
+						;
+					end if
+					;	
+			end
+			;
 		
 			-- Main end user role
 			if not l_view_rec.is_external 
@@ -428,9 +491,10 @@ begin
 						, case when l_view_rec.is_routine then 'execute on routine ' else 'select on' end
 						, l_view_rec.schema_name
 						, l_view_rec.internal_name 
-					
-					);
-			end if;
+					)
+				;
+			end if
+			;
 		
 			update 
 				${mainSchemaName}.meta_view v
@@ -449,7 +513,7 @@ begin
 				'Disabling non-actual external view %.%...'
 				, l_view_rec.schema_name
 				, l_view_rec.internal_name
-				;
+			;
 			
 			update 
 				${mainSchemaName}.meta_view 
@@ -459,8 +523,10 @@ begin
 			where 
 				id = l_view_rec.id
 			;
-		end if;
-	end loop build_views;
+		end if
+		;
+	end loop build_views
+	;
 
 	raise notice 
 		'Done in %.'
@@ -470,15 +536,18 @@ begin
 	raise notice 
 		E'Actualizing stored dependencies...\n%'
 		, l_views
-		;
+	;
 	
-	l_timestamp := clock_timestamp();
+	l_timestamp := clock_timestamp()
+	;
 
-	call ${mainSchemaName}.p_specify_meta_view_dependencies(
-		i_views => l_views
-		, i_treat_the_obj_as_dependent => true 
-		, i_consider_registered_objects_only => true
-	);
+	call 
+		${mainSchemaName}.p_specify_meta_view_dependencies(
+			i_views => l_views
+			, i_treat_the_obj_as_dependent => true 
+			, i_consider_registered_objects_only => true
+		)
+	;
 
 	raise notice 
 		'Done in %.'
@@ -510,8 +579,11 @@ begin
 		, clock_timestamp() - l_start_timestamp
 	;
 end
-$procedure$;	
+$procedure$
+;	
 
-comment on procedure p_build_target_views(
-	${mainSchemaName}.meta_schema.internal_name%type
-) is 'Генерация целевых представлений';
+comment on procedure 
+	p_build_target_views(
+		${mainSchemaName}.meta_schema.internal_name%type
+	) is 'Генерация целевых представлений'
+;

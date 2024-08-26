@@ -714,9 +714,26 @@
 	</changeSet>     
 	
 	<changeSet id="meta_view_chunk_dependency: comparison_operator" author="${default_author}">
-
 		<addColumn tableName="meta_view_chunk_dependency">
 			<column name="comparison_operator" type="${type.internal_name}" remarks="Comparison operator" defaultValue="=">
+				<constraints nullable="false" />
+			</column>
+		</addColumn>
+	</changeSet>
+	
+	<changeSet id="meta_view_chunk_dependency: deprecated columns nullability" author="${default_author}">
+		<dropNotNullConstraint
+			tableName="meta_view_chunk_dependency"
+			columnName="master_chunk_field" />
+		<dropNotNullConstraint
+			tableName="meta_view_chunk_dependency"
+			columnName="comparison_operator" />		
+	</changeSet>
+
+	<changeSet id="meta_view_chunk_dependency: invalidated_chunk_query_tmpl" author="${default_author}">
+
+		<addColumn tableName="meta_view_chunk_dependency">
+			<column name="invalidated_chunk_query_tmpl" type="clob" remarks="Invalidated chunk query template">
 				<constraints nullable="false" />
 			</column>
 		</addColumn>

@@ -4,10 +4,9 @@ create or replace procedure p_build_target_table(
 language plpgsql
 as $procedure$
 declare 
-	l_attr_rec record;
-	l_index_rec record;
 	l_is_pk_index_exists boolean := i_type_rec.is_pk_index_exists;
 	l_table_rec record;
+	l_rec record;
 begin
 	if i_type_rec.is_table_exists = false then 
 		if i_type_rec.is_temporal = false then
@@ -141,7 +140,7 @@ begin
 		);
 	end if;	
 	
-	for l_attr_rec in (
+	for l_rec in (
 		select
 			a.*
 		from 
@@ -155,15 +154,23 @@ begin
 	loop
 		call ${mainSchemaName}.p_build_target_column(
 			i_type_rec => i_type_rec,
-			i_attr_rec => l_attr_rec
+			i_attr_rec => l_rec
 		);
 		call ${mainSchemaName}.p_build_target_staging_table_column(
 			i_type_rec => i_type_rec,
-			i_attr_rec => l_attr_rec
+			i_attr_rec => l_rec
 		);
 	end loop;	
 	
-	for l_index_rec in (
+	call ${mainSchemaName}.p_build_target_lc_table(
+		i_type_rec => i_type_rec
+	);
+
+	call ${mainSchemaName}.p_build_target_api(
+		i_type_rec => i_type_rec
+	);
+
+	for l_rec in (
 		select
 			i.*
 		from 
@@ -173,17 +180,23 @@ begin
 	) 
 	loop
 		call ${mainSchemaName}.p_build_target_index(
-			i_index_rec => l_index_rec
+			i_index_rec => l_rec
 		);
 	end loop;
-	
-	call ${mainSchemaName}.p_build_target_lc_table(
-		i_type_rec => i_type_rec
-	);
 
-	call ${mainSchemaName}.p_build_target_api(
-		i_type_rec => i_type_rec
-	);
+	for l_rec in (
+		select
+			t.*
+		from 
+			${mainSchemaName}.v_meta_trigger t
+		where 
+			t.meta_type_id = i_type_rec.id
+	) 
+	loop
+		call ${mainSchemaName}.p_build_target_trigger(
+			i_trigger_rec => l_rec
+		);
+	end loop;
 
 	update ${mainSchemaName}.meta_type 
 	set is_built = true

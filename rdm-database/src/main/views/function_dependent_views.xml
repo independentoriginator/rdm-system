@@ -19,6 +19,17 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="v_meta_trigger-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_meta_trigger" 
+			path="v_meta_trigger.sql"
+			remarks="Meta triggers"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="v_sys_maintenance_mode-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_sys_maintenance_mode" 

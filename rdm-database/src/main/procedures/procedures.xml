@@ -89,6 +89,15 @@
 		<rollback/>
 	</changeSet>
 
+	<changeSet id="p_build_target_trigger-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_build_target_trigger" 
+			dbms="postgresql" 
+			path="p_build_target_trigger.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
 	<changeSet id="p_build_target_staging_table_column-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_staging_table_column" 

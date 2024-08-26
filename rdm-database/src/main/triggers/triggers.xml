@@ -181,5 +181,29 @@
 		</rollback>
 
 	</changeSet>
+	
+	<changeSet id="trf_meta_view_chunk_dependency_after_update-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="trf_meta_view_chunk_dependency_after_update" 
+			dbms="postgresql" 
+			path="trf_meta_view_chunk_dependency_after_update.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+
+	<changeSet id="tr_meta_view_chunk_dependency_invalidate_view_built_flag-trigger" author="${default_author}" runOnChange="true">
+
+		<sqlFile 
+			dbms="postgresql"
+			path="tr_meta_view_chunk_dependency_invalidate_view_built_flag.sql"
+	        relativeToChangelogFile="true"
+	        splitStatements="false"
+	        stripComments="false"/>
+
+		<rollback>
+			drop trigger if exists tr_meta_view_chunk_dependency_invalidate_view_built_flag on meta_view_chunk_dependency;
+		</rollback>
+
+	</changeSet>
 		
 </databaseChangeLog>
