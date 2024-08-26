@@ -713,6 +713,19 @@
 		
 	</changeSet>     
 	
+	<changeSet id="meta_view_chunk_dependency: master_type_id FK fix" author="${default_author}">
+		<dropForeignKeyConstraint 
+			constraintName="fk_meta_view_chunk_dependency$master_type_id"
+			baseTableName="meta_view_chunk_dependency" />
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_view_chunk_dependency$master_type_id"
+			baseTableName="meta_view_chunk_dependency" 
+			baseColumnNames="master_type_id" 
+			referencedTableName="meta_type" 
+			referencedColumnNames="id" />
+	</changeSet>
+	
 	<changeSet id="meta_view_chunk_dependency: comparison_operator" author="${default_author}">
 		<addColumn tableName="meta_view_chunk_dependency">
 			<column name="comparison_operator" type="${type.internal_name}" remarks="Comparison operator" defaultValue="=">
