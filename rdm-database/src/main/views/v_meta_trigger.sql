@@ -108,7 +108,7 @@ from (
 			, i_indentation_level => 1
 		) as function_body
 		, 'null' as function_return_expr
-		, v.mv_emulation_filled_chunk_table_creation_cmd as preparation_command
+		, null::text as preparation_command
 	from									
 		${mainSchemaName}.meta_view_chunk_dependency dep
 	join ${mainSchemaName}.v_meta_view v
