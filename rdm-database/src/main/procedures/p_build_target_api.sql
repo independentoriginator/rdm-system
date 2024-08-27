@@ -305,8 +305,7 @@ begin
 											and src.valid_from is not null
 											and src.valid_from > dest.valid_from 
 										where 
-											l_row_offset = 0
-											and dest.valid_to = ng_rdm.f_undefined_max_date()
+											dest.valid_to = ng_rdm.f_undefined_max_date()
 											and dest.external_version is not null 
 											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
 										for update of dest
@@ -342,8 +341,7 @@ begin
 											and src.valid_from is not null
 											and src.valid_from > dest.valid_from 
 										where 
-											l_row_offset = 0
-											and dest.valid_to = ng_rdm.f_undefined_max_date()
+											dest.valid_to = ng_rdm.f_undefined_max_date()
 											and dest.meta_version is not null
 											and dest.external_id is null
 											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
