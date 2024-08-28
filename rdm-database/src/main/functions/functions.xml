@@ -80,6 +80,15 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="f_abbreviate_name-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_abbreviate_name" 
+			dbms="postgresql" 
+			path="f_abbreviate_name.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="f_current_timestamp-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="f_current_timestamp" 
