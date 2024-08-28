@@ -12,7 +12,6 @@ begin
 				${mainSchemaName}.meta_view_dependency d
 			join ${mainSchemaName}.meta_view v
 				on v.id = d.view_id
-				and v.is_valid = true
 			where
 				d.master_type_id = i_type_id
 			for update of v
