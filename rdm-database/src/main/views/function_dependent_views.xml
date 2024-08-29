@@ -71,5 +71,15 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="v_meta_view_orderliness_dependency-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_meta_view_orderliness_dependency" 
+			path="v_meta_view_orderliness_dependency.sql"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 
 </databaseChangeLog>

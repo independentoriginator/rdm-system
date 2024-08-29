@@ -83,6 +83,13 @@ begin
 							on mv.id = dep.master_view_id
 						except 
 						select 
+							dep.view_id
+						from 
+							${mainSchemaName}.v_meta_view_orderliness_dependency dep
+						join materialized_view mv 
+							on mv.id = dep.master_view_id
+						except 
+						select 
 							extra_info::${type.id} as view_id
 						from 
 							${stagingSchemaName}.parallel_worker
