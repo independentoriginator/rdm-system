@@ -12,47 +12,76 @@ begin
 	end if
 	;
 
-	execute 
-		format(
-			E'create or replace function %I.%s()'
-			'\nreturns trigger'
-			'\nlanguage plpgsql'
-			'\nas $function$'
-			'\nbegin'
-			'\n	%s'
-			'\n	;'
-			'\n'
-			'\n	return'
-			'\n		%s'
-			'\n	;'
-			'\nend'
-			'\n$function$'
-			, i_trigger_rec.event_object_schema
-			, i_trigger_rec.function_name
-			, i_trigger_rec.function_body
-			, i_trigger_rec.function_return_expr
-		)
-	;
+	if i_trigger_rec.trigger_id is not null then
+		execute 
+			format(
+				E'create or replace function %I.%s()'
+				'\nreturns trigger'
+				'\nlanguage plpgsql'
+				'\nas $function$'
+				'\nbegin'
+				'\n	%s'
+				'\n	;'
+				'\n'
+				'\n	return'
+				'\n		%s'
+				'\n	;'
+				'\nend'
+				'\n$function$'
+				, i_trigger_rec.function_schema_name
+				, i_trigger_rec.function_name
+				, i_trigger_rec.function_body
+				, i_trigger_rec.function_return_expr
+			)
+		;
+	
+		execute 
+			format(
+				E'create or replace trigger %s'
+				'\n%s %s'
+				'\non %I.%I'
+				'\nreferencing%s%s'
+				'\nfor each %s'
+				'\nexecute function %I.%s()'
+				, i_trigger_rec.trigger_name
+				, i_trigger_rec.action_timing
+				, i_trigger_rec.event_manipulation
+				, i_trigger_rec.event_object_schema
+				, i_trigger_rec.event_object_table
+				, case when i_trigger_rec.action_reference_old_table is not null then ' old table as ' || i_trigger_rec.action_reference_old_table else '' end
+				, case when i_trigger_rec.action_reference_new_table is not null then ' new table as ' || i_trigger_rec.action_reference_new_table else '' end
+				, i_trigger_rec.action_orientation
+				, i_trigger_rec.function_schema_name
+				, i_trigger_rec.function_name
+			)
+		;
+	else
+		if i_trigger_rec.target_trigger_id is not null 
+			and not (
+				i_trigger_rec.event_object_schema = '${mainSchemaName}'
+				and i_trigger_rec.event_object_table like 'meta\_%'
+			)
+		then
+			execute 
+				format(
+					'drop trigger %s on %I.%I'
+					, i_trigger_rec.trigger_name
+					, i_trigger_rec.event_object_schema
+					, i_trigger_rec.event_object_table
+				)
+			;
 
-	execute 
-		format(
-			E'create or replace trigger %s'
-			'\n%s %s'
-			'\non %I.%I'
-			'\nreferencing%s%s'
-			'\nfor each %s'
-			'\nexecute function %I.%s()'
-			, i_trigger_rec.trigger_name
-			, i_trigger_rec.action_timing
-			, i_trigger_rec.event_manipulation
-			, i_trigger_rec.event_object_schema
-			, i_trigger_rec.event_object_table
-			, case when i_trigger_rec.action_reference_old_table is not null then ' old table as ' || i_trigger_rec.action_reference_old_table else '' end
-			, case when i_trigger_rec.action_reference_new_table is not null then ' new table as ' || i_trigger_rec.action_reference_new_table else '' end
-			, i_trigger_rec.action_orientation
-			, i_trigger_rec.event_object_schema
-			, i_trigger_rec.function_name
-		)
+			execute 
+				format(
+					'drop function %I.%I'
+					, i_trigger_rec.trigger_name
+					, i_trigger_rec.function_schema_name
+					, i_trigger_rec.function_name
+				)
+			;
+		end if
+		;	
+	end if
 	;
 end
 $procedure$
