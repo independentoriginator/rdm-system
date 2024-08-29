@@ -30,7 +30,8 @@ begin
 			join type_descendants d 
 				on d.id = t.id
 			where 
-				t.is_abstract = false
+				t.is_built = true
+				and t.is_abstract = false
 			for update of t
 		)
 	update 
