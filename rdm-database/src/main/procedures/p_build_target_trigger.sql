@@ -59,7 +59,7 @@ begin
 		if i_trigger_rec.target_trigger_id is not null 
 			and not (
 				i_trigger_rec.event_object_schema = '${mainSchemaName}'
-				and i_trigger_rec.event_object_table like 'meta\_%'
+				and i_trigger_rec.event_object_table not like 'meta\_%'
 			)
 		then
 			execute 
