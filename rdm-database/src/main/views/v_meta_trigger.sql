@@ -47,19 +47,23 @@ with
 			, ${mainSchemaName}.f_indent_text(
 				i_text => 
 					format(
-						E'delete from'
+						E'with'
+						'\n	invalidated_chunk as ('
+						'\n		select'
+						'\n			chunk.id'
+						'\n		from ('
+						'\n			%s'
+						'\n		) as chunk(id)'
+						'\n		join %I.%I_chunk c'
+						'\n		on c.%s = chunk.id'
+						'\n		for update of c'
+						'\n	)'
+						'\ndelete from'
 						'\n	%I.%I_chunk chunk'
-						'\nusing ('
-						'\n	select'
-						'\n		chunk.id'
-						'\n	from ('
-						'\n		%s'
-						'\n	) as chunk(id)'
-						'\n) invalidated_chunk'
+						'\nusing'
+						'\n	invalidated_chunk'
 						'\nwhere'
-						'\n	invalidated_chunk.id = chunk.%s'
-						, v.schema_name
-						, v.internal_name
+						'\n	chunk.%s = invalidated_chunk.id'
 						, ${mainSchemaName}.f_indent_text(
 							i_text => 
 								replace(
@@ -67,8 +71,13 @@ with
 									, '{{transition_table}}'
 									, transition_table.name
 								)
-							, i_indentation_level => 2
+							, i_indentation_level => 3
 						)
+						, v.schema_name
+						, v.internal_name
+						, v.mv_emulation_chunking_field
+						, v.schema_name
+						, v.internal_name
 						, v.mv_emulation_chunking_field
 					)
 				, i_indentation_level => 1
