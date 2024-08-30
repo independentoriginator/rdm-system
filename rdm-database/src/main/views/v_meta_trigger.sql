@@ -55,7 +55,7 @@ with
 						'\n			%s'
 						'\n		) as chunk(id)'
 						'\n		join %I.%I_chunk c'
-						'\n		on c.%s = chunk.id'
+						'\n			on c.%s = chunk.id'
 						'\n		for update of c'
 						'\n	)'
 						'\ndelete from'
