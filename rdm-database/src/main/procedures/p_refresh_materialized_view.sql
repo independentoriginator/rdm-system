@@ -47,7 +47,7 @@ begin
 			, case 
 				when t.is_matview_emulation then
 					concat_ws(
-						E'\n;'
+						E'\n\t;\n\t'
 						, format(
 							'call %I.p_refresh_%I()'
 							, t.schema_name
