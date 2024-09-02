@@ -179,4 +179,13 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="f_trigger_creation_command-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_trigger_creation_command" 
+			dbms="postgresql" 
+			path="f_trigger_creation_command.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

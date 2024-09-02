@@ -36,12 +36,36 @@ create or replace procedure
 language plpgsql
 security definer
 as $procedure$
+declare 
+	l_rec record
+	;
 begin
 	if i_refresh_all then 
-		update ${mainSchemaName}.meta_view
-		set is_valid = false
-		where is_valid = true;
-	end if;
+		update 
+			${mainSchemaName}.meta_view
+		set 
+			is_valid = false
+		where 
+			is_valid = true
+		;
+	
+		for l_rec in (
+			select 
+				v.mv_emulation_filled_chunk_table_truncation_cmd
+			from 
+				${mainSchemaName}.v_meta_view v 
+			where 
+				not v.is_disabled 
+				and v.mv_emulation_filled_chunk_table_truncation_cmd is not null
+		) 
+		loop
+			execute 
+				l_rec.mv_emulation_filled_chunk_table_truncation_cmd
+			;
+		end loop
+		;
+	end if
+	;
 
 	call 
 		${stagingSchemaName}.p_execute_in_parallel(

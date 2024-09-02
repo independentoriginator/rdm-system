@@ -6,6 +6,56 @@ as $procedure$
 declare 
 	l_sttmnt record;
 	l_is_matview_recognized boolean := false;
+	l_chunk_invalidation_script text := 
+		nullif((
+				select 
+					string_agg(
+						format(
+							E'with'
+							'\n	invalidated_chunk as ('
+							'\n		select'
+							'\n			chunk.id'
+							'\n		from ('
+							'\n			%s'
+							'\n		) as chunk(id)'
+							'\n		join %I.%I_chunk c'
+							'\n			on c.%s = chunk.id'
+							'\n		for update of c'
+							'\n	)'
+							'\ndelete from'
+							'\n	%I.%I_chunk chunk'
+							'\nusing'
+							'\n	invalidated_chunk'
+							'\nwhere'
+							'\n	chunk.%s = invalidated_chunk.id'
+							, ${mainSchemaName}.f_indent_text(
+								i_text => 
+									replace(
+										dep.invalidated_chunk_query_tmpl
+										, '{{transition_table}}'
+										, i_view_rec.schema_name || '.%I'
+									)
+								, i_indentation_level => 3
+							)
+							, dependent_view.schema_name
+							, dependent_view.internal_name
+							, dependent_view.mv_emulation_chunking_field
+							, dependent_view.schema_name
+							, dependent_view.internal_name
+							, dependent_view.mv_emulation_chunking_field
+						)
+						, E'\n;\n'
+					)
+				from			
+					${mainSchemaName}.meta_view_chunk_dependency dep
+				join ${mainSchemaName}.v_meta_view dependent_view
+					on dependent_view.id = dep.view_id
+				where
+					dep.master_view_id = i_view_rec.id
+			)
+			, ''
+		)
+	;
 begin
 	for l_sttmnt in (
 		select 
@@ -471,7 +521,7 @@ begin
 															'\n			$dml$'
 															'\n			%s, chunk.new_partition'
 															'\n			, chunk.arr'
-															'\n			, chunk.type'
+															'\n			, chunk.type%s'
 															'\n		)'
 															'\n		, E'';\\n'''
 															'\n	) as new_partition_filling'
@@ -625,56 +675,60 @@ begin
 															, i_view_rec.schema_name
 															, ${mainSchemaName}.f_indent_text(
 																i_text =>
-																	case 
-																		when i_view_rec.mv_emulation_chunk_row_limit is not null then
-																			format(
-																				E'do $$'
-																				'\ndeclare'
-																				'\n	l_row_limit bigint := %%s;'
-																				'\n	l_row_offset bigint := 0;'
-																				'\nbegin'
-																				'\n	<<insertion_in_parts>>'
-																				'\n	loop' 
-																				'\n		insert into'
-																				'\n			%I.%%I'
-																				'\n		select'
-																				'\n			*'
-																				'\n		from'
-																				'\n			%I.%I('
-																				'\n				%s => %%L::%%s[]'
-																				'\n				, i_row_limit => l_row_limit'
-																				'\n				, i_row_offset => l_row_offset'
-																				'\n			)'
-																				'\n		;'
-																				'\n		exit insertion_in_parts when not found'
-																				'\n		;'
-																				'\n		l_row_offset := l_row_offset + l_row_limit'
-																				'\n		;'
-																				'\n	end loop insertion_in_parts'
-																				'\n	;'
-																				'\nend'
-																				'\n$$'
-																				, i_view_rec.schema_name
-																				, i_view_rec.schema_name
-																				, i_view_rec.mv_emulation_table_func_name
-																				, i_view_rec.mv_emulation_refresh_proc_param
-																			)
-																		else
-																			format(
-																				E'insert into'
-																				'\n	%I.%%I'
-																				'\nselect'
-																				'\n	*'
-																				'\nfrom'
-																				'\n	%I.%I('
-																				'\n		%s => %%L::%%s[]'
-																				'\n	)'
-																				, i_view_rec.schema_name
-																				, i_view_rec.schema_name
-																				, i_view_rec.mv_emulation_table_func_name
-																				, i_view_rec.mv_emulation_refresh_proc_param
-																			)
-																	end
+																	concat_ws(
+																		E'\n;\n'
+																		, case 
+																			when i_view_rec.mv_emulation_chunk_row_limit is not null then
+																				format(
+																					E'do $$'
+																					'\ndeclare'
+																					'\n	l_row_limit bigint := %%s;'
+																					'\n	l_row_offset bigint := 0;'
+																					'\nbegin'
+																					'\n	<<insertion_in_parts>>'
+																					'\n	loop' 
+																					'\n		insert into'
+																					'\n			%I.%%I'
+																					'\n		select'
+																					'\n			*'
+																					'\n		from'
+																					'\n			%I.%I('
+																					'\n				%s => %%L::%%s[]'
+																					'\n				, i_row_limit => l_row_limit'
+																					'\n				, i_row_offset => l_row_offset'
+																					'\n			)'
+																					'\n		;'
+																					'\n		exit insertion_in_parts when not found'
+																					'\n		;'
+																					'\n		l_row_offset := l_row_offset + l_row_limit'
+																					'\n		;'
+																					'\n	end loop insertion_in_parts'
+																					'\n	;'
+																					'\nend'
+																					'\n$$'
+																					, i_view_rec.schema_name
+																					, i_view_rec.schema_name
+																					, i_view_rec.mv_emulation_table_func_name
+																					, i_view_rec.mv_emulation_refresh_proc_param
+																				)
+																			else
+																				format(
+																					E'insert into'
+																					'\n	%I.%%I'
+																					'\nselect'
+																					'\n	*'
+																					'\nfrom'
+																					'\n	%I.%I('
+																					'\n		%s => %%L::%%s[]'
+																					'\n	)'
+																					, i_view_rec.schema_name
+																					, i_view_rec.schema_name
+																					, i_view_rec.mv_emulation_table_func_name
+																					, i_view_rec.mv_emulation_refresh_proc_param
+																				)
+																		end
+																		, l_chunk_invalidation_script
+																	)
 																, i_indentation_level => 3
 															)
 															, case 
@@ -686,6 +740,10 @@ begin
 																	)
 																else
 																	''
+															end
+															, case
+																when l_chunk_invalidation_script is not null then
+																	E'\n 		, chunk.new_partition'
 															end
 															, i_view_rec.schema_name
 															, i_view_rec.schema_name

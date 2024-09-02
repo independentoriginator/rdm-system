@@ -36,23 +36,8 @@ begin
 		;
 	
 		execute 
-			format(
-				E'create or replace trigger %s'
-				'\n%s %s'
-				'\non %I.%I'
-				'\nreferencing%s%s'
-				'\nfor each %s'
-				'\nexecute function %I.%s()'
-				, i_trigger_rec.trigger_name
-				, i_trigger_rec.action_timing
-				, i_trigger_rec.event_manipulation
-				, i_trigger_rec.event_object_schema
-				, i_trigger_rec.event_object_table
-				, case when i_trigger_rec.action_reference_old_table is not null then ' old table as ' || i_trigger_rec.action_reference_old_table else '' end
-				, case when i_trigger_rec.action_reference_new_table is not null then ' new table as ' || i_trigger_rec.action_reference_new_table else '' end
-				, i_trigger_rec.action_orientation
-				, i_trigger_rec.function_schema_name
-				, i_trigger_rec.function_name
+			${mainSchemaName}.f_trigger_creation_command(
+				i_trigger_rec => i_trigger_rec
 			)
 		;
 	else
