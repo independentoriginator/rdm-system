@@ -9,7 +9,10 @@ begin
 	set 
 		is_created = false
 	where 
-		id = coalesce(new.view_id, old.view_id)
+		id = new.view_id
+		or id = old.view_id
+		or id = new.master_view_id
+		or id = old.master_view_id
 	;
 	
 	return 

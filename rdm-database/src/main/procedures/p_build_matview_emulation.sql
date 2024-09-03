@@ -6,57 +6,65 @@ as $procedure$
 declare 
 	l_sttmnt record;
 	l_is_matview_recognized boolean := false;
-	l_chunk_invalidation_script text := 
-		nullif((
-				select 
-					string_agg(
-						format(
-							E'with'
-							'\n	invalidated_chunk as ('
-							'\n		select'
-							'\n			chunk.id'
-							'\n		from ('
-							'\n			%s'
-							'\n		) as chunk(id)'
-							'\n		join %I.%I_chunk c'
-							'\n			on c.%s = chunk.id'
-							'\n		for update of c'
-							'\n	)'
-							'\ndelete from'
-							'\n	%I.%I_chunk chunk'
-							'\nusing'
-							'\n	invalidated_chunk'
-							'\nwhere'
-							'\n	chunk.%s = invalidated_chunk.id'
-							, ${mainSchemaName}.f_indent_text(
-								i_text => 
-									replace(
-										dep.invalidated_chunk_query_tmpl
-										, '{{transition_table}}'
-										, i_view_rec.schema_name || '.%I'
-									)
-								, i_indentation_level => 3
+	l_chunk_invalidation_script text; 
+	l_chunk_invalidation_script_subst text;
+begin
+	select 
+		nullif(
+			string_agg(
+				format(
+					E'with'
+					'\n	invalidated_chunk as ('
+					'\n		select'
+					'\n			chunk.id'
+					'\n		from ('
+					'\n			%s'
+					'\n		) as chunk(id)'
+					'\n		join %I.%I_chunk c'
+					'\n			on c.%s = chunk.id'
+					'\n		for update of c'
+					'\n	)'
+					'\ndelete from'
+					'\n	%I.%I_chunk chunk'
+					'\nusing'
+					'\n	invalidated_chunk'
+					'\nwhere'
+					'\n	chunk.%s = invalidated_chunk.id'
+					, ${mainSchemaName}.f_indent_text(
+						i_text => 
+							replace(
+								dep.invalidated_chunk_query_tmpl
+								, '{{transition_table}}'
+								, i_view_rec.schema_name || '.%I'
 							)
-							, dependent_view.schema_name
-							, dependent_view.internal_name
-							, dependent_view.mv_emulation_chunking_field
-							, dependent_view.schema_name
-							, dependent_view.internal_name
-							, dependent_view.mv_emulation_chunking_field
-						)
-						, E'\n;\n'
+						, i_indentation_level => 3
 					)
-				from			
-					${mainSchemaName}.meta_view_chunk_dependency dep
-				join ${mainSchemaName}.v_meta_view dependent_view
-					on dependent_view.id = dep.view_id
-				where
-					dep.master_view_id = i_view_rec.id
+					, dependent_view.schema_name
+					, dependent_view.internal_name
+					, dependent_view.mv_emulation_chunking_field
+					, dependent_view.schema_name
+					, dependent_view.internal_name
+					, dependent_view.mv_emulation_chunking_field
+				)
+				, E'\n;\n'
 			)
 			, ''
 		)
+		, string_agg(
+			E'\n	 		, chunk.new_partition'
+			, ''
+		) 
+	into 
+		l_chunk_invalidation_script
+		, l_chunk_invalidation_script_subst
+	from			
+		${mainSchemaName}.meta_view_chunk_dependency dep
+	join ${mainSchemaName}.v_meta_view dependent_view
+		on dependent_view.id = dep.view_id
+	where
+		dep.master_view_id = i_view_rec.id
 	;
-begin
+
 	for l_sttmnt in (
 		select 
 			case 
@@ -534,6 +542,7 @@ begin
 															'\n					, current_table_id'
 															'\n					, shadow_table_id'
 															'\n					, partition_bound_spec'
+															'\n					, refresh_time'
 															'\n				)'
 															'\n			values('
 															'\n				%%s'
@@ -553,12 +562,14 @@ begin
 															'\n				)'
 															'\n				, nullif(%%L, '''')::${type.system_object_id}'
 															'\n				, %%L'
+															'\n				, ${mainSchemaName}.f_current_timestamp()'
 															'\n			)'
 															'\n			on conflict (meta_view_id, partition_id)'
 															'\n				do update set'
 															'\n					current_table_id = excluded.current_table_id'
 															'\n					, shadow_table_id = excluded.shadow_table_id'
 															'\n					, partition_bound_spec = excluded.partition_bound_spec'
+															'\n					, refresh_time = excluded.refresh_time'
 															'\n			$dml$'
 															'\n			, l_meta_view_id'
 															'\n			, chunk.id'
@@ -741,10 +752,7 @@ begin
 																else
 																	''
 															end
-															, case
-																when l_chunk_invalidation_script is not null then
-																	E'\n 		, chunk.new_partition'
-															end
+															, l_chunk_invalidation_script_subst
 															, i_view_rec.schema_name
 															, i_view_rec.schema_name
 															, i_view_rec.internal_name
@@ -818,9 +826,11 @@ begin
 															E'\n\ninsert into'
 															'\n	%I.%I_chunk('
 															'\n		%s'
+															'\n		, refresh_time'
 															'\n	)'
 															'\nselect'
 															'\n	id'
+															'\n	, ${mainSchemaName}.f_current_timestamp()'
 															'\nfrom'
 															'\n	unnest(%s) chunk(id)'
 															'\non conflict (%s)'

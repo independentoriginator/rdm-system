@@ -742,6 +742,13 @@
 			tableName="meta_view_chunk_dependency"
 			columnName="comparison_operator" />		
 	</changeSet>
+	
+	<changeSet id="meta_view_chunk_dependency: drop deprecated columns" author="${default_author}">
+		<dropColumn tableName="meta_view_chunk_dependency">
+			<column name="master_chunk_field" />
+			<column name="comparison_operator" />
+		</dropColumn>
+	</changeSet>
 
 	<changeSet id="meta_view_chunk_dependency: invalidated_chunk_query_tmpl" author="${default_author}">
 
@@ -752,7 +759,7 @@
 		</addColumn>
 		
 	</changeSet>
-	
+
 	<changeSet id="materialized_view_refresh_duration" author="${default_author}">
 	
 		<createTable
@@ -833,6 +840,14 @@
 			referencedTableSchemaName="${mainSchemaName}"
 			referencedColumnNames="id" />
 
+	</changeSet>
+	
+	<changeSet id="materialized_view_partition: refresh_time" author="${default_author}">
+		<addColumn tableName="materialized_view_partition" schemaName="${stagingSchemaName}">
+			<column name="refresh_time" type="timestamp" remarks="Refresh time">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
 	</changeSet>
             			
 </databaseChangeLog>

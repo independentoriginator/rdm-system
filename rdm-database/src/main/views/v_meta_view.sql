@@ -49,7 +49,7 @@ select
 			format('
 				create table %I.%I
 				as 
-				select %s
+				select %s, null::timestamp as refresh_time
 				from %I.%I 
 				where false
 				;
