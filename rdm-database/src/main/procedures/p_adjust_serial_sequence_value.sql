@@ -45,14 +45,14 @@ begin
 						from (
 							select 
 								coalesce((select last_value from %%s), 0) as sequence_last_value
-								, coalesce(max(%%s), 0) as max_id
+								, coalesce(max(%s), 0) as max_id
 							from 
-								%%I.%%I
+								%I.%I
 						) t
 						where 
 							(
 								t.sequence_last_value < t.max_id
-								or (t.sequence_last_value > t.max_id and %%L::boolean)
+								or (t.sequence_last_value > t.max_id and %L::boolean)
 							)
 							and t.max_id >= (
 								select 
@@ -60,17 +60,12 @@ begin
 								from
 									pg_catalog.pg_sequences
 								where 
-									schemaname = '%%I'
+									schemaname = '%I'
 									and sequencename = '%%I'													
 							)
 						$sql$
 						, l_sequence_name
 						, l_sequence_name
-						, '%s'
-						, '%I'
-						, '%I' 
-						, '%s'
-						, '%I'
 						, l_sequence_name
 					);
 			 	
@@ -81,7 +76,8 @@ begin
 			, case 
 				when i_sequence_name ~ '^[[:alnum:]]+\.[[:alnum:]]+$' then 
 					i_sequence_name 
-				else format('%I.%I', i_schema_name, i_sequence_name) 
+				else 
+					format('%I.%I', i_schema_name, i_sequence_name) 
 			end
 			, i_schema_name
 			, i_table_name
@@ -90,6 +86,7 @@ begin
 			, i_schema_name
 			, i_table_name
 			, i_allow_value_decreasing
+			, i_schema_name
 		);
 	 
 	if i_foreign_server is null then 
