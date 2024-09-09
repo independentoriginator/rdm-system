@@ -299,13 +299,22 @@ begin
 											%I.%I dest
 										join package_data src
 											on src.data_package_id = i_data_package_id
-											and src.external_id = dest.external_id								
+											and src.external_id = dest.external_id
+											and src.source_id = dest.source_id
 											and src.version_ordinal_num = 1
 											and src.external_version is not null 
 											and src.valid_from is not null
-											and src.valid_from > dest.valid_from 
 										where 
-											dest.valid_to = ng_rdm.f_undefined_max_date()
+											dest.valid_to = (
+												select 
+													max(t.valid_to)
+												from 
+													%I.%I t
+												where 
+													t.external_id = src.external_id
+													and t.source_id = src.source_id
+													and t.valid_from < src.valid_from 
+											)
 											and dest.external_version is not null 
 											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
 										for update of dest
@@ -334,14 +343,23 @@ begin
 											%I.%I dest
 										join package_data src
 											on src.data_package_id = i_data_package_id
-											and src.meta_id = dest.meta_id								
+											and src.meta_id = dest.meta_id
+											and src.source_id = dest.source_id
 											and src.version_ordinal_num = 1
 											and src.meta_version is not null 
 											and src.external_id is null 
 											and src.valid_from is not null
-											and src.valid_from > dest.valid_from 
 										where 
-											dest.valid_to = ng_rdm.f_undefined_max_date()
+											dest.valid_to = (
+												select 
+													max(t.valid_to)
+												from 
+													%I.%I t
+												where 
+													t.meta_id = src.meta_id
+													and t.source_id = src.source_id
+													and t.valid_from < src.valid_from 
+											)
 											and dest.meta_version is not null
 											and dest.external_id is null
 											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
@@ -536,7 +554,11 @@ begin
 				, i_type_rec.internal_name
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
 				, l_cte_option
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
 				, i_type_rec.schema_name
