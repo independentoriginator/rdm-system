@@ -182,11 +182,15 @@ begin
 										'\n	%s tv_%I_%I.arr_%s%%type%s'
 										'\n)'
 										'\nreturns setof %I.%I'
-										'\nlanguage sql'
+										'\nlanguage plpgsql'
 										'\nstable'
 										'\nparallel safe'									
 										'\nas $routine$'
-										'\n	%s'
+										'\nbegin'
+										'\n	return query'
+										'\n		%s'
+										'\n	;'
+										'\nend'
 										'\n$routine$'
 										'\n;'
 										, i_view_rec.schema_name
@@ -207,7 +211,10 @@ begin
 										end
 										, i_view_rec.schema_name
 										, i_view_rec.internal_name
-										, target_query
+										, ${mainSchemaName}.f_indent_text(
+											i_text => target_query
+											, i_indentation_level => 1		
+										)
  									)
 									, format(
 										E'create or replace procedure %I.%I('
