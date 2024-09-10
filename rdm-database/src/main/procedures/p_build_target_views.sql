@@ -5,8 +5,7 @@ drop procedure if exists
 ;
 
 drop procedure if exists 
-	p_build_target_views(
-	)
+	p_build_target_views()
 ;
 
 create or replace procedure 
@@ -76,21 +75,10 @@ begin
 				not v.is_schema_exists
 		) as schemas_to_create
 		, string_agg(
-			concat_ws(	
-				E';\n'
-				, ${mainSchemaName}.f_sys_obj_drop_command(
-					i_obj_class => v.obj_class
-					, i_obj_id => v.view_oid
-					, i_cascade => true
-					, i_check_existence => true
-				)
-				, v.mv_emulation_refresh_procedures_drop_cmd
-				, v.mv_emulation_partition_tables_drop_cmd
-				, format(
-					'drop table if exists %I.%I_chunk'
-					, v.schema_name
-					, v.internal_name
-				)
+			${mainSchemaName}.f_meta_view_drop_command(
+				i_meta_view_id => v.id
+				, i_cascade => true
+				, i_check_existence => true
 			)
 			, E';\n'
 		) filter(
@@ -103,83 +91,14 @@ begin
 		, l_views
 		, l_schemas_to_create
 		, l_drop_command
-	from (
-		select 
-			v.id
-			, v.schema_name
-			, v.internal_name
-			, v.obj_class
-			, v.is_routine
-			, v.is_schema_exists
-			, v.is_view_exists			
-			, v.view_oid
-			, (
-				select 
-					string_agg(
-						${mainSchemaName}.f_sys_obj_drop_command(
-							i_obj_class => p.obj_class
-							, i_obj_id => p.obj_id
-							, i_check_existence => true							
-						)		
-						, E';\n'
-					)	
-				from 
-					${mainSchemaName}.v_sys_obj p
-				where 
-					p.obj_schema = v.schema_name
-					and p.unqualified_name = v.mv_emulation_refresh_proc_name
-			) as mv_emulation_refresh_procedures_drop_cmd
-			, (
-				select 
-					concat_ws(
-						E';\n'
-						, string_agg(
-							case 
-								when current_table.obj_id is not null then
-									${mainSchemaName}.f_sys_obj_drop_command(
-										i_obj_class => current_table.obj_class
-										, i_obj_id => current_table.obj_id
-										, i_check_existence => true							
-									)
-							end
-							, E';\n'
-						)
-						, string_agg(
-							case 
-								when shadow_table.obj_id is not null then
-									${mainSchemaName}.f_sys_obj_drop_command(
-										i_obj_class => shadow_table.obj_class
-										, i_obj_id => shadow_table.obj_id
-										, i_check_existence => true							
-									)
-							end
-							, E';\n'
-						)
-						, format(
-							'delete from ${stagingSchemaName}.materialized_view_partition where meta_view_id = %s'
-							, p.meta_view_id
-						)
-					)
-				from 
-					${stagingSchemaName}.materialized_view_partition p
-				left join ${mainSchemaName}.v_sys_obj current_table
-					on current_table.obj_id = p.current_table_id
-				left join ${mainSchemaName}.v_sys_obj shadow_table
-					on shadow_table.obj_id = p.shadow_table_id
-				where 
-					p.meta_view_id = v.id
-				group by 
-					p.meta_view_id
-			) as mv_emulation_partition_tables_drop_cmd
-		from
-			${mainSchemaName}.v_meta_view v
-		join ${mainSchemaName}.meta_view mv 
-			on mv.id = v.id
-		where 
-			(not coalesce(v.is_created, false) or mv.dependency_level is null)
-			and not coalesce(v.is_disabled, false)
-			and (v.schema_name = i_schema_name or i_schema_name is null)
-	) v
+	from
+		${mainSchemaName}.v_meta_view v
+	join ${mainSchemaName}.meta_view mv 
+		on mv.id = v.id
+	where 
+		(not coalesce(v.is_created, false) or mv.dependency_level is null)
+		and not coalesce(v.is_disabled, false)
+		and (v.schema_name = i_schema_name or i_schema_name is null)
 	;
 
 	if l_view_ids is null then

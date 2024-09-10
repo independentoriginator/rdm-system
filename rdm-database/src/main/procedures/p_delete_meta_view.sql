@@ -41,29 +41,33 @@ begin
 
 	if l_view_id is null then
 		if i_skip_nonexistent then 
-			return;
+			return
+			;
 		else
 			raise exception 'The view specified is invalid: %.% (id = %)', i_schema_name, i_internal_name, i_id;
-		end if;
-	end if;
-	
-	raise notice '%', format('
-		drop %s if exists %I.%I cascade
-		'
-		, l_view_type
-		, l_schema_name
-		, l_internal_name
-	);
-	execute format('
-		drop %s if exists %I.%I cascade
-		'
-		, l_view_type
-		, l_schema_name
-		, l_internal_name
-	);
+		end if
+		;
+	end if
+	;
+
+	execute 
+		${mainSchemaName}.f_meta_view_drop_command(
+			i_meta_view_id => l_view_id
+			, i_cascade => true
+			, i_check_existence => true
+		)
+	;
 	
 	delete from ${mainSchemaName}.meta_view_dependency 
 	where view_id = l_view_id or master_view_id = l_view_id
+	;
+
+	delete from ${mainSchemaName}.meta_view_chunk_dependency 
+	where view_id = l_view_id
+	;
+
+	delete from ${stagingSchemaName}.materialized_view_refresh_duration 
+	where meta_view_id = l_view_id
 	;
 
 	delete from ${mainSchemaName}.meta_view_lc 

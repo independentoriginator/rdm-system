@@ -77,6 +77,7 @@ select
 				, v.mv_emulation_filled_chunk_table_name
 			)
 	end as mv_emulation_filled_chunk_table_truncation_cmd
+	, v.mv_emulation_filled_chunk_table_name
 from (
 	select
 		v.id
