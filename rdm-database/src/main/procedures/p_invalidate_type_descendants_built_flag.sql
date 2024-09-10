@@ -32,6 +32,8 @@ begin
 			where 
 				t.is_built = true
 				and t.is_abstract = false
+			order by 
+				t.id
 			for update of t
 		)
 	update 

@@ -317,6 +317,8 @@ begin
 											)
 											and dest.external_version is not null 
 											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+										order by 
+											dest.version
 										for update of dest
 									)
 								update
@@ -363,6 +365,8 @@ begin
 											and dest.meta_version is not null
 											and dest.external_id is null
 											and (dest.data_package_id <> i_data_package_id or dest.data_package_id is null)
+										order by 
+											dest.version
 										for update of dest
 									)
 								update

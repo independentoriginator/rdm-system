@@ -14,7 +14,9 @@ begin
 				and v.is_valid = true
 			where 
 				dep.master_view_id = old.id
-				and dep.master_view_id <> dep.view_id 
+				and dep.master_view_id <> dep.view_id
+			order by 
+				v.id
 			for update of v
 		)
 	update ${mainSchemaName}.meta_view meta_view

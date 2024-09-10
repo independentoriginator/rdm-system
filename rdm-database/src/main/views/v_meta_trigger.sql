@@ -46,39 +46,12 @@ with
 			, 'statement'::text as action_orientation
 			, ${mainSchemaName}.f_indent_text(
 				i_text => 
-					format(
-						E'with'
-						'\n	invalidated_chunk as ('
-						'\n		select'
-						'\n			chunk.id'
-						'\n		from ('
-						'\n			%s'
-						'\n		) as chunk(id)'
-						'\n		join %I.%I_chunk c'
-						'\n			on c.%s = chunk.id'
-						'\n		for update of c'
-						'\n	)'
-						'\ndelete from'
-						'\n	%I.%I_chunk chunk'
-						'\nusing'
-						'\n	invalidated_chunk'
-						'\nwhere'
-						'\n	chunk.%s = invalidated_chunk.id'
-						, ${mainSchemaName}.f_indent_text(
-							i_text => 
-								replace(
-									dep.invalidated_chunk_query_tmpl
-									, '{{transition_table}}'
-									, transition_table.name
-								)
-							, i_indentation_level => 3
-						)
-						, v.schema_name
-						, v.internal_name
-						, v.mv_emulation_chunking_field
-						, v.schema_name
-						, v.internal_name
-						, v.mv_emulation_chunking_field
+					${mainSchemaName}.f_meta_view_chunk_invalidation_command(
+						i_dependent_view_schema => v.schema_name
+						, i_dependent_view_name => v.internal_name
+						, i_mv_emulation_chunking_field => v.mv_emulation_chunking_field
+						, i_invalidated_chunk_query_tmpl => dep.invalidated_chunk_query_tmpl
+						, i_transition_table_name => transition_table.name
 					)
 				, i_indentation_level => 1
 			) as function_body

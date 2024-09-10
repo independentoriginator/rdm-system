@@ -15,6 +15,8 @@ begin
 				and v.is_valid = true
 			where
 				d.master_type_id = i_type_id
+			order by 
+				v.id
 			for update of v
 		)
 	update 
