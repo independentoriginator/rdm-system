@@ -81,6 +81,8 @@ begin
 				, i_check_existence => true
 			)
 			, E';\n'
+			order by 
+				v.dependency_level desc
 		) filter(
 			where
 				not v.is_routine
@@ -179,7 +181,7 @@ begin
 			E'Dropping views that will be recreated... \n%'
 			, l_drop_command
 		;
-		
+	
 		l_timestamp := clock_timestamp()
 		;
 	
