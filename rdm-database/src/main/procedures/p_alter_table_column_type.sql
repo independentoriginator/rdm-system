@@ -35,11 +35,13 @@ begin
 	select
 		format('
 			alter %stable %I.%I
-				alter column %I set data type %s
+				alter column %I set data type %s using %I::%s
 			'
 			, case when c.relkind = 'f' then 'foreign ' else '' end 
 			, i_schema_name
 			, i_table_name
+			, i_column_name
+			, i_column_type
 			, i_column_name
 			, i_column_type
 		) 
