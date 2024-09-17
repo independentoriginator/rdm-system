@@ -68,7 +68,15 @@ declare
 			end as target_name
 		from ( 
 			select 
-				upper(left(t.subname, 1)) || right(t.subname, -1) as subname 
+				(
+					upper(left(t.subname, 1)) 
+					|| case 
+						when right(t.subname, -1) = upper(right(t.subname, -1)) then 
+							lower(right(t.subname, -1))
+						else 
+							right(t.subname, -1)
+					end
+				) as subname 
 				, t.ordinal_number
 			from ( 
 				select 
