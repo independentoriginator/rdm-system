@@ -178,7 +178,7 @@ begin
 			) 
 			loop
 				raise notice 'Re-creating the dependent object %...', l_dependent_obj->>'name'; 
-				execute l_dependent_obj->>'command';
+				execute l_dependent_obj->>'definition';
 			end loop;
 		end if;
 	
