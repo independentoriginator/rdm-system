@@ -14,6 +14,13 @@ drop function if exists f_database_one_off_static_snapshot_gen_script(
 	, text
 );
 
+drop function if exists f_database_one_off_static_snapshot_gen_script(
+	name[]
+	, boolean
+	, boolean
+	, text 
+);
+
 create or replace function f_database_one_off_static_snapshot_gen_script(
 	i_schemas name[] = null
 	, i_include_tables boolean = false
@@ -241,7 +248,7 @@ from (
 		, t.obj_num
 		, c.command_num
 		, c.is_statement
-		, false as is_alternative_quote_delimiter_used
+		, c.is_alternative_quote_delimiter_used
 		, c.is_intercmd_newline_delimiter_used
 	from (
 		select
@@ -276,12 +283,14 @@ from (
 						, t.columns_list
 					)
 			end as copy_to_stdout_cmd
+			, t.indices_def
 			, row_number() over() as obj_num
 		from (
 			select 
 				t.schema_name
 				, t.table_name
 				, t.is_view
+				, t.indices_def
 				, array_to_string(
 					array_agg(
 						t.column_name
@@ -301,6 +310,7 @@ from (
 					t.schema_name
 					, t.internal_name as table_name
 					, t.is_view
+					, indices.def as indices_def
 					, a.attname as column_name
 					, pg_catalog.format_type(a.atttypid, a.atttypmod) as column_type
 					, case
@@ -326,6 +336,23 @@ from (
 					from 
 						target_view	
 				) t 
+				left join lateral (
+					select 
+						string_agg(
+							replace(
+								i.indexdef
+								, ' ON ONLY '
+								, ' ON '
+							)
+							, E';\n'
+						) as def
+					from 
+						pg_catalog.pg_indexes i
+					where
+						i.schemaname = t.schema_name
+						and i.tablename = t.internal_name
+				) indices
+					on true
 				join pg_catalog.pg_attribute a 
 					on a.attrelid = t.obj_id
 					and a.attnum > 0
@@ -335,23 +362,26 @@ from (
 				t.schema_name
 				, t.table_name
 				, t.is_view
+				, t.indices_def
 		) t
 	) t
 	join lateral (
 		values
-			(t.dest_table_def, 'select', 1, true, true)
-			, (t.copy_from_stdin_cmd, 'select', 2, true, false)		
-			, (t.copy_to_stdout_cmd, 'perform', 3, true, false)
-			, ('\\.', 'select', 4, false, true) -- data_end_marker
+			(t.dest_table_def, 'select', 1, true, false, true)
+			, (t.copy_from_stdin_cmd, 'select', 2, true, false, false)		
+			, (t.copy_to_stdout_cmd, 'perform', 3, true, false, false)
+			, ('\\.', 'select', 4, false, false, true) -- data_end_marker
+			, (t.indices_def, 'select', 5, true, true, true)
 	) 
 	as c(
 		command
 		, command_type
 		, command_num
 		, is_statement
+		, is_alternative_quote_delimiter_used
 		, is_intercmd_newline_delimiter_used
 	)
-		on c.command_num = 1 or i_include_data
+		on c.command_num in (1, 5) or i_include_data
 	union all 
 	select 
 		${mainSchemaName}.f_sys_obj_definition(

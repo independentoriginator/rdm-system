@@ -117,7 +117,7 @@ select
 	) is 'Допустимое системное имя'
 	;
 	$sql$ as query
-	, -1001 as creation_order
+	, -1000 as creation_order
 	, true as is_routine
 	, false as is_external
 	, false as is_disabled
