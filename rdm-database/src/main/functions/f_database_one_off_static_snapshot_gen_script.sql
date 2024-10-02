@@ -182,7 +182,7 @@ select
 			E'SELECT\n'
 			|| case 
 				when t.is_alternative_quote_delimiter_used 
-				then i_alternative_quote_delimiter || E'\n' 
+				then i_alternative_quote_delimiter 
 				else 'E''' 
 			end
 			|| t.command 
