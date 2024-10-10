@@ -1,34 +1,55 @@
-drop function if exists f_database_one_off_static_snapshot_gen_script(
-	text
-);
+drop function if exists 
+	f_database_one_off_static_snapshot_gen_script(
+		text
+	)
+;
 
-drop function if exists f_database_one_off_static_snapshot_gen_script(
-	text
-	, boolean
-);
+drop function if exists 
+	f_database_one_off_static_snapshot_gen_script(
+		text
+		, boolean
+	)
+;
 
-drop function if exists f_database_one_off_static_snapshot_gen_script(
-	text
-	, boolean
-	, boolean
-	, text
-);
+drop function if exists 
+	f_database_one_off_static_snapshot_gen_script(
+		text
+		, boolean
+		, boolean
+		, text
+	)
+;
 
-drop function if exists f_database_one_off_static_snapshot_gen_script(
-	name[]
-	, boolean
-	, boolean
-	, text 
-);
+drop function if exists 
+	f_database_one_off_static_snapshot_gen_script(
+		name[]
+		, boolean
+		, boolean
+		, text 
+	)
+;
 
-create or replace function f_database_one_off_static_snapshot_gen_script(
-	i_schemas name[] = null
-	, i_include_tables boolean = false
-	, i_include_data boolean = true
-	, i_enforced_compatibility_level integer = null
-	, i_alternative_quote_delimiter text = '$quote_delimiter$' 
-)
-returns setof text
+drop function if exists 
+	f_database_one_off_static_snapshot_gen_script(
+		name[]
+		, boolean
+		, boolean
+		, integer
+		, text 
+	)
+;
+
+create or replace function 
+	f_database_one_off_static_snapshot_gen_script(
+		i_schemas name[] = null
+		, i_include_tables boolean = false
+		, i_include_data boolean = true
+		, i_date_range_filter daterange = null
+		, i_enforced_compatibility_level integer = null
+		, i_alternative_quote_delimiter text = '$quote_delimiter$' 
+	)
+returns 
+	setof text
 language sql
 stable
 as $function$
@@ -85,13 +106,15 @@ with
 					on v.id = dep.master_view_id
 					and v.is_routine
 					and v.is_view_exists
-			)			
+			)	
+			and false
 	)
 	, target_view as (
 		select 
 			v.view_oid as obj_id
 			, v.schema_name
 			, v.internal_name 
+			, v.date_range_filter_condition
 		from 
 			${mainSchemaName}.v_meta_view v
 		where 
@@ -100,11 +123,15 @@ with
 			and not v.is_disabled 
 			and v.is_view_exists
 			and (v.schema_name = any(i_schemas) or i_schemas is null)
+			and v.id = 3287
 		union 
-		select distinct
+		select distinct on (
+				v.view_oid
+			) 
 			v.view_oid as obj_id
 			, v.schema_name
-			, v.internal_name 
+			, v.internal_name
+			, v.date_range_filter_condition
 		from 
 			target_routine r
 		join ${mainSchemaName}.meta_view_dependency dep 
@@ -113,12 +140,14 @@ with
 			on v.id = dep.master_view_id
 			and not v.is_routine
 			and v.is_view_exists
+			and false
 	)
 	, target_table as (
 		select 
 			t.table_oid as obj_id
 			, t.schema_name
 			, t.internal_name 
+			, t.date_range_filter_condition
 		from 	
 			${mainSchemaName}.v_meta_type t
 		where 
@@ -129,7 +158,8 @@ with
 		select 
 			t.localization_table_oid as obj_id
 			, t.schema_name
-			, t.localization_table_name as internal_name 
+			, t.localization_table_name as internal_name
+			, null as date_range_filter_condition
 		from 	
 			${mainSchemaName}.v_meta_type t
 		where
@@ -137,10 +167,13 @@ with
 			and t.is_localization_table_exists
 			and (t.schema_name = any(i_schemas) or i_schemas is null)
 		union
-		select distinct
+		select distinct on (
+				master_table.obj_id
+			)
 			master_table.obj_id
 			, master_table.schema_name
 			, master_table.internal_name 
+			, master_table.date_range_filter_condition
 		from 
 			target_routine r
 		join ${mainSchemaName}.meta_view_dependency dep 
@@ -150,12 +183,13 @@ with
 			and t.is_table_exists
 		join lateral (
 			values
-				(t.table_oid, t.schema_name, t.internal_name)
-				, (t.localization_table_oid, t.schema_name, t.localization_table_name)
+				(t.table_oid, t.schema_name, t.internal_name, t.date_range_filter_condition)
+				, (t.localization_table_oid, t.schema_name, t.localization_table_name, null)
 		) as master_table(
 			obj_id
 			, schema_name
 			, internal_name
+			, date_range_filter_condition
 		)
 			on master_table.obj_id is not null
 	)
@@ -266,14 +300,29 @@ from (
 				, t.table_name
 				, t.columns_list
 			) as copy_from_stdin_cmd
-			, case t.is_view
-				when true 
+			, case 
+				when t.is_view 
+					or (
+						i_date_range_filter is not null
+						and t.date_range_filter_condition is not null
+					)
 				then 
 					format(
-						'COPY (SELECT %s FROM %I.%I) TO stdout'
+						'COPY (SELECT %s FROM %I.%I%s) TO stdout'
 						, t.columns_list
 						, t.schema_name
 						, t.table_name
+						, case 
+							when i_date_range_filter is not null
+								and t.date_range_filter_condition is not null
+							then 
+								' WHERE '
+								|| replace(
+									t.date_range_filter_condition
+									, '{{date_range}}'
+									, i_date_range_filter::text
+								)
+						end
 					)
 				else 
 					format(
@@ -290,6 +339,7 @@ from (
 				t.schema_name
 				, t.table_name
 				, t.is_view
+				, t.date_range_filter_condition
 				, t.indices_def
 				, array_to_string(
 					array_agg(
@@ -310,6 +360,7 @@ from (
 					t.schema_name
 					, t.internal_name as table_name
 					, t.is_view
+					, t.date_range_filter_condition
 					, indices.def as indices_def
 					, a.attname as column_name
 					, pg_catalog.format_type(a.atttypid, a.atttypmod) as column_type
@@ -325,6 +376,7 @@ from (
 						, schema_name
 						, internal_name
 						, false as is_view
+						, date_range_filter_condition
 					from 
 						target_table
 					union all
@@ -333,6 +385,7 @@ from (
 						, schema_name
 						, internal_name
 						, true as is_view
+						, date_range_filter_condition
 					from 
 						target_view	
 				) t 
@@ -362,6 +415,7 @@ from (
 				t.schema_name
 				, t.table_name
 				, t.is_view
+				, t.date_range_filter_condition
 				, t.indices_def
 		) t
 	) t
@@ -404,12 +458,17 @@ order by
 	t.obj_type_num
 	, t.obj_num
 	, t.command_num	
-$function$;	
+$function$
+;	
 
-comment on function f_database_one_off_static_snapshot_gen_script(
-	name[]
-	, boolean
-	, boolean
-	, integer
-	, text 
-) is 'Скрипт генерации одноразового статического снимка базы данных';
+comment on function 
+	f_database_one_off_static_snapshot_gen_script(
+		name[]
+		, boolean
+		, boolean
+		, daterange
+		, integer
+		, text 
+	) 
+	is 'Скрипт генерации одноразового статического снимка базы данных'
+;

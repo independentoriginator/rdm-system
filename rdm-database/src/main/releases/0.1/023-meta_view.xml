@@ -849,5 +849,21 @@
 			</column>
 		</addColumn>
 	</changeSet>
+
+	<changeSet id="meta_view: date_range_filter_condition" author="${default_author}">
+		<addColumn tableName="meta_view">
+			<column name="date_range_filter_condition" type="clob" remarks="Date range filter condition">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+	</changeSet>
+	
+	<changeSet id="meta_type: date_range_filter_condition" author="${default_author}">
+		<addColumn tableName="meta_type">
+			<column name="date_range_filter_condition" type="clob" remarks="Date range filter condition">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+	</changeSet>
             			
 </databaseChangeLog>

@@ -78,6 +78,7 @@ select
 			)
 	end as mv_emulation_filled_chunk_table_truncation_cmd
 	, v.mv_emulation_filled_chunk_table_name
+	, v.date_range_filter_condition
 from (
 	select
 		v.id
@@ -203,6 +204,7 @@ from (
 		, v.internal_name || '_chunk' as mv_emulation_filled_chunk_table_name
 		, (target_chunk_table.oid is not null) as is_mv_emulation_filled_chunk_table_exists
 		, v.mv_emulation_chunk_row_limit
+		, v.date_range_filter_condition
 	from 
 		${mainSchemaName}.meta_view v
 	left join ${mainSchemaName}.meta_schema s

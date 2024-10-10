@@ -131,6 +131,7 @@ select
 	, (actual_rec_u_constraint.constraint_name is not null) as is_actual_rec_u_constraint_exists
 	, target_table.oid as table_oid
 	, lc_table.oid as localization_table_oid
+	, t.date_range_filter_condition
 from (	
 	select
 		t.id
@@ -160,6 +161,7 @@ from (
 		) as is_staging_table_generated
 		, t.is_built
 		, type_name.lc_string as table_description
+		, t.date_range_filter_condition
 	from 
 		${mainSchemaName}.meta_type t
 	left join ${mainSchemaName}.meta_schema s
