@@ -39,12 +39,23 @@ drop function if exists
 	)
 ;
 
+drop function if exists 
+	f_database_one_off_static_snapshot_gen_script(
+		name[]
+		, boolean
+		, boolean
+		, daterange
+		, integer
+		, text 
+	)
+;
+
 create or replace function 
 	f_database_one_off_static_snapshot_gen_script(
 		i_schemas name[] = null
 		, i_include_tables boolean = false
 		, i_include_data boolean = true
-		, i_date_range_filter daterange = null
+		, i_date_range_filter text = null
 		, i_enforced_compatibility_level integer = null
 		, i_alternative_quote_delimiter text = '$quote_delimiter$' 
 	)
@@ -107,7 +118,6 @@ with
 					and v.is_routine
 					and v.is_view_exists
 			)	
-			and false
 	)
 	, target_view as (
 		select 
@@ -123,7 +133,6 @@ with
 			and not v.is_disabled 
 			and v.is_view_exists
 			and (v.schema_name = any(i_schemas) or i_schemas is null)
-			and v.id = 3287
 		union 
 		select distinct on (
 				v.view_oid
@@ -140,7 +149,6 @@ with
 			on v.id = dep.master_view_id
 			and not v.is_routine
 			and v.is_view_exists
-			and false
 	)
 	, target_table as (
 		select 
@@ -320,7 +328,22 @@ from (
 								|| replace(
 									t.date_range_filter_condition
 									, '{{date_range}}'
-									, i_date_range_filter::text
+									, case i_date_range_filter
+										when 'current report year' then (
+											select 
+												format(
+													'[%s,%s)'
+													, reference_date.value
+													, (reference_date.value + interval '1 year')::date 
+												) as date_range
+											from (
+												values(
+													date_trunc('year', (date_trunc('month', current_date) - '1 month'::interval))::date
+												) 
+											) as reference_date(value)
+										)
+										else i_date_range_filter 
+									end
 								)
 						end
 					)
@@ -466,7 +489,7 @@ comment on function
 		name[]
 		, boolean
 		, boolean
-		, daterange
+		, text
 		, integer
 		, text 
 	) 
