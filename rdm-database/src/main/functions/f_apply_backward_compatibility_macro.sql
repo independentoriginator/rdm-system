@@ -1,7 +1,8 @@
-create or replace function f_apply_backward_compatibility_macro(
-	i_program_code text
-	, i_compatibility_level integer -- server major version 
-)
+create or replace function 
+	f_apply_backward_compatibility_macro(
+		i_program_code text
+		, i_compatibility_level integer -- server major version 
+	)
 returns text
 language plpgsql
 immutable
@@ -116,16 +117,38 @@ begin
 					l_converted_program_code
 					, l_rec.bc_macro
 					, l_rec.target_code_block
-				);		
-		end loop;
+				)
+			;		
+		end loop
+		;
 	
-	end if;
+		-- Explicit handling for the frequently missed case with a CTE materialization
+		if i_compatibility_level < 12 then
+			l_converted_program_code := 
+				regexp_replace(
+					l_converted_program_code
+					, 'as materialized'
+					, 'as'
+					, 'gi'
+				)
+			;		
+		end if
+		;
+	
+	end if
+	;
 
-	return l_converted_program_code;
+	return 
+		l_converted_program_code
+	;
 end
-$function$;
+$function$
+;
 
-comment on function f_apply_backward_compatibility_macro(
-	text
-	, integer 
-) is 'Применить макрокоманды для обратной совместимости';
+comment on function 
+	f_apply_backward_compatibility_macro(
+		text
+		, integer 
+	) 
+	is 'Применить макрокоманды для обратной совместимости'
+;
