@@ -91,7 +91,8 @@ with
 			, v.view_oid as obj_id
 			, v.obj_class
 			, v.schema_name
-			, v.internal_name 
+			, v.internal_name
+			, v.is_materialized as is_materialized_view
 			, row_number()
 				over(
 					order by 
@@ -200,6 +201,8 @@ with
 			, date_range_filter_condition
 		)
 			on master_table.obj_id is not null
+		where 
+			not r.is_materialized_view
 	)
 	, target_schema as (
 		select distinct 
