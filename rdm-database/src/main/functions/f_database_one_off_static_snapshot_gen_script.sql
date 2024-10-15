@@ -156,6 +156,7 @@ with
 			t.table_oid as obj_id
 			, t.schema_name
 			, t.internal_name 
+			, t.internal_name as entity_name
 			, t.date_range_filter_condition
 		from 	
 			${mainSchemaName}.v_meta_type t
@@ -168,7 +169,8 @@ with
 			t.localization_table_oid as obj_id
 			, t.schema_name
 			, t.localization_table_name as internal_name
-			, null as date_range_filter_condition
+			, t.internal_name as entity_name
+			, t.lc_table_date_range_filter_condition as date_range_filter_condition
 		from 	
 			${mainSchemaName}.v_meta_type t
 		where
@@ -182,6 +184,7 @@ with
 			master_table.obj_id
 			, master_table.schema_name
 			, master_table.internal_name 
+			, master_table.entity_name
 			, master_table.date_range_filter_condition
 		from 
 			target_routine r
@@ -192,12 +195,25 @@ with
 			and t.is_table_exists
 		join lateral (
 			values
-				(t.table_oid, t.schema_name, t.internal_name, t.date_range_filter_condition)
-				, (t.localization_table_oid, t.schema_name, t.localization_table_name, null)
+				(
+					t.table_oid
+					, t.schema_name
+					, t.internal_name
+					, t.internal_name
+					, t.date_range_filter_condition
+				)
+				, (
+					t.localization_table_oid
+					, t.schema_name
+					, t.localization_table_name
+					, t.internal_name
+					, t.lc_table_date_range_filter_condition
+				)
 		) as master_table(
 			obj_id
 			, schema_name
 			, internal_name
+			, entity_name
 			, date_range_filter_condition
 		)
 			on master_table.obj_id is not null
@@ -329,24 +345,28 @@ from (
 							then 
 								' WHERE '
 								|| replace(
-									t.date_range_filter_condition
-									, '{{date_range}}'
-									, case i_date_range_filter
-										when 'current report year' then (
-											select 
-												format(
-													'[%s,%s)'
-													, reference_date.value
-													, (reference_date.value + interval '1 year')::date 
-												) as date_range
-											from (
-												values(
-													date_trunc('year', (date_trunc('month', current_date) - '1 month'::interval))::date
-												) 
-											) as reference_date(value)
-										)
-										else i_date_range_filter 
-									end
+									replace(
+										t.date_range_filter_condition
+										, '{{date_range}}'
+										, case i_date_range_filter
+											when 'current report year' then (
+												select 
+													format(
+														'[%s,%s)'
+														, reference_date.value
+														, (reference_date.value + interval '1 year')::date 
+													) as date_range
+												from (
+													values(
+														date_trunc('year', (date_trunc('month', current_date) - '1 month'::interval))::date
+													) 
+												) as reference_date(value)
+											)
+											else i_date_range_filter 
+										end
+									)
+									, '{{entity_table}}'
+									, t.schema_name || '.' || t.entity_name
 								)
 						end
 					)
@@ -364,6 +384,7 @@ from (
 			select 
 				t.schema_name
 				, t.table_name
+				, t.entity_name
 				, t.is_view
 				, t.date_range_filter_condition
 				, t.indices_def
@@ -385,6 +406,7 @@ from (
 				select
 					t.schema_name
 					, t.internal_name as table_name
+					, t.entity_name
 					, t.is_view
 					, t.date_range_filter_condition
 					, indices.def as indices_def
@@ -401,6 +423,7 @@ from (
 						obj_id
 						, schema_name
 						, internal_name
+						, entity_name
 						, false as is_view
 						, date_range_filter_condition
 					from 
@@ -410,6 +433,7 @@ from (
 						obj_id
 						, schema_name
 						, internal_name
+						, internal_name as entity_name
 						, true as is_view
 						, date_range_filter_condition
 					from 
@@ -440,6 +464,7 @@ from (
 			group by
 				t.schema_name
 				, t.table_name
+				, t.entity_name
 				, t.is_view
 				, t.date_range_filter_condition
 				, t.indices_def

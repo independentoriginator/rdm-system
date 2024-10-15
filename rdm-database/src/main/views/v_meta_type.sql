@@ -132,6 +132,27 @@ select
 	, target_table.oid as table_oid
 	, lc_table.oid as localization_table_oid
 	, t.date_range_filter_condition
+	, case 
+		when t.is_localization_table_generated
+			and t.date_range_filter_condition is not null 
+		then 
+			case 
+				when t.is_temporal then
+					format(
+						'(master_id, master_version) in (select id, version from %I.%I where %s)'
+						, t.schema_name
+						, t.internal_name
+						, t.date_range_filter_condition
+					)
+				else
+					format(
+						'master_id in (select id from %I.%I where %s)'
+						, t.schema_name
+						, t.internal_name
+						, t.date_range_filter_condition
+					)
+			end
+	end as lc_table_date_range_filter_condition
 from (	
 	select
 		t.id
