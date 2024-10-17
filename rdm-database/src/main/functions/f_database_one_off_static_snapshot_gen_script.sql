@@ -50,11 +50,23 @@ drop function if exists
 	)
 ;
 
+drop function if exists 
+	f_database_one_off_static_snapshot_gen_script(
+		name[]
+		, boolean
+		, boolean
+		, text
+		, integer
+		, text 
+	) 
+;
+
 create or replace function 
 	f_database_one_off_static_snapshot_gen_script(
 		i_schemas name[] = null
 		, i_include_tables boolean = false
 		, i_include_data boolean = true
+		, i_include_indices boolean = true
 		, i_date_range_filter text = null
 		, i_enforced_compatibility_level integer = null
 		, i_alternative_quote_delimiter text = '$quote_delimiter$' 
@@ -486,7 +498,15 @@ from (
 		, is_alternative_quote_delimiter_used
 		, is_intercmd_newline_delimiter_used
 	)
-		on c.command_num in (1, 5) or i_include_data
+		on c.command_num = 1
+		or (
+			c.command_num = 5
+			and i_include_indices
+		)
+		or (
+			c.command_num in (2, 3, 4)
+			and i_include_data
+		)
 	union all 
 	select 
 		${mainSchemaName}.f_sys_obj_definition(
@@ -515,6 +535,7 @@ $function$
 comment on function 
 	f_database_one_off_static_snapshot_gen_script(
 		name[]
+		, boolean
 		, boolean
 		, boolean
 		, text
