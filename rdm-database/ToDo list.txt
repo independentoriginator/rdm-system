@@ -7,8 +7,10 @@ ToDO list
 - Target table partitioning support
 - Integration of a full user role permissions model 
 - Materialized views incremental refresh: https://github.com/sraoss/pg_ivm
-- Set application_name process attribute  
-- mv emulation: truncation of an existing partition locks a reading process (an idea: create new partition and delete an old one instead truncation)
+- Set application_name process attribute - solved
+- mv emulation: truncation of an existing partition locks a reading process (an idea: create new partition and delete an old one instead truncation) - solved
 - mv emulation: the main refreshing process is killed after some time interval because of it being non-active (an activity imitation is needed)
+- mv emulation: custom "order by" expression in invalidated chunk selection within the triggers due to getting dead locks (for example, common period chunk, 
+inluded months, quarter, year, should be sorted by year-quarter due to there is a year-quarter chunking applied in slave data set)  
 
 - p_refresh_materialized_views: looping bug fix  
