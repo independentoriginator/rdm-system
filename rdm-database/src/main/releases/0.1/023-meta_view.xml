@@ -760,6 +760,28 @@
 		
 	</changeSet>
 
+	<changeSet id="meta_view_chunk_dependency: alter unique constraints" author="${default_author}">
+
+		<dropUniqueConstraint 
+			constraintName="uc_meta_view_chunk_dependency$master_view_id" 
+			tableName="meta_view_chunk_dependency"/>
+
+		<addUniqueConstraint 
+			constraintName="uc_meta_view_chunk_dependency$master_view_id" 
+			tableName="meta_view_chunk_dependency"
+			columnNames="view_id, master_view_id"/>
+
+		<dropUniqueConstraint 
+			constraintName="uc_meta_view_chunk_dependency$master_type_id" 
+			tableName="meta_view_chunk_dependency"/>
+
+		<addUniqueConstraint 
+			constraintName="uc_meta_view_chunk_dependency$master_type_id" 
+			tableName="meta_view_chunk_dependency"
+			columnNames="view_id, master_type_id"/>
+		
+	</changeSet>     
+
 	<changeSet id="materialized_view_refresh_duration" author="${default_author}">
 	
 		<createTable
