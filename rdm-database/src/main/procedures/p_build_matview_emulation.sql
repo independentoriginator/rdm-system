@@ -95,6 +95,7 @@ begin
 								format(
 									E'create or replace procedure %I.%I()'
 									'\nlanguage plpgsql'
+									'\nsecurity definer'
 									'\nas $routine$%s'
 									'\nbegin'
 									'\n\t%s'
@@ -221,6 +222,7 @@ begin
 										'\n\t%s tv_%I_%I.arr_%s%%type = null'
 										'\n)'
 										'\nlanguage plpgsql'
+										'\nsecurity definer'
 										'\nas $routine$%s'
 										'\nbegin'
 										'\n	if %s is null then'
