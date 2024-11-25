@@ -35,22 +35,14 @@ begin
 			if i_attr_rec.target_attr_type <> i_attr_rec.staging_table_column_data_type then 
 				execute format('
 					alter table %I.%I
-						alter column %I set data type %s%s
+						alter column %I set data type %s using %I::%s
 					'
 					, i_attr_rec.staging_schema_name
 					, i_attr_rec.meta_type_name 
 					, i_attr_rec.internal_name 
 					, i_attr_rec.target_attr_type
-					, case
-						when c.relkind <> 'f' then
-							 format(
-							 	' using %I::%s'
-								, i_attr_rec.internal_name 
-								, i_attr_rec.target_attr_type
-							)
-						else 
-							''
-					end					
+					, i_attr_rec.internal_name 
+					, i_attr_rec.target_attr_type
 				);
 			end if;
 		end if;
