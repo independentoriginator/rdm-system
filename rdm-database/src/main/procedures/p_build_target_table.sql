@@ -37,7 +37,7 @@ begin
 	else
 		if i_type_rec.is_temporal = true and i_type_rec.is_target_table_non_temporal = true then
 			raise exception 
-				'%. %: non-temporal to temporal entity conversion is not supported;'
+				'%.%: non-temporal to temporal entity conversion is not supported;'
 				'in this case, a new entity with a different name is expected to be created'
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
