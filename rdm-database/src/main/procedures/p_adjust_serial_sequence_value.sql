@@ -24,19 +24,31 @@ begin
 		format($plpgsql$
 			do $$
 			declare	
-				l_sequence_name text;
+				l_sequence_name text := 
+					nullif('%s', '')
+				;
 				l_sql_expr text;
 			begin
-			 	l_sequence_name := coalesce('%s', pg_catalog.pg_get_serial_sequence('%I.%I', '%s'));
-			 
+				if l_sequence_name is null then
+					l_sequence_name := 
+						pg_catalog.pg_get_serial_sequence('%I.%I', '%s')
+					;
+				else
+					if l_sequence_name !~ '^[[:alnum:]]+\.[[:alnum:]]+$' then 
+						l_sequence_name :=  
+							'%s.%s'
+						;
+					end if
+					;
+				end if
+				;
+			
 			 	if l_sequence_name is null then
 			 		raise exception 
-			 			'Cannot find sequence for the table column specified: %%.%%.%%'
-						, i_schema_name
-						, i_table_name
-						, i_column_name
-						;			 			
-			 	end if;
+			 			'Cannot find sequence for the table column specified: %s.%s.%s'
+					;			 			
+			 	end if
+			 	;
 			 	
 			 	l_sql_expr := 
 					format($sql$
@@ -73,12 +85,12 @@ begin
 			end
 			$$;
 			$plpgsql$
-			, case 
-				when i_sequence_name ~ '^[[:alnum:]]+\.[[:alnum:]]+$' then 
-					i_sequence_name 
-				else 
-					format('%I.%I', i_schema_name, i_sequence_name) 
-			end
+			, i_sequence_name 
+			, i_schema_name
+			, i_table_name
+			, i_column_name
+			, i_schema_name
+			, i_sequence_name 
 			, i_schema_name
 			, i_table_name
 			, i_column_name
