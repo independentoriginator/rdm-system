@@ -79,6 +79,7 @@ begin
 		if i_attr_rec.is_fk_constraint_exists = true 
 			and (
 				i_attr_rec.is_fk_constraint_added = false
+				or (i_attr_rec.attr_type_name, i_attr_rec.attr_type_schema) != (i_attr_rec.fk_referenced_table, i_attr_rec.fk_referenced_table_schema) 
 				or i_attr_rec.fk_on_delete_cascade != i_attr_rec.target_fk_on_delete_cascade
 			)
 		then

@@ -146,7 +146,9 @@ select
 	, target_column_descr.description target_column_description
 	, target_staging_table_column_descr.description staging_column_description
 	, a.fk_on_delete_cascade
-	, coalesce(fk_constraint.confdeltype = 'f'::"char", false) as target_fk_on_delete_cascade 
+	, coalesce(fk_constraint.confdeltype = 'f'::"char", false) as target_fk_on_delete_cascade
+	, fk_referenced_table_schema.nspname as fk_referenced_table_schema 
+	, fk_referenced_table.relname as fk_referenced_table
 from (
 	select
 		a.id
@@ -246,6 +248,10 @@ left join pg_catalog.pg_constraint fk_constraint
 	on fk_constraint.conrelid = target_table.oid
 	and fk_constraint.conname = a.fk_constraint_name
 	and fk_constraint.contype = 'f'::"char" 
+left join pg_catalog.pg_class fk_referenced_table 
+	on fk_referenced_table.oid = fk_constraint.confrelid
+left join pg_catalog.pg_namespace fk_referenced_table_schema
+	on fk_referenced_table_schema.oid = fk_referenced_table.relnamespace
 left join pg_catalog.pg_indexes fk_index	
 	on fk_index.schemaname = target_schema.nspname
 	and fk_index.tablename = a.meta_type_name
