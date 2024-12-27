@@ -10,8 +10,8 @@ with
 	, orderliness_dependency as (
 		select
 			v.schema_name
-			, left(v.internal_name, n.max_len)
-			, array_agg(v.id order by v.id) as view_seq
+			, left(v.internal_name, n.max_len) as group_name
+			, array_agg(v.id order by v.internal_name) as view_seq
 		from 
 			${mainSchemaName}.v_meta_view v
 		cross join index_owner_name n
@@ -26,6 +26,17 @@ with
 		having 
 			count(*) > 1
 	)
+	, dependency_group_item as (
+		select 
+			dep.schema_name
+			, dep.group_name
+			, meta_view.id
+			, meta_view.ordinal_num
+		from 
+			orderliness_dependency dep
+		cross join lateral unnest(dep.view_seq) 
+			with ordinality as meta_view(id, ordinal_num)
+	)
 select 
 	t.view_id
 	, v.internal_name as view_name
@@ -35,12 +46,14 @@ select
 	, mv.schema_name as master_view_schema
 from (
 	select
-		dep.view_seq[1] as master_view_id
+		master_view.id as master_view_id
 		, dependent_view.id as view_id
 	from 
-		orderliness_dependency dep
-	join lateral unnest(array_remove(dep.view_seq, dep.view_seq[1])) as dependent_view(id)
-		on true
+		dependency_group_item master_view
+	join dependency_group_item dependent_view
+		on dependent_view.schema_name = master_view.schema_name
+		and dependent_view.group_name = master_view.group_name
+		and dependent_view.ordinal_num < master_view.ordinal_num
 	except 
 	select 
 		dep.master_view_id
