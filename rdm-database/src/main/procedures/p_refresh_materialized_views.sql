@@ -110,7 +110,19 @@ begin
 							dep.view_id
 						from 
 							${mainSchemaName}.v_meta_view_orderliness_dependency dep
-						join materialized_view mv 
+						join (
+							select 
+								t.id
+							from 
+								materialized_view t
+							except
+							select 
+								dep.view_id
+							from 
+								ng_rdm.meta_view_dependency dep
+							join materialized_view mv 
+								on mv.id = dep.master_view_id						
+						) mv 
 							on mv.id = dep.master_view_id
 						except 
 						select 
