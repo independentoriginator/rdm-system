@@ -53,7 +53,7 @@ from (
 	join dependency_group_item dependent_view
 		on dependent_view.schema_name = master_view.schema_name
 		and dependent_view.group_name = master_view.group_name
-		and dependent_view.ordinal_num < master_view.ordinal_num
+		and dependent_view.ordinal_num > master_view.ordinal_num
 	except 
 	select 
 		dep.master_view_id
