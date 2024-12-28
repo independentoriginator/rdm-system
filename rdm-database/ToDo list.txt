@@ -11,6 +11,7 @@ ToDO list
 - mv emulation: truncation of an existing partition locks a reading process (an idea: create new partition and delete an old one instead truncation) - solved
 - mv emulation: the main refreshing process is killed after some time interval because of it being non-active (an activity imitation is needed)
 - mv emulation: custom "order by" expression in invalidated chunk selection within the triggers due to getting dead locks (for example, common period chunk, 
-inluded months, quarter, year, should be sorted by year-quarter due to there is a year-quarter chunking applied in a slave data set)  
+inluded months, quarter, year, should be sorted by year-quarter due to there is a year-quarter chunking applied in a slave data set)
+- mv_emulation: dependent emulated views are not recreated and a column type mismatch can be occurred - therefore dependent views should be always recreated.  
 
 - p_refresh_materialized_views: looping bug fix  
