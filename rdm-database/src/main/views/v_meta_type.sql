@@ -84,6 +84,7 @@ select
 			where 
 				target_column.attrelid = target_table.oid
 				and target_column.attname = 'version'
+				and target_column.attisdropped = false
 		)
 	) as is_target_table_non_temporal
 	, t.is_localization_table_generated
@@ -91,16 +92,15 @@ select
 	, (lc_table.oid is not null) as is_localization_table_exists
 	, t.master_type_id
 	, t.master_type_name
-	, (
-		exists (
-			select 
-				1
-			from
-				pg_catalog.pg_attribute target_column
-			where 
-				target_column.attrelid = target_table.oid
-				and target_column.attname = 'master_id'
-		)
+	, exists (
+		select 
+			1
+		from
+			pg_catalog.pg_attribute target_column
+		where 
+			target_column.attrelid = target_table.oid
+			and target_column.attname = 'master_id'
+			and target_column.attisdropped = false
 	) as is_ref_to_master_column_exists
 	, t.staging_schema_name
 	, t.is_staging_table_generated
@@ -110,16 +110,15 @@ select
 	, a.localisable_attributes
 	, a.insert_expr_on_conflict_update_part_for_localisable
 	, a.localisable_attr_values_list
-	, (
-		exists (
-			select 
-				1
-			from
-				pg_catalog.pg_attribute target_column
-			where 
-				target_column.attrelid = staging_table.oid
-				and target_column.attname = 'master_id'
-		)
+	, exists (
+		select 
+			1
+		from
+			pg_catalog.pg_attribute target_column
+		where 
+			target_column.attrelid = staging_table.oid
+			and target_column.attname = 'master_id'
+			and target_column.attisdropped = false
 	) as is_ref_to_master_column_in_staging_table_exists
 	, t.is_built
 	, t.table_description
@@ -153,6 +152,41 @@ select
 					)
 			end
 	end as lc_table_date_range_filter_condition
+	, t.invalidated_chunk_table_name
+	, (target_invalidated_chunk_table.oid is not null) as is_invalidated_chunk_table_exists
+	, exists (
+		select 
+			1
+		from 
+			${mainSchemaName}.meta_type_invalidated_chunk c
+		where 
+			c.type_id = t.id
+			and not c.is_disabled
+	) as is_invalidated_chunk_table_generated
+	, (
+		select 
+			jsonb_agg(
+				jsonb_build_object(
+					'field_name'
+					, c.chunking_field
+					, 'field_type'
+					, a.target_attr_type
+				)
+			)
+		from
+			${mainSchemaName}.meta_type_invalidated_chunk c
+		join ${mainSchemaName}.v_meta_attribute a
+			on a.master_id = c.type_id
+			and a.internal_name = c.chunking_field
+		left join pg_catalog.pg_attribute target_column
+			on target_column.attrelid = target_invalidated_chunk_table.oid
+			and target_column.attname = c.chunking_field
+			and target_column.attisdropped = false
+		where 
+			c.type_id = t.id
+			and not c.is_disabled
+			and target_column.attname is null
+	) as nonexistent_invalidated_chunk_table_fields
 from (	
 	select
 		t.id
@@ -183,6 +217,7 @@ from (
 		, t.is_built
 		, type_name.lc_string as table_description
 		, t.date_range_filter_condition
+		, t.internal_name || '_invalidated_chunk' as invalidated_chunk_table_name 
 	from 
 		${mainSchemaName}.meta_type t
 	left join ${mainSchemaName}.meta_schema s
@@ -244,6 +279,10 @@ left join pg_catalog.pg_description staging_table_descr
 	on staging_table_descr.objoid = staging_table.oid
 	and staging_table_descr.classoid = 'pg_class'::regclass
 	and staging_table_descr.objsubid = 0	
+left join pg_catalog.pg_class target_invalidated_chunk_table
+	on target_invalidated_chunk_table.relnamespace = target_schema.oid 
+	and target_invalidated_chunk_table.relname = t.invalidated_chunk_table_name
+	and target_invalidated_chunk_table.relkind in ('r'::"char", 'p'::"char")
 left join attributes a 
 	on a.master_id = t.id
 ;

@@ -184,6 +184,60 @@ begin
 		);
 	end loop;
 
+	if i_type_rec.is_invalidated_chunk_table_generated then
+		if not i_type_rec.is_invalidated_chunk_table_exists then
+			execute 
+				format('
+					create table %I.%I(
+						source_id ${type.id} not null
+						, constraint fk_%I$source_id foreign key (source_id) references ${mainSchemaName}.source(id)
+						, invalidation_time timestamp without time zone default ${mainSchemaName}.f_current_timestamp() not null
+					)'
+					, i_type_rec.schema_name
+					, i_type_rec.invalidated_chunk_table_name
+					, i_type_rec.invalidated_chunk_table_name
+				)
+			;
+			execute 
+				format('
+					create index i_%I$source_id on %I.%I(source_id)
+					'
+					, i_type_rec.invalidated_chunk_table_name
+					, i_type_rec.schema_name
+					, i_type_rec.invalidated_chunk_table_name
+				)
+			;
+		end if
+		;
+	
+		for l_rec in (
+			select
+				chunking_field.field_name
+				, chunking_field.field_type
+			from 
+				jsonb_to_recordset(i_type_rec.nonexistent_invalidated_chunk_table_fields) 
+					as chunking_field(
+						field_name name
+						, field_type name
+					)
+		) 
+		loop
+			execute 
+				format('
+					alter table %I.%I
+						add column %s %s null
+					'
+					, i_type_rec.schema_name
+					, i_type_rec.invalidated_chunk_table_name
+					, l_rec.field_name
+					, l_rec.field_type
+				)
+			;
+		end loop
+		;
+	end if
+	;
+
 	for l_rec in (
 		select
 			t.*

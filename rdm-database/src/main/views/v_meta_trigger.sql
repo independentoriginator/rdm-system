@@ -1,7 +1,4 @@
-drop view if exists v_meta_trigger
-;
-
-create view v_meta_trigger
+create or replace view v_meta_trigger
 as
 with 
 	table_object as (
@@ -25,16 +22,11 @@ with
 		where 
 			t.is_matview_emulation
 	)
-	, chunk_invalidation_trigger as (
+	, trigger_operation as (
 		select 
-			coalesce(
-				't' || dep.master_type_id::varchar
-				, 'v' || dep.master_view_id::varchar
-			) as trigger_id 
-			, dep.master_type_id as meta_type_id
-			, dep.master_view_id as meta_view_id
-			, 'after'::text as action_timing
+			'after'::text as action_timing
 			, operation.name as event_manipulation
+			, transition_table.name as transition_table 
 			, case 
 				when operation.name in ('update', 'delete')
 				then 'old_table'::name
@@ -44,29 +36,12 @@ with
 				then 'new_table'::name
 			end as action_reference_new_table
 			, 'statement'::text as action_orientation
-			, ${mainSchemaName}.f_indent_text(
-				i_text => 
-					${mainSchemaName}.f_meta_view_chunk_invalidation_command(
-						i_dependent_view_schema => v.schema_name
-						, i_dependent_view_name => v.internal_name
-						, i_mv_emulation_chunking_field => v.mv_emulation_chunking_field
-						, i_invalidated_chunk_query_tmpl => dep.invalidated_chunk_query_tmpl
-						, i_transition_table_name => transition_table.name
-					)
-				, i_indentation_level => 1
-			) as function_body
-			, 'null'::text as function_return_expr
-			, null::text as preparation_command
-		from									
-			${mainSchemaName}.meta_view_chunk_dependency dep
-		join ${mainSchemaName}.v_meta_view v
-			on v.id = dep.view_id
-		cross join (
-				values
-					('insert'::text)
-					, ('update'::text)
-					, ('delete'::text)
-			) as operation(name)
+		from (
+			values
+				('insert'::text)
+				, ('update'::text)
+				, ('delete'::text)
+		) as operation(name)
 		join (
 				values
 					('old_table'::name)
@@ -80,6 +55,105 @@ with
 				transition_table.name = 'new_table'
 				and operation.name in ('insert', 'update')
 			)
+	)
+	, chunk_invalidation_trigger as (
+		select 
+			't' || c.type_id::varchar as trigger_id 
+			, c.type_id as meta_type_id
+			, null::${type.id} as meta_view_id
+			, trigger_operation.action_timing
+			, trigger_operation.event_manipulation
+			, trigger_operation.action_reference_old_table
+			, trigger_operation.action_reference_new_table
+			, trigger_operation.action_orientation
+			, ${mainSchemaName}.f_indent_text(
+				i_text => 
+					format(
+						E'\ninsert into'
+						'\n	%I.%I('
+						'\n		source_id'
+						'\n		, %s'
+						'\n)'
+						'\nselect distinct'
+						'\n	source_id'				
+						'\n	, %s'
+						'\nfrom'
+						'\n	%s'
+						'\nwhere'
+						'\n	source_id = any(('
+						'\n		select'
+						'\n			array_agg(id)'
+						'\n		from'
+						'\n			${mainSchemaName}.source'
+						'\n		where'
+						'\n			internal_name in ('
+						'\n				%s'
+						'\n			)'
+						'\n	))'
+						'\n;'
+						, t.schema_name
+						, t.invalidated_chunk_table_name
+						, c.chunking_field
+						, c.chunking_field
+						, trigger_operation.transition_table
+						, c.data_source_list
+					)
+				, i_indentation_level => 1
+			) as function_body
+			, 'null'::text as function_return_expr
+			, null::text as preparation_command
+		from (
+			select 
+				c.type_id
+				, c.chunking_field
+				, string_agg(
+					quote_literal(s.internal_name)
+					, ', '
+				) as data_source_list
+			from 
+				${mainSchemaName}.meta_type_invalidated_chunk c
+			join ${mainSchemaName}.source s  
+				on s.id = c.source_id
+			where 
+				not c.is_disabled
+			group by 
+				c.type_id
+				, c.chunking_field
+		) c	
+		join ${mainSchemaName}.v_meta_type t 
+			on t.id = c.type_id
+		cross join trigger_operation 
+		union all
+		select 
+			coalesce(
+				't' || dep.master_type_id::varchar
+				, 'v' || dep.master_view_id::varchar
+			) as trigger_id 
+			, dep.master_type_id as meta_type_id
+			, dep.master_view_id as meta_view_id
+			, trigger_operation.action_timing
+			, trigger_operation.event_manipulation
+			, trigger_operation.action_reference_old_table
+			, trigger_operation.action_reference_new_table
+			, trigger_operation.action_orientation
+			, ${mainSchemaName}.f_indent_text(
+				i_text => 
+					${mainSchemaName}.f_meta_view_chunk_invalidation_command(
+						i_dependent_view_schema => v.schema_name
+						, i_dependent_view_name => v.internal_name
+						, i_mv_emulation_chunking_field => v.mv_emulation_chunking_field
+						, i_invalidated_chunk_query_tmpl => dep.invalidated_chunk_query_tmpl
+						, i_transition_table_name => trigger_operation.transition_table
+					)
+				, i_indentation_level => 1
+			) as function_body
+			, 'null'::text as function_return_expr
+			, null::text as preparation_command
+		from									
+			${mainSchemaName}.meta_view_chunk_dependency dep
+		join ${mainSchemaName}.v_meta_view v
+			on v.id = dep.view_id
+		cross join trigger_operation 
 	)
 select
 	t.trigger_id

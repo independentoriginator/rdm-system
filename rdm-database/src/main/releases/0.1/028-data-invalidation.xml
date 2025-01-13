@@ -1,0 +1,63 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd 
+        http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+        
+	<changeSet id="Meta type invalidated chunk" author="${default_author}">
+	
+		<createTable
+			tableName="meta_type_invalidated_chunk" 
+			remarks="Meta type invalidated chunk">
+			<column name="type_id" type="${type.id}" remarks="Meta type identifier">
+				<constraints nullable="false" />
+			</column>
+			<column name="chunking_field" type="${type.internal_name}" remarks="Chunking field">
+				<constraints nullable="false" />
+			</column>
+			<column name="source_id" type="${type.id}" remarks="Data source identifier">
+				<constraints nullable="false" />
+			</column>
+			<column name="is_disabled" type="boolean" remarks="Is disabled" defaultValueBoolean="false">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+		
+		<createIndex 
+			indexName="i_meta_type_invalidated_chunk$type_id" 
+			tableName="meta_type_invalidated_chunk">
+			<column name="type_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_type_invalidated_chunk$type_id"
+			baseTableName="meta_type_invalidated_chunk" 
+			baseColumnNames="type_id" 
+			referencedTableName="meta_type" 
+			referencedColumnNames="id" />
+
+		<createIndex 
+			indexName="i_meta_type_invalidated_chunk$source_id" 
+			tableName="meta_type_invalidated_chunk">
+			<column name="source_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_meta_type_invalidated_chunk$source_id"
+			baseTableName="meta_type_invalidated_chunk" 
+			baseColumnNames="source_id" 
+			referencedTableName="source" 
+			referencedColumnNames="id" />
+
+		<addPrimaryKey 
+			constraintName="pk_meta_type_invalidated_chunk" 
+			tableName="meta_type_invalidated_chunk"
+			columnNames="type_id, source_id"/>
+			
+	</changeSet>
+            			
+</databaseChangeLog>
