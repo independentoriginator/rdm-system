@@ -404,9 +404,9 @@ begin
 												e.external_id = t.external_id
 												and e.source_id = t.source_id
 											order by 
-												t.external_id
-												, t.external_version_ordinal_num
-												, t.valid_from
+												e.external_id
+												, e.external_version_ordinal_num
+												, e.valid_from
 											limit 1
 										)
 										, (
@@ -419,9 +419,9 @@ begin
 												and e.meta_id = t.meta_id
 												and e.source_id = t.source_id
 											order by 
-												t.meta_id
-												, t.meta_version_ordinal_num
-												, t.valid_from
+												e.meta_id
+												, e.meta_version_ordinal_num
+												, e.valid_from
 											limit 1
 										)
 										, nextval('%I.%I_id_seq')
@@ -437,8 +437,41 @@ begin
 									, coalesce(
 										t.valid_from
 										, case 
-											when t.id is null then ${mainSchemaName}.f_undefined_min_date()
-											else l_state_change_date
+											when t.id is null then 
+												coalesce(
+													(
+														select
+															e.valid_to
+														from 
+															%I.%I e 
+														where 
+															e.external_id = t.external_id
+															and e.source_id = t.source_id
+														order by 
+															e.external_id
+															, e.external_version_ordinal_num
+															, e.valid_from
+														limit 1
+													)
+													, (
+														select
+															e.valid_to
+														from 
+															%I.%I e 
+														where 
+															t.external_id is null 
+															and e.meta_id = t.meta_id
+															and e.source_id = t.source_id
+														order by 
+															e.meta_id
+															, e.meta_version_ordinal_num
+															, e.valid_from
+														limit 1
+													)
+													, ${mainSchemaName}.f_undefined_min_date()
+												)
+											else 
+												l_state_change_date
 										end
 									) as valid_from
 									, coalesce(
