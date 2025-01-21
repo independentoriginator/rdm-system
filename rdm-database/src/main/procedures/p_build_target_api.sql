@@ -612,6 +612,10 @@ begin
 				, i_type_rec.internal_name
 				, i_type_rec.schema_name
 				, i_type_rec.internal_name
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
+				, i_type_rec.schema_name
+				, i_type_rec.internal_name
 				, i_type_rec.non_localisable_attributes
  				, i_type_rec.insert_expr_on_conflict_update_part
 				, i_type_rec.schema_name
