@@ -271,17 +271,19 @@ begin
 									, t.valid_from
 									, t.valid_to
 									, %s
-									, row_number() over(
-										partition by
-											t.external_id
-											, t.meta_id
-										order by 
-											t.external_id
-											, t.external_version_ordinal_num
-											, t.meta_id
-											, t.meta_version_ordinal_num
-											, t.valid_from
-									) as version_ordinal_num
+									, row_number() 
+										over(
+											partition by
+												t.external_id
+												, t.meta_id
+											order by 
+												t.external_id
+												, t.external_version_ordinal_num
+												, t.meta_id
+												, t.meta_version_ordinal_num
+												, t.valid_from
+										) 
+										as version_ordinal_num
 								from 								
 									${stagingSchemaName}.%I t
 								where 
@@ -404,9 +406,7 @@ begin
 												e.external_id = t.external_id
 												and e.source_id = t.source_id
 											order by 
-												e.external_id
-												, e.external_version_ordinal_num
-												, e.valid_from
+												e.valid_from desc
 											limit 1
 										)
 										, (
@@ -419,9 +419,7 @@ begin
 												and e.meta_id = t.meta_id
 												and e.source_id = t.source_id
 											order by 
-												e.meta_id
-												, e.meta_version_ordinal_num
-												, e.valid_from
+												e.valid_from desc
 											limit 1
 										)
 										, nextval('%I.%I_id_seq')
@@ -448,9 +446,8 @@ begin
 															e.external_id = t.external_id
 															and e.source_id = t.source_id
 														order by 
-															e.external_id
-															, e.external_version_ordinal_num
-															, e.valid_from
+															e.external_version_ordinal_num desc
+															, e.valid_from desc
 														limit 1
 													)
 													, (
@@ -463,9 +460,8 @@ begin
 															and e.meta_id = t.meta_id
 															and e.source_id = t.source_id
 														order by 
-															e.meta_id
-															, e.meta_version_ordinal_num
-															, e.valid_from
+															e.meta_version_ordinal_num desc
+															, e.valid_from desc
 														limit 1
 													)
 													, ${mainSchemaName}.f_undefined_min_date()
