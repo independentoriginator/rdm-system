@@ -26,7 +26,7 @@ begin
 		, string_agg(
 			E'\n	 		, chunk.new_partition'
 			, ''
-		) 
+		)
 	into 
 		l_chunk_invalidation_script
 		, l_chunk_invalidation_script_subst
@@ -226,7 +226,7 @@ begin
 										'\nas $routine$%s'
 										'\nbegin'
 										'\n	if %s is null then'
-										'\n		call'
+										'\n		%scall'
 										'\n			${stagingSchemaName}.p_execute_in_parallel('
 										'\n				i_command_list_query => $sql$'
 										'\n					select'
@@ -306,6 +306,31 @@ begin
 												''
 										end					
 										, i_view_rec.mv_emulation_refresh_proc_param
+										, (
+											select 
+												${mainSchemaName}.f_indent_text(
+													i_text => 
+														E'-- ensure actuality of the statistics\n'
+														|| string_agg(
+															format(
+																'analyze %I.%I'
+																, coalesce(master_type.schema_name, master_view.schema_name)
+																, coalesce(master_type.internal_name, master_view.internal_name)
+															)
+															, E'\n;\n'
+														)
+														|| E'\n;\n\n'
+													, i_indentation_level => 2
+												)
+											from			
+												${mainSchemaName}.meta_view_chunk_dependency dep
+											left join ${mainSchemaName}.v_meta_view master_view
+												on master_view.id = dep.master_view_id
+											left join ${mainSchemaName}.v_meta_type master_type
+												on master_type.id = dep.master_type_id
+											where
+												dep.view_id = i_view_rec.id										
+										)
 										, i_view_rec.schema_name
 										, i_view_rec.mv_emulation_refresh_proc_name
 										, i_view_rec.mv_emulation_refresh_proc_param
