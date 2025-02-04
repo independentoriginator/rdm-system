@@ -46,18 +46,65 @@ begin
 			, t.id
 			, case 
 				when t.is_matview_emulation then
-					concat_ws(
-						E'\n\t;\n\t'
-						, format(
-							'call %I.p_refresh_%I()'
-							, t.schema_name
-							, t.internal_name
-						)
-						, format(
-							'analyze %I.%I'
-							, t.schema_name
-							, t.internal_name
-						)
+					${mainSchemaName}.f_indent_text(
+						i_text =>  
+							concat_ws(
+								E'\n;\n'
+								, format(
+									E'\n-- enforce actualization of the statistics that will be inquired by the materialized view'
+									'\nexecute'
+									'\n	coalesce(('
+									'\n			select' 
+									'\n				''analyze '''
+									'\n				|| string_agg('
+									'\n					format('
+									'\n						''%%I.%%I'''
+									'\n						, t.schema_name'
+									'\n						, t.table_name'
+									'\n					)'
+									'\n					, '', '''
+									'\n					order by'
+									'\n						t.schema_name'
+									'\n						, t.table_name'									
+									'\n				)'
+									'\n			from ('
+									'\n				select'
+									'\n					coalesce(master_type.schema_name, master_view.schema_name) as schema_name'
+									'\n					, coalesce(master_type.internal_name, master_view.internal_name) as table_name'
+									'\n				from'
+									'\n					${mainSchemaName}.meta_view_chunk_dependency dep'
+									'\n				left join ${mainSchemaName}.v_meta_view master_view'
+									'\n					on master_view.id = dep.master_view_id'
+									'\n				left join ${mainSchemaName}.v_meta_type master_type'
+									'\n					on master_type.id = dep.master_type_id'
+									'\n				where'
+									'\n					dep.view_id = %s'
+									'\n			) t'
+									'\n			left join pg_catalog.pg_stat_all_tables s'
+									'\n				on s.schemaname = t.schema_name'
+									'\n				and s.relname = t.table_name'
+									'\n			where'
+									'\n				coalesce('
+									'\n					current_timestamp - greatest(s.last_analyze, s.last_autoanalyze)'
+									'\n					, ''${statictics_out_of_date_threshold}''::interval'
+									'\n				) >= ''${statictics_out_of_date_threshold}''::interval'
+									'\n		)'									
+									'\n		, '''''
+									'\n	)'										
+									, t.id
+								)								
+								, format(
+									'call %I.p_refresh_%I()'
+									, t.schema_name
+									, t.internal_name
+								)
+								, format(
+									'analyze %I.%I'
+									, t.schema_name
+									, t.internal_name
+								)
+							)
+						, i_indentation_level => 1
 					)
 				else
 					${mainSchemaName}.f_materialized_view_refresh_command(

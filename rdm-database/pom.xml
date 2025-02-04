@@ -147,6 +147,10 @@
 							<name>max_parallel_worker_processes</name>
 							<value>10</value>
 						</property>
+						<property>
+							<name>statictics_out_of_date_threshold</name>
+							<value>1 hour</value>
+						</property>
 						<!-- Backward compatibility options -->
 						<property>
 							<name>bco_cte_materialized</name>
