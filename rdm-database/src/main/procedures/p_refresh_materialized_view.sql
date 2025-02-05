@@ -80,7 +80,7 @@ begin
 									'\n				where'
 									'\n					dep.view_id = %s'
 									'\n			) t'
-									'\n			left join pg_catalog.pg_stat_all_tables s'
+									'\n			join pg_catalog.pg_stat_all_tables s'
 									'\n				on s.schemaname = t.schema_name'
 									'\n				and s.relname = t.table_name'
 									'\n			where'
