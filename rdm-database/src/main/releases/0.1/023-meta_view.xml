@@ -633,6 +633,16 @@
 		</addColumn>
 		
 	</changeSet>
+	
+	<changeSet id="actualize_inquiring_statictics" author="${default_author}">
+
+		<addColumn tableName="meta_view">
+			<column name="actualize_inquiring_statictics" type="boolean" remarks="Actualize inquiring statictics before refresh" defaultValueBoolean="true">
+				<constraints nullable="false" />
+			</column>
+		</addColumn>
+		
+	</changeSet>
 
 	<changeSet id="Meta view chunk dependency" author="${default_author}">
 	
