@@ -38,7 +38,7 @@ begin
 			v.id
 		) filter(
 			where
-				not v.is_view_exists
+				v.is_view_exists
 		) as existing_view_ids
 		, jsonb_agg(
 			jsonb_build_object(
@@ -51,7 +51,7 @@ begin
 			)
 		) filter(
 			where
-				not v.is_view_exists
+				v.is_view_exists
 		) as existing_views
 		, string_agg(
 			format('
@@ -127,7 +127,7 @@ begin
 	end if
 	;
 
-	if l_views is not null then
+	if l_existing_view_ids is not null then
 		raise notice 
 			'Detecting and saving dependants before them dropping cascadly...'
 		;
@@ -142,15 +142,9 @@ begin
 		;
 	
 		raise notice 
-			'Done in %.'
-			, clock_timestamp() - l_timestamp
-		;
-	end if;
-
-	if l_existing_view_ids is not null then
-		raise notice 
 			'Invalidating of the creation flag for dependent views (this matters for functions, that are not cascadly dropped)...'
 		;
+	
 		with 
 			dependent_view as (
 				select 
@@ -174,6 +168,11 @@ begin
 		where
 			dependent_view.id = meta_view.id
 		;	
+	
+		raise notice 
+			'Done in %.'
+			, clock_timestamp() - l_timestamp
+		;
 	end if;
 
 	if l_drop_command is not null then
