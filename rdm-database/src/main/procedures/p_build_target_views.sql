@@ -16,7 +16,6 @@ language plpgsql
 as $procedure$
 declare 
 	l_view_ids ${type.id}[];
-	l_existing_view_ids ${type.id}[];
 	l_views jsonb;
 	l_schemas_to_create text;
 	l_drop_command text;
@@ -34,12 +33,6 @@ begin
 		array_agg(
 			v.id
 		) as ids
-		, array_agg(
-			v.id
-		) filter(
-			where
-				v.is_view_exists
-		) as existing_view_ids
 		, jsonb_agg(
 			jsonb_build_object(
 				'obj_name' 
@@ -89,7 +82,6 @@ begin
 		) as drop_command
 	into 
 		l_view_ids
-		, l_existing_view_ids
 		, l_views
 		, l_schemas_to_create
 		, l_drop_command
@@ -127,7 +119,7 @@ begin
 	end if
 	;
 
-	if l_existing_view_ids is not null then
+	if l_views is not null then
 		raise notice 
 			'Detecting and saving dependants before them dropping cascadly...'
 		;
@@ -142,38 +134,11 @@ begin
 		;
 	
 		raise notice 
-			'Invalidating of the creation flag for dependent views (this matters for functions, that are not cascadly dropped)...'
-		;
-	
-		with 
-			dependent_view as (
-				select 
-					v.id
-				from 
-					${mainSchemaName}.meta_view_dependency dep
-				join ${mainSchemaName}.meta_view v 
-					on v.id = dep.view_id
-					and v.is_created = true
-					and v.is_external = false
-				where 
-					dep.master_view_id = any(l_existing_view_ids)
-				for update of v
-			)
-		update 
-			${mainSchemaName}.meta_view meta_view
-		set 
-			is_created = false
-		from 
-			dependent_view
-		where
-			dependent_view.id = meta_view.id
-		;	
-	
-		raise notice 
 			'Done in %.'
 			, clock_timestamp() - l_timestamp
 		;
-	end if;
+	end if
+	;
 
 	if l_drop_command is not null then
 		raise notice 
