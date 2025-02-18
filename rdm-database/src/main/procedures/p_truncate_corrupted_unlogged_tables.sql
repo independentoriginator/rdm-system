@@ -11,7 +11,7 @@ begin
 			t.schema_name
 			, t.table_name
 			, format(
-				'select from %I.%I'
+				'select from %I.%I where false'
 				, t.schema_name
 				, t.table_name
 			) as check_cmd
