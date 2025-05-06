@@ -16,6 +16,7 @@ with recursive
 			, a.is_non_nullable
 			, a.is_unique
 			, a.is_localisable
+			, a.is_logged
 			, a.fk_on_delete_cascade
 			, a.ordinal_position
 			, a.default_value
@@ -40,6 +41,7 @@ with recursive
 			end as is_non_nullable
 			, false as is_unique
 			, false as is_localisable
+			, false as is_logged
 			, (left(t.internal_name, length('meta_')) <> 'meta_') as fk_on_delete_cascade
 			, 0 as ordinal_position
 			, null as default_value
@@ -66,6 +68,7 @@ with recursive
 			, a_inherited.is_non_nullable
 			, a_inherited.is_unique 
 			, a_inherited.is_localisable
+			, a_inherited.is_logged
 			, a_inherited.fk_on_delete_cascade
 			, a_inherited.ordinal_position
 			, a_inherited.default_value
@@ -149,6 +152,17 @@ select
 	, coalesce(fk_constraint.confdeltype = 'f'::"char", false) as target_fk_on_delete_cascade
 	, fk_referenced_table_schema.nspname as fk_referenced_table_schema 
 	, fk_referenced_table.relname as fk_referenced_table
+	, a.is_logged
+	, (target_log_table_column.column_name is not null) as is_log_table_column_exists
+	, ${mainSchemaName}.f_column_type_specification(
+		i_data_type => target_log_table_column.data_type
+		, i_character_maximum_length => target_log_table_column.character_maximum_length
+		, i_numeric_precision => target_log_table_column.numeric_precision
+		, i_numeric_scale => target_log_table_column.numeric_scale	
+		, i_datetime_precision => target_log_table_column.datetime_precision	
+	) as log_table_column_data_type
+	, target_log_table_column_descr.description log_column_description
+	, a.log_table_name
 from (
 	select
 		a.id
@@ -194,6 +208,8 @@ from (
 		, '${stagingSchemaName}' as staging_schema_name
 		, coalesce(attr_type_schema.internal_name, '${mainSchemaName}') as attr_type_schema 
 		, a.meta_type_id as ancestor_type_id
+		, a.is_logged
+		, t.internal_name || '_log' as log_table_name
 	from 
 		attr a
 	join 
@@ -279,6 +295,18 @@ left join pg_catalog.pg_description target_staging_table_column_descr
 	on target_staging_table_column_descr.objoid = staging_table.oid
 	and target_staging_table_column_descr.classoid = 'pg_class'::regclass
 	and target_staging_table_column_descr.objsubid = target_staging_table_column.ordinal_position
+left join pg_catalog.pg_class log_table
+	on log_table.relnamespace = target_schema.oid 
+	and log_table.relname = a.log_table_name
+	and log_table.relkind in ('r'::"char", 'p'::"char")
+left join information_schema.columns target_log_table_column
+	on target_log_table_column.table_schema = target_schema.nspname
+	and target_log_table_column.table_name = a.log_table_name
+	and target_log_table_column.column_name = a.internal_name
+left join pg_catalog.pg_description target_log_table_column_descr
+	on target_log_table_column_descr.objoid = log_table.oid
+	and target_log_table_column_descr.classoid = 'pg_class'::regclass
+	and target_log_table_column_descr.objsubid = target_log_table_column.ordinal_position
 ;
 
 comment on view v_meta_attribute is 'Метаатрибуты';

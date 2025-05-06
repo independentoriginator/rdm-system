@@ -187,6 +187,10 @@ select
 			and not c.is_disabled
 			and target_column.attname is null
 	) as nonexistent_invalidated_chunk_table_fields
+	, t.is_logged
+	, t.log_table_name
+	, (log_table.oid is not null) as is_log_table_exists
+	, log_table_descr.description as log_table_description
 from (	
 	select
 		t.id
@@ -218,6 +222,8 @@ from (
 		, type_name.lc_string as table_description
 		, t.date_range_filter_condition
 		, t.internal_name || '_invalidated_chunk' as invalidated_chunk_table_name 
+		, t.is_logged
+		, t.internal_name || '_log' as log_table_name
 	from 
 		${mainSchemaName}.meta_type t
 	left join ${mainSchemaName}.meta_schema s
@@ -259,7 +265,7 @@ left join information_schema.table_constraints actual_rec_u_constraint
 	and actual_rec_u_constraint.constraint_type = 'UNIQUE'
 left join pg_catalog.pg_class lc_table
 	on lc_table.relnamespace = target_schema.oid 
-	and lc_table.relname = t.internal_name || '_lc'
+	and lc_table.relname = t.localization_table_name
 	and lc_table.relkind in ('r'::"char", 'p'::"char")
 left join pg_catalog.pg_namespace staging_schema
 	on staging_schema.nspname = '${stagingSchemaName}'
@@ -283,6 +289,14 @@ left join pg_catalog.pg_class target_invalidated_chunk_table
 	on target_invalidated_chunk_table.relnamespace = target_schema.oid 
 	and target_invalidated_chunk_table.relname = t.invalidated_chunk_table_name
 	and target_invalidated_chunk_table.relkind in ('r'::"char", 'p'::"char")
+left join pg_catalog.pg_class log_table
+	on log_table.relnamespace = target_schema.oid 
+	and log_table.relname = t.log_table_name
+	and log_table.relkind in ('r'::"char", 'p'::"char")
+left join pg_catalog.pg_description log_table_descr 
+	on log_table_descr.objoid = log_table.oid
+	and log_table_descr.classoid = 'pg_class'::regclass
+	and log_table_descr.objsubid = 0	
 left join attributes a 
 	on a.master_id = t.id
 ;

@@ -56,6 +56,76 @@ with
 				and operation.name in ('insert', 'update')
 			)
 	)
+	, log_trigger as (
+		select 
+			't' || t.id::varchar as trigger_id 
+			, t.id as meta_type_id
+			, trigger_operation.action_timing
+			, trigger_operation.event_manipulation
+			, trigger_operation.action_reference_old_table
+			, trigger_operation.action_reference_new_table
+			, trigger_operation.action_orientation
+			, ${mainSchemaName}.f_indent_text(
+				i_text => 
+					format(
+						E'insert into'
+						'\n	%I.%I('
+						'\n		operation'
+						'\n		, %s'
+						'\n	)'
+						'\nselect distinct'
+						'\n	%L::"char"'
+						'\n	, %s'
+						'\nfrom'
+						'\n	%s'
+						, t.schema_name
+						, t.log_table_name
+						, ${mainSchemaName}.f_indent_text(
+							i_text => a.logged_attributes
+							, i_indentation_level => 2
+						)
+						, upper(left(trigger_operation.event_manipulation, 1))
+						, ${mainSchemaName}.f_indent_text(
+							i_text => a.logged_attributes
+							, i_indentation_level => 1
+						)
+						, trigger_operation.transition_table
+					)
+				, i_indentation_level => 1
+			) as function_body
+			, 'null'::text as function_return_expr
+			, null::text as preparation_command
+		from 
+			${mainSchemaName}.v_meta_type t 
+		join (
+			select 
+				a.master_id as type_id
+				, string_agg(
+					a.internal_name 
+					|| case 
+						when a.is_referenced_type_temporal then
+							E'\n, ' || a.version_ref_name
+						else ''
+					end					
+					, E'\n, ' order by a.ordinal_position nulls last
+				) as logged_attributes
+			from
+				${mainSchemaName}.v_meta_attribute a
+			where 
+				a.is_logged
+			group by 
+				a.master_id		
+		) a 
+			on a.type_id = t.id 
+		join trigger_operation
+			on trigger_operation.action_timing = 'after'
+			and (
+				trigger_operation.transition_table = 'new_table'
+				or trigger_operation.event_manipulation <> 'update' 
+			)
+		where 
+			t.is_logged
+	)
 	, chunk_invalidation_trigger as (
 		select 
 			't' || c.type_id::varchar as trigger_id 
@@ -73,7 +143,7 @@ with
 						'\n	%I.%I('
 						'\n		source_id'
 						'\n		, %s'
-						'\n)'
+						'\n	)'
 						'\nselect distinct'
 						'\n	source_id'				
 						'\n	, %s'
@@ -122,7 +192,8 @@ with
 		) c	
 		join ${mainSchemaName}.v_meta_type t 
 			on t.id = c.type_id
-		cross join trigger_operation 
+		join trigger_operation
+			on trigger_operation.action_timing = 'after'
 		union all
 		select 
 			coalesce(
@@ -153,7 +224,8 @@ with
 			${mainSchemaName}.meta_view_chunk_dependency dep
 		join ${mainSchemaName}.v_meta_view v
 			on v.id = dep.view_id
-		cross join trigger_operation 
+		join trigger_operation
+			on trigger_operation.action_timing = 'after'
 	)
 select
 	t.trigger_id
@@ -244,6 +316,26 @@ from (
 			, t.function_return_expr
 			, t.preparation_command
 		from (		
+			select 
+				o.meta_type_id
+				, o.meta_view_id
+				, o.object_id
+				, o.object_schema
+				, o.object_table
+				, tr.trigger_id
+				, tr.action_timing
+				, tr.event_manipulation
+				, tr.action_reference_old_table
+				, tr.action_reference_new_table
+				, tr.action_orientation
+				, tr.function_body
+				, tr.function_return_expr
+				, tr.preparation_command
+			from 
+				table_object o
+			join log_trigger tr
+				on tr.meta_type_id = o.meta_type_id
+			union all
 			select 
 				o.meta_type_id
 				, o.meta_view_id

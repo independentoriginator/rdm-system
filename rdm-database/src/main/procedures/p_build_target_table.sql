@@ -61,6 +61,10 @@ begin
 		i_type_rec => i_type_rec
 	);
 
+	call ${mainSchemaName}.p_build_target_log_table(
+		i_type_rec => i_type_rec
+	);
+
 	if i_type_rec.is_pk_index_exists = false and i_type_rec.is_temporal = false then
 		execute format('
 			create unique index %I on %I.%I (
@@ -157,6 +161,10 @@ begin
 			i_attr_rec => l_rec
 		);
 		call ${mainSchemaName}.p_build_target_staging_table_column(
+			i_type_rec => i_type_rec,
+			i_attr_rec => l_rec
+		);
+		call ${mainSchemaName}.p_build_target_log_table_column(
 			i_type_rec => i_type_rec,
 			i_attr_rec => l_rec
 		);
