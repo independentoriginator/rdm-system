@@ -126,6 +126,22 @@
 		</insert>
 		
 	</changeSet>       
+
+	<changeSet id="meta_index: as constraint" author="${default_author}">
+
+		<addColumn tableName="meta_index">
+			<column name="is_constraint_used" type="boolean" remarks="Is constraint used" defaultValueBoolean="false">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+
+		<addColumn tableName="meta_index">
+			<column name="is_constraint_deferrable" type="boolean" remarks="Is constraint deferrable" defaultValueBoolean="false">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+
+	</changeSet>       
 	
 	<changeSet id="meta_index-tag-uniqueness" author="${default_author}">
 	
