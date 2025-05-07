@@ -124,7 +124,7 @@ with recursive
 						or ic.meta_attr_name = 'master_id'
 					) 
 			) ic 
-			on true
+				on true
 		) i
 		left join pg_catalog.pg_namespace n 
 			on n.nspname = i.schema_name
@@ -163,6 +163,7 @@ with recursive
 			on true
 		where 
 			i.id is not null
+			and i.index_columns is not null
 	)
 	, fk_index as (
 		select 
