@@ -157,7 +157,7 @@
 						</property>
 						<property>
 							<name>session_context_key_task_name</name>
-							<value>task_name</value>
+							<value>session_context.task_name</value>
 						</property>
 						<!-- Backward compatibility options -->
 						<property>
