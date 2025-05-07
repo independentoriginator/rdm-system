@@ -65,7 +65,7 @@ $procedure$
 ;			
 
 comment on procedure 
-	p_clean_log_data(
+	${stagingSchemaName}.p_clean_log_data(
 		interval
 		, integer
 		, interval
