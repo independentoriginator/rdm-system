@@ -16,7 +16,7 @@ begin
 							default 
 								coalesce(
 									${stagingSchemaName}.f_session_context(
-										i_key => 'task_name'
+										i_key => '${session_context_key_task_name}'
 									)
 									, session_user
 								)
