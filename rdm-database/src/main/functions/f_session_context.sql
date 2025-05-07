@@ -5,6 +5,7 @@ create or replace function
 	)
 returns text
 language sql
+stable
 as $function$
 select 	
 	case 
