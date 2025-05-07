@@ -260,15 +260,7 @@ where
 			meta_index
 		where 
 			meta_index.master_id = t.id
-			and ((
-					meta_index.index_name = target_index.relname
-					and meta_index.is_constraint_used = false
-				)
-				or (
-					meta_index.constraint_name = target_index.relname
-					and meta_index.is_constraint_used = true
-				)
-			)			
+			and meta_index.index_name = target_index.relname
 	)
 	and not exists (
 		select 
@@ -345,7 +337,6 @@ where
 		where 
 			meta_index.master_id = t.id
 			and meta_index.constraint_name = target_constraint.conname
-			and meta_index.is_constraint_used
 	)
 	and not exists (
 		select 
