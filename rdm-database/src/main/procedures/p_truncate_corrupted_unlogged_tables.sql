@@ -22,6 +22,9 @@ begin
 			) as truncate_cmd
 		from 
 			${mainSchemaName}.v_sys_table_size t
+		join pg_catalog.pg_class c
+			on c.oid = t.table_id
+			and c.relpersistence = 'u'::"char" -- unlogged
 		where 
 			t.schema_name = i_schema_name
 		order by 
