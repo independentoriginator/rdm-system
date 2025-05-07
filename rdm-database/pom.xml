@@ -152,6 +152,10 @@
 							<value>1 hour</value>
 						</property>
 						<property>
+							<name>log_data_expiration_age</name>
+							<value>1 month</value>
+						</property>
+						<property>
 							<name>session_context_key_task_name</name>
 							<value>task_name</value>
 						</property>
