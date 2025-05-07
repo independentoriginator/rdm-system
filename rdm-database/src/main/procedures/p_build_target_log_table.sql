@@ -18,7 +18,7 @@ begin
 									${stagingSchemaName}.f_session_context(
 										i_key => '${session_context_key_task_name}'
 									)
-									, session_user
+									, session_user::text
 								)
 						, operation "char" not null
 					)$$
