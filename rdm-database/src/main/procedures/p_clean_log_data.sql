@@ -15,7 +15,7 @@ begin
 				$sql$
 				select
 					format(
-						'call ${stagingSchemaName}.p_truncate_corrupted_unlogged_tables(i_schema_name => %%L)'
+						'call ${stagingSchemaName}.p_truncate_corrupted_unlogged_tables(i_schema_name => %L)'
 						, t.schema_name
 					)
 				from (
@@ -38,20 +38,22 @@ begin
 	-- perform a log data clean with the specified data expiration age
 	call 
 		${stagingSchemaName}.p_execute_in_parallel(
-			i_command_list_query => 
-				$sql$
-				select
-					format(
-						'delete from %%I.%%I where age(current_date, change_date) > %%L::interval'
-						, t.schema_name
-						, t.log_table_name
-						, i_data_expiration_age
-					)
-				from
-					${mainSchemaName}.v_meta_type t
-				where 
-					t.is_logged
-				$sql$
+			i_command_list_query =>
+				format($sql$
+					select
+						format(
+							'delete from %%I.%%I where age(current_date, change_date) > %%L::interval'
+							, t.schema_name
+							, t.log_table_name
+							, %L
+						)
+					from
+						${mainSchemaName}.v_meta_type t
+					where 
+						t.is_logged
+					$sql$
+					, i_data_expiration_age
+				)
 			, i_context_id => '${stagingSchemaName}.p_clean_log_data'::regproc
 			, i_use_notifications => false
 			, i_max_worker_processes => i_max_worker_processes
