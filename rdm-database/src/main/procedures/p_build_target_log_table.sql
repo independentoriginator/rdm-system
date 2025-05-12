@@ -9,7 +9,7 @@ begin
 		if i_type_rec.is_log_table_exists = false then
 			execute 
 				format($$
-					create unlogged table %I.%I(
+					create table %I.%I(
 						change_date timestamp without time zone not null
 							default ${mainSchemaName}.f_current_timestamp()
 						, session_context text not null 
