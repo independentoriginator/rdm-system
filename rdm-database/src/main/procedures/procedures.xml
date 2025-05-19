@@ -44,11 +44,11 @@
 		<rollback/>
 	</changeSet>
 	
-	<changeSet id="p_sync_tables-procedure" author="${default_author}" runOnChange="true">
+	<changeSet id="p_recreate_table_as-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
-			procedureName="p_sync_tables" 
+			procedureName="p_recreate_table_as" 
 			dbms="postgresql" 
-			path="p_sync_tables.sql" 
+			path="p_recreate_table_as.sql" 
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>

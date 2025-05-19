@@ -419,6 +419,22 @@ begin
 	;
 
 	raise notice 
+		E'Perform deferred dependent objects rebuild...'
+	;
+	
+	l_timestamp := clock_timestamp()
+	;
+
+	call 
+		${mainSchemaName}.p_perform_deferred_dependent_obj_rebuild()
+	;
+
+	raise notice 
+		'Done in %.'
+		, clock_timestamp() - l_timestamp
+	;
+
+	raise notice 
 		E'Actualizing stored dependencies...\n%'
 		, l_views
 	;

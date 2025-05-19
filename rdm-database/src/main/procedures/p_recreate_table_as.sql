@@ -1,0 +1,353 @@
+drop procedure if exists
+	p_sync_tables(
+		name
+		, name
+		, name
+		, name
+		, boolean
+	)
+;
+
+drop procedure if exists
+	p_sync_tables(
+		name
+		, name
+		, name
+		, name
+		, boolean
+		, boolean
+	)
+;
+
+create or replace procedure 
+	p_recreate_table_as(
+		i_table_schema name
+		, i_table_name name
+		, i_query text
+		, i_partitioning_strategy text = null
+		, i_partition_key text = null
+	)
+language plpgsql
+as $procedure$
+declare 
+	l_temp_table_name name := i_table_schema || '_' || i_table_name; 
+	l_rec record;
+begin
+	-- temporary table as a sample of the target structure
+	execute
+		format('
+			create temp table %I as %s with no data
+			'
+			, l_temp_table_name
+			, i_query
+		)
+	;
+	
+	<<ddl_commands>>
+	for l_rec in (
+		with 
+			table_spec as (
+				select 
+					t.table_id
+					, t.table_name
+					, t.schema_id
+					, t.schema_name
+					, t.partitioning_strategy
+					, t.partition_key
+					, t.partitions 
+					, 'p_recreate_table_as_temp_'::name || t.table_id::name as temp_name
+				from (			
+					select 
+						c.oid as table_id
+						, c.relname as table_name
+						, c.relnamespace as schema_id
+						, n.nspname as schema_name
+						, null::text as partitioning_strategy
+						, null::text as partition_key
+						, array[
+							format(
+								'%I.%I'
+								, n.nspname
+								, c.relname
+							)
+						]::name[] as partitions
+					from 
+						pg_catalog.pg_namespace n
+					join pg_catalog.pg_class c
+						on c.relnamespace = n.oid
+						and c.relkind = 'r'::"char"	
+					union all
+					select 
+						t.table_id
+						, t.table_name
+						, t.schema_id
+						, t.schema_name
+						, t.partitioning_strategy
+						, t.partition_key
+						, partitions.tables as partitions 
+					from 
+						${mainSchemaName}.v_sys_partitioned_table t
+					left join lateral (
+						select 
+							array_agg(
+								format(
+									'%I.%I'
+									, p.partition_schema_name
+									, p.partition_table_name
+								)::name
+							) as tables
+						from 
+							${mainSchemaName}.v_sys_table_partition p
+						where 
+							p.table_id = t.table_id
+					) partitions
+						on true
+				) t
+			)
+			, column_spec as (
+				select 
+					a.attrelid as table_id
+					, a.attname as column_name
+					, pg_catalog.format_type(a.atttypid, a.atttypmod) as column_type			
+				from 
+					pg_catalog.pg_attribute a
+				where 
+					not a.attisdropped			
+					and a.attnum > 0
+			)
+		select 
+			ddl.sttmnt
+		from 
+			table_spec temp_table
+		left join table_spec target_table
+			on target_table.schema_name = i_table_schema
+			and target_table.table_name = i_table_name
+		join lateral(
+			values (
+				case 
+					when target_table.table_id is null
+					then
+						format(
+							'create table %I.%I(like %I.%I)%s'
+							, i_table_schema
+							, i_table_name
+							, temp_table.schema_name
+							, temp_table.table_name
+							, case 
+								when i_partitioning_strategy is not null then
+									format(
+										' partition by %s(%s)'
+										, i_partitioning_strategy
+										, i_partition_key 
+									)
+								else 
+									''
+							end
+						)
+				end 
+			)
+			, (
+				case 
+					when target_table.table_id is not null
+						and (
+							nullif(i_partition_key, target_table.partition_key) is not null
+							or (i_partition_key is null and target_table.partition_key is not null)
+							or nullif(i_partitioning_strategy, target_table.partitioning_strategy) is not null
+							or (i_partitioning_strategy is null and target_table.partitioning_strategy is not null)
+						)
+					then
+						concat_ws(
+							E';\n'
+							-- create new table with a temporary name
+							, format(
+								'create table %I.%I(like %I.%I)%s'
+								, i_table_schema
+								, target_table.temp_name 
+								, temp_table.schema_name
+								, temp_table.table_name
+								, case 
+									when i_partitioning_strategy is not null then
+										format(
+											' partition by %s(%s)'
+											, i_partitioning_strategy
+											, i_partition_key 
+										)
+									else 
+										''
+								end
+							)
+							-- copy existing data
+							, (
+								select 
+									string_agg(
+										format(
+											'insert into %I.%I(%s)'
+											' select %s from %s'
+											, i_table_schema
+											, target_table.temp_name
+											, transition_columns.columns
+											, transition_columns.columns
+											, p.table_name
+										)
+										, E';\n'
+									)
+								from 
+									unnest(target_table.partitions) p(table_name)
+								join lateral (
+									select 
+										string_agg(old_table_column.column_name, ', ') as columns
+									from 
+										column_spec old_table_column
+									join column_spec new_table_column
+										on new_table_column.table_id = target_table.table_id
+										and new_table_column.column_name = old_table_column.column_name 
+									where
+										old_table_column.table_id = temp_table.table_id
+								) transition_columns
+									on true
+							)
+							-- drop old table
+							, format(
+								'drop table %I.%I'
+								, i_table_schema
+								, i_table_name
+							)
+							-- rename newly created table 
+							, format(
+								'alter table %I.%I rename to %I'
+								, i_table_schema
+								, target_table.temp_name
+								, i_table_name
+							)
+						)
+				end 
+			)
+		) ddl(
+			sttmnt
+		)
+			on ddl.sttmnt is not null
+		where 
+			temp_table.schema_id = pg_my_temp_schema()
+			and temp_table.table_name = l_temp_table_name			
+		union all
+		select 
+			ddl.sttmnt
+		from (
+			select
+				target_table.table_id as target_table_id
+				, target_table.column_name as old_column_name
+				, target_table.column_type as old_column_type			
+				, temp_table.column_name as new_column_name
+				, temp_table.column_type as new_column_type			
+			from (
+				select 
+					t.schema_name
+					, t.table_name
+					, t.table_id
+					, c.column_name
+					, c.column_type			
+				from 
+					table_spec t
+				join column_spec c
+					on c.table_id = t.table_id
+				where 
+					t.schema_id = pg_my_temp_schema()
+					and t.table_name = l_temp_table_name			
+			) temp_table
+			full join (
+				select 
+					t.schema_name
+					, t.table_name
+					, t.table_id
+					, c.column_name
+					, c.column_type			
+				from 
+					table_spec t
+				join column_spec c
+					on c.table_id = t.table_id
+				where 
+					t.schema_name = i_table_schema
+					and t.table_name = i_table_name
+			) target_table
+				on target_table.column_name = temp_table.column_name
+		) t
+		join lateral(
+			values (
+				case 
+					when t.old_column_name is null 
+						and t.new_column_name is not null
+					then
+						format(
+							'alter table %I.%I add column %I %s null'
+							, i_table_schema
+							, i_table_name
+							, t.new_column_name
+							, t.new_column_type
+						)
+					when t.old_column_name = t.new_column_name
+						and t.old_column_type <> t.new_column_type
+					then
+						format(
+							E'call ${mainSchemaName}.p_alter_table_column_type('
+							'\n	i_schema_name => %L'
+							'\n	, i_table_name => %L'
+							'\n	, i_column_name => %L'
+							'\n	, i_column_type => %L'
+							'\n	, i_defer_dependent_obj_recreation => true'
+							'\n)'
+							, i_table_schema
+							, i_table_name
+							, t.new_column_name
+							, t.new_column_type		
+						)
+					when t.old_column_name is not null 
+						and t.new_column_name is null
+					then
+						format(
+							'alter table %I.%I drop column %I'
+							, i_table_schema
+							, i_table_name
+							, t.old_column_name
+						)
+				end 
+			)
+		) ddl(
+			sttmnt
+		)
+			on ddl.sttmnt is not null
+		where 
+			t.target_table_id is not null
+	)
+	loop
+		raise notice
+			'%'
+			, l_rec.sttmnt
+		;
+		execute
+			l_rec.sttmnt
+		;		
+	end loop ddl_commands
+	;	
+
+	-- drop the temporary table
+	execute
+		format('
+			drop table %I
+			'
+			, l_temp_table_name
+		)
+	;
+end
+$procedure$
+;		
+
+comment on procedure 
+	p_recreate_table_as(
+		name
+		, name
+		, text
+		, text
+		, text
+	) 
+	is 'Пересоздать таблицу на основе запроса'
+;

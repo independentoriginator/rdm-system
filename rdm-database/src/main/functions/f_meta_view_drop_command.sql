@@ -11,12 +11,20 @@ as $function$
 select
 	concat_ws(	
 		E';\n'
-		, ${mainSchemaName}.f_sys_obj_drop_command(
-			i_obj_class => v.obj_class
-			, i_obj_id => v.view_oid
-			, i_cascade => i_cascade
-			, i_check_existence => i_check_existence
-		)
+		, case 
+			when not v.is_matview_emulation
+				or (
+					v.view_oid is not null
+					and v.view_type <> 'table'
+				)
+			then
+				${mainSchemaName}.f_sys_obj_drop_command(
+					i_obj_class => v.obj_class
+					, i_obj_id => v.view_oid
+					, i_cascade => i_cascade
+					, i_check_existence => i_check_existence
+				)
+		end
 		, (
 			select 
 				string_agg(

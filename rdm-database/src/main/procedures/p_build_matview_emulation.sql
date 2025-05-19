@@ -50,36 +50,28 @@ begin
 								and i_view_rec.mv_emulation_chunking_field is not null
 							then
 								format('
-									create temp table %I_%I 
-									as 
-									select * 
-									from (%s) t 
-									where false
-									; 
-									create table %I.%I(like %I_%I)
-									partition by list (%s)
-									;
-									drop table %I_%I
-									;
+									call 
+										${mainSchemaName}.p_recreate_table_as(
+											i_table_schema => %L
+											, i_table_name => %L
+											, i_query => %L
+											, i_partitioning_strategy => ''list''
+											, i_partition_key => %L
+										)			
 									'
-									, i_view_rec.internal_name
 									, i_view_rec.schema_name
+									, i_view_rec.internal_name
 									, t.view_query
-									, i_view_rec.schema_name
-									, i_view_rec.internal_name
-									, i_view_rec.internal_name
-									, i_view_rec.schema_name
 									, i_view_rec.mv_emulation_chunking_field
-									, i_view_rec.internal_name
-									, i_view_rec.schema_name
 								)
 							else 
 								format('
-									create table %I.%I 
-									as 
-									select * 
-									from (%s) t 
-									where false
+									call 
+										${mainSchemaName}.p_recreate_table_as(
+											i_table_schema => %L
+											, i_table_name => %L
+											, i_query => %L
+										)			
 									'
 									, i_view_rec.schema_name
 									, i_view_rec.internal_name
@@ -975,7 +967,7 @@ begin
 	end loop;
 
 	if not l_is_matview_recognized then
-		raise 'The materialized view %.% is not defined as it expected', i_view_rec.schema_name, i_view_rec.internal_name; 
+		raise 'The materialized view %.% is not defined as it should be', i_view_rec.schema_name, i_view_rec.internal_name; 
 	end if;
 end
 $procedure$;	
