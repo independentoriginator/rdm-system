@@ -47,7 +47,9 @@ select
 					E';\n'
 					, string_agg(
 						case 
-							when current_table.obj_id is not null then
+							when current_table.obj_id is not null
+								and not ('is_partition' = any(current_table.flags))
+							then
 								${mainSchemaName}.f_sys_obj_drop_command(
 									i_obj_class => current_table.obj_class
 									, i_obj_id => current_table.obj_id
@@ -58,7 +60,9 @@ select
 					)
 					, string_agg(
 						case 
-							when shadow_table.obj_id is not null then
+							when shadow_table.obj_id is not null
+								and not ('is_partition' = any(shadow_table.flags))
+							then
 								${mainSchemaName}.f_sys_obj_drop_command(
 									i_obj_class => shadow_table.obj_class
 									, i_obj_id => shadow_table.obj_id

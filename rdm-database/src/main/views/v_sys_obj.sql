@@ -46,6 +46,10 @@ from (
 				when c.relkind = 'm'::"char" and c.relispopulated 
 				then array['is_populated'::text]
 			end
+			|| case 
+				when c.relispartition
+				then array['is_partition'::text]
+			end
 		) as flags
 	from 
 		pg_catalog.pg_class c
