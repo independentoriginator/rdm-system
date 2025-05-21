@@ -234,17 +234,13 @@ begin
 			ddl.sttmnt
 		from (
 			select
-				target_table.table_id as target_table_id
-				, target_table.column_name as old_column_name
-				, target_table.column_type as old_column_type			
-				, temp_table.column_name as new_column_name
-				, temp_table.column_type as new_column_type			
+				target_table_column.column_name as old_column_name
+				, target_table_column.column_type as old_column_type			
+				, temp_table_column.column_name as new_column_name
+				, temp_table_column.column_type as new_column_type			
 			from (
 				select 
-					t.schema_name
-					, t.table_name
-					, t.table_id
-					, c.column_name
+					c.column_name
 					, c.column_type			
 				from 
 					table_spec t
@@ -253,13 +249,10 @@ begin
 				where 
 					t.schema_id = pg_my_temp_schema()
 					and t.table_name = l_temp_table_name			
-			) temp_table
+			) temp_table_column
 			full join (
 				select 
-					t.schema_name
-					, t.table_name
-					, t.table_id
-					, c.column_name
+					c.column_name
 					, c.column_type			
 				from 
 					table_spec t
@@ -268,9 +261,12 @@ begin
 				where 
 					t.schema_name = i_table_schema
 					and t.table_name = i_table_name
-			) target_table
-				on target_table.column_name = temp_table.column_name
+			) target_table_column
+				on target_table_column.column_name = temp_table_column.column_name
 		) t
+		join table_spec target_table
+			on target_table.schema_name = i_table_schema
+			and target_table.table_name = i_table_name
 		join lateral(
 			values (
 				case 
@@ -315,8 +311,6 @@ begin
 			sttmnt
 		)
 			on ddl.sttmnt is not null
-		where 
-			t.target_table_id is not null
 	)
 	loop
 		raise notice
