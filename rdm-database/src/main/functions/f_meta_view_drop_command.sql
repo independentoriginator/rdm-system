@@ -43,6 +43,22 @@ select
 		)
 		, (
 			select 
+				string_agg(
+					${mainSchemaName}.f_sys_obj_drop_command(
+						i_obj_class => p.obj_class
+						, i_obj_id => p.obj_id
+						, i_check_existence => true							
+					)		
+					, E';\n'
+				)	
+			from 
+				${mainSchemaName}.v_sys_obj p
+			where 
+				p.obj_schema = v.schema_name
+				and p.unqualified_name = v.mv_emulation_table_func_name
+		)
+		, (
+			select 
 				concat_ws(
 					E';\n'
 					, string_agg(
