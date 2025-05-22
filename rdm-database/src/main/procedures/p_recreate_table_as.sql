@@ -108,12 +108,49 @@ begin
 				select 
 					a.attrelid as table_id
 					, a.attname as column_name
-					, pg_catalog.format_type(a.atttypid, a.atttypmod) as column_type			
+					, pg_catalog.format_type(a.atttypid, a.atttypmod) as column_type
+					, a.attnum as column_position
 				from 
 					pg_catalog.pg_attribute a
 				where 
 					not a.attisdropped			
 					and a.attnum > 0
+			)
+			, column_matching as (
+				select
+					target_table_column.column_name as old_column_name
+					, target_table_column.column_type as old_column_type
+					, target_table_column.column_position as old_column_position
+					, temp_table_column.column_name as new_column_name
+					, temp_table_column.column_type as new_column_type			
+					, temp_table_column.column_position as new_column_position
+				from (
+					select 
+						c.column_name
+						, c.column_type		
+						, c.column_position
+					from 
+						table_spec t
+					join column_spec c
+						on c.table_id = t.table_id
+					where 
+						t.schema_id = pg_my_temp_schema()
+						and t.table_name = l_temp_table_name			
+				) temp_table_column
+				full join (
+					select 
+						c.column_name
+						, c.column_type		
+						, c.column_position
+					from 
+						table_spec t
+					join column_spec c
+						on c.table_id = t.table_id
+					where 
+						t.schema_name = i_table_schema
+						and t.table_name = i_table_name
+				) target_table_column
+					on target_table_column.column_name = temp_table_column.column_name
 			)
 		select 
 			ddl.sttmnt
@@ -154,6 +191,15 @@ begin
 							or (i_partition_key is null and target_table.partition_key is not null)
 							or nullif(i_partitioning_strategy, target_table.partitioning_strategy) is not null
 							or (i_partitioning_strategy is null and target_table.partitioning_strategy is not null)
+							or exists (
+								select 
+									1
+								from 
+									column_matching m 
+								where 
+									m.old_column_name = m.new_column_name
+									and m.old_column_position <> m.new_column_position
+							)
 						)
 					then
 						concat_ws(
@@ -232,38 +278,8 @@ begin
 		union all
 		select 
 			ddl.sttmnt
-		from (
-			select
-				target_table_column.column_name as old_column_name
-				, target_table_column.column_type as old_column_type			
-				, temp_table_column.column_name as new_column_name
-				, temp_table_column.column_type as new_column_type			
-			from (
-				select 
-					c.column_name
-					, c.column_type			
-				from 
-					table_spec t
-				join column_spec c
-					on c.table_id = t.table_id
-				where 
-					t.schema_id = pg_my_temp_schema()
-					and t.table_name = l_temp_table_name			
-			) temp_table_column
-			full join (
-				select 
-					c.column_name
-					, c.column_type			
-				from 
-					table_spec t
-				join column_spec c
-					on c.table_id = t.table_id
-				where 
-					t.schema_name = i_table_schema
-					and t.table_name = i_table_name
-			) target_table_column
-				on target_table_column.column_name = temp_table_column.column_name
-		) t
+		from 
+			column_matching t
 		join table_spec target_table
 			on target_table.schema_name = i_table_schema
 			and target_table.table_name = i_table_name
@@ -331,6 +347,16 @@ begin
 			sttmnt
 		)
 			on ddl.sttmnt is not null
+		where 
+			not exists (
+				select 
+					1
+				from 
+					column_matching m 
+				where 
+					m.old_column_name = m.new_column_name
+					and m.old_column_position <> m.new_column_position
+			)
 	)
 	loop
 		raise notice
