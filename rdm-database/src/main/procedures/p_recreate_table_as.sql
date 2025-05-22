@@ -30,7 +30,14 @@ create or replace procedure
 language plpgsql
 as $procedure$
 declare 
-	l_temp_table_name name := i_table_schema || '_' || i_table_name; 
+	l_temp_table_name name := 
+		format(
+			'%I_%I'
+			, i_table_schema
+			, i_table_name
+		)
+	;
+	l_temp_name_tmpl name := 'p_recreate_table_as_temp_%s';
 	l_rec record;
 begin
 	-- temporary table as a sample of the target structure
@@ -54,8 +61,10 @@ begin
 					, t.schema_name
 					, t.partitioning_strategy
 					, t.partition_key
-					, t.partitions 
-					, 'p_recreate_table_as_temp_'::name || t.table_id::name as temp_name
+					, format(
+						l_temp_name_tmpl
+						, t.table_id
+					)::name as temp_name
 				from (			
 					select 
 						c.oid as table_id
@@ -64,13 +73,6 @@ begin
 						, n.nspname as schema_name
 						, null::text as partitioning_strategy
 						, null::text as partition_key
-						, array[
-							format(
-								'%I.%I'
-								, n.nspname
-								, c.relname
-							)
-						]::name[] as partitions
 					from 
 						pg_catalog.pg_namespace n
 					join pg_catalog.pg_class c
@@ -84,24 +86,8 @@ begin
 						, t.schema_name
 						, t.partitioning_strategy
 						, t.partition_key
-						, partitions.tables as partitions 
 					from 
 						${mainSchemaName}.v_sys_partitioned_table t
-					left join lateral (
-						select 
-							array_agg(
-								format(
-									'%I.%I'
-									, p.partition_schema_name
-									, p.partition_table_name
-								)::name
-							) as tables
-						from 
-							${mainSchemaName}.v_sys_table_partition p
-						where 
-							p.table_id = t.table_id
-					) partitions
-						on true
 				) t
 			)
 			, column_spec as (
@@ -159,6 +145,79 @@ begin
 		left join table_spec target_table
 			on target_table.schema_name = i_table_schema
 			and target_table.table_name = i_table_name
+		join lateral (
+			select 
+				string_agg(
+					concat_ws(
+						E';\n'
+						, case 
+							when p.partition_expression is not null then 
+								format(
+									'create table %I.%I partition of %I.%I %s'
+									, p.partition_schema_name
+									, p.partition_temp_name
+									, i_table_schema
+									, target_table.temp_name
+									, p.partition_expression
+								)
+						end
+						, format(
+							'insert into %I.%I(%s) select %s from %I.%I'
+							, i_table_schema
+							, target_table.temp_name
+							, transition_columns.columns
+							, transition_columns.columns
+							, p.partition_schema_name
+							, p.partition_table_name
+						)
+					)
+					, E';\n'
+				) as data_copy_commands
+				, string_agg(
+					format(
+						'alter table %I.%I rename to %I'
+						, p.partition_schema_name
+						, p.partition_temp_name
+						, p.partition_table_name
+					)
+					, E';\n'
+				) as partition_rename_commands
+			from (
+				select
+					p.partition_schema_name
+					, p.partition_table_name
+					, format(
+						l_temp_name_tmpl
+						, p.partition_table_id
+					)::name as partition_temp_name
+					, p.partition_expression
+				from
+					${mainSchemaName}.v_sys_table_partition p
+				where 
+					p.table_id = target_table.table_id
+				union all
+				select 
+					target_table.schema_name as partition_schema_name
+					, target_table.table_name as partition_table_name
+					, target_table.table_name as partition_temp_name
+					, null as partition_expression
+				where 
+					target_table.partitioning_strategy is null
+			) p
+			join lateral (
+				select 
+					string_agg(old_table_column.column_name, ', ') as columns
+				from 
+					column_spec old_table_column
+				join column_spec new_table_column
+					on new_table_column.table_id = target_table.table_id
+					and new_table_column.column_name = old_table_column.column_name 
+				where
+					old_table_column.table_id = temp_table.table_id
+			) transition_columns
+				on true
+		) partitions
+			on true
 		join lateral(
 			values (
 				case 
@@ -223,42 +282,16 @@ begin
 								end
 							)
 							-- copy existing data
-							, (
-								select 
-									string_agg(
-										format(
-											'insert into %I.%I(%s)'
-											' select %s from %s'
-											, i_table_schema
-											, target_table.temp_name
-											, transition_columns.columns
-											, transition_columns.columns
-											, p.table_name
-										)
-										, E';\n'
-									)
-								from 
-									unnest(target_table.partitions) p(table_name)
-								join lateral (
-									select 
-										string_agg(old_table_column.column_name, ', ') as columns
-									from 
-										column_spec old_table_column
-									join column_spec new_table_column
-										on new_table_column.table_id = target_table.table_id
-										and new_table_column.column_name = old_table_column.column_name 
-									where
-										old_table_column.table_id = temp_table.table_id
-								) transition_columns
-									on true
-							)
+							, partitions.data_copy_commands
 							-- drop old table
 							, format(
 								'drop table %I.%I'
 								, i_table_schema
 								, i_table_name
 							)
-							-- rename newly created table 
+							-- rename newly created partitions
+							, partitions.partition_rename_commands
+							-- rename newly created table
 							, format(
 								'alter table %I.%I rename to %I'
 								, i_table_schema
