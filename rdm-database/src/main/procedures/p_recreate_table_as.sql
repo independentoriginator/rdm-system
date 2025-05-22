@@ -284,17 +284,37 @@ begin
 						and t.old_column_type <> t.new_column_type
 					then
 						format(
-							E'call ${mainSchemaName}.p_alter_table_column_type('
-							'\n	i_schema_name => %L'
-							'\n	, i_table_name => %L'
-							'\n	, i_column_name => %L'
-							'\n	, i_column_type => %L'
-							'\n	, i_defer_dependent_obj_recreation => true'
-							'\n)'
+							E'begin'
+							'\n	call'
+							'\n		${mainSchemaName}.p_alter_table_column_type('
+							'\n			i_schema_name => %L'
+							'\n			, i_table_name => %L'
+							'\n			, i_column_name => %L'
+							'\n			, i_column_type => %L'
+							'\n			, i_defer_dependent_obj_recreation => true'
+							'\n		)'
+							'\n	;'
+							'\nexception'
+							'\n	-- Class 42 — Syntax Error or Access Rule Violation'
+							'\n	-- 42846 cannot_coerce'
+							'\n	when sqlstate ''42846'' then'
+							'\n		alter table %I.%I drop column %I'
+							'\n		;'
+							'\n		alter table %I.%I add column %I %s null'
+							'\n		;'
+							'\nend'
+							'\n;'	
 							, i_table_schema
 							, i_table_name
 							, t.new_column_name
-							, t.new_column_type		
+							, t.new_column_type
+							, i_table_schema
+							, i_table_name
+							, t.old_column_name
+							, i_table_schema
+							, i_table_name
+							, t.new_column_name
+							, t.new_column_type
 						)
 					when t.old_column_name is not null 
 						and t.new_column_name is null
