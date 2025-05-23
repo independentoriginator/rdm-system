@@ -336,7 +336,8 @@ begin
 						and t.old_column_type <> t.new_column_type
 					then
 						format(
-							E'begin'
+							E'do $$'
+							'\nbegin'
 							'\n	call'
 							'\n		${mainSchemaName}.p_alter_table_column_type('
 							'\n			i_schema_name => %L'
@@ -355,6 +356,7 @@ begin
 							'\n		alter table %I.%I add column %I %s null'
 							'\n		;'
 							'\nend'
+							'\n$$'
 							'\n;'	
 							, i_table_schema
 							, i_table_name
