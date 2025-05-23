@@ -22,7 +22,6 @@ where
 	v.is_materialized
 	and not v.is_valid
 	and not v.is_disabled
-	and v.is_created
 order by 	
 	v.dependency_level
 ;
