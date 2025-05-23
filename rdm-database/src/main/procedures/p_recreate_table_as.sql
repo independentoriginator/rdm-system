@@ -181,6 +181,9 @@ begin
 						, p.partition_table_name
 					)
 					, E';\n'
+				) filter (
+					where 
+						p.partition_expression is not null 
 				) as partition_rename_commands
 			from (
 				select
