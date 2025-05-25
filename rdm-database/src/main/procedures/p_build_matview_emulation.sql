@@ -157,12 +157,16 @@ begin
 								concat_ws(
 									E'\n'
 									, format(
-										E'create temp view tv_%I_%I as'
+										E'drop view if exists tv_%I_%I'
+										'\n;'										
+										'\ncreate temp view tv_%I_%I as'
 										'\nselect' 
 										'\n	array('
 										'\n		select %s from %I.%I limit 0'
 										'\n	) as arr_%s'
 										'\n;'
+										, i_view_rec.internal_name
+										, i_view_rec.schema_name
 										, i_view_rec.internal_name
 										, i_view_rec.schema_name
 										, i_view_rec.mv_emulation_chunking_field
@@ -1141,7 +1145,7 @@ begin
 			)
 			, query_with_chunking_filter
 			|| case 
-				when i_view_rec.has_unique_index and t.view_query not ilike '%order by%' then 
+				when chunk_row_limit_marker is not null and i_view_rec.has_unique_index and t.view_query not ilike '%order by%' then 
 					format(
 						E'\norder by'
 						'\n	%s'
