@@ -28,6 +28,7 @@ create or replace procedure
 		, i_partition_key text = null
 	)
 language plpgsql
+security definer
 as $procedure$
 declare 
 	l_temp_table_name name := 
