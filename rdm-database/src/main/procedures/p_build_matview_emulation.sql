@@ -832,67 +832,281 @@ begin
 					 	, 'i'
 					)
 			end as ddl_sttmnt
-			, (t.view_query is not null) is_matview_query
+			, (t.view_query is not null) as is_matview_query
 		from (
-			select 
-				t.sttmnt
-				, t.ordinal_num
+			select
+				t.obj_class
+				, t.obj_name
 				, t.view_query
+				, t.sttmnt
+				, t.ordinal_num
 			 	, array_agg(t.chunking_filter_marker) as chunking_filter_marker
 			 	, array_agg(t.chunking_filter_expr) as chunking_filter_expr
 				, t.chunk_row_limit_marker
 				, t.chunk_row_limit_expr
 			from (
 				select 
-					sttmnt.expr[1] as sttmnt
-					, sttmnt.ordinal_num
-					, view_query[1] as view_query
-				 	, chunking_filter_marker[1] as chunking_filter_marker
-				 	, chunking_filter_expr[1] as chunking_filter_expr
-					, chunk_row_limit_marker[1] as chunk_row_limit_marker
-					, chunk_row_limit_expr[1] as chunk_row_limit_expr
-				from  
-					regexp_matches(
-						i_view_rec.query
-						, '(.+?);'  
-						, 'g'
-					) with ordinality as sttmnt(expr, ordinal_num)
-					cross join lateral 
-						regexp_match(
-							sttmnt.expr[1]
-							, '\s*create materialized view\s+.+?as\s+(.+?)(?:\s*(?:with\s+no\s+data|with\s+data)\s*)?' 
-							, 'i'
-						) as view_query
+					obj_def.obj_class
+					, obj_def.obj_name
+					, case 
+						when obj_def.obj_class = 'materialized view' then
+							obj_def.obj_body
+					end as view_query
+					, obj_def.ordinal_num
+					, case 
+						when obj_def.obj_body is null
+							and target_obj.obj_body is not null
+							and obj_def.obj_class <> 'materialized view' 
+						then
+							case 
+								when obj_def.obj_class in ('index', 'unique index') then
+									format(	
+										'drop index %I.%I'
+										, i_view_rec.schema_name
+										, obj_def.obj_name
+									)
+								when obj_def.obj_class = 'comment on column' then
+									format(	
+										'comment on column %I.%I.%s is null'
+										, i_view_rec.schema_name
+										, i_view_rec.internal_name
+										, obj_def.obj_name
+									)
+								when obj_def.obj_class = 'comment on materialized view' then
+									format(	
+										'comment on table %I.%I is null'
+										, i_view_rec.schema_name
+										, i_view_rec.internal_name
+									)
+							end
+						else 
+							obj_def.sttmnt
+					end as sttmnt
+					, case 
+						when obj_def.obj_class in ('index', 'unique index') then
+							(
+								target_obj.obj_name is null 
+								or (
+									obj_def.obj_name = target_obj.obj_name
+									and regexp_replace(obj_def.obj_body, '\s', '', 'g') <> target_obj.obj_body
+								)
+								or obj_def.obj_class <> target_obj.obj_class
+							)	
+						when obj_def.obj_class = 'comment on column' then
+							(
+								target_obj.obj_name = obj_def.obj_name
+								and (
+									nullif(obj_def.obj_body, target_obj.obj_body) is not null 
+									or (
+										obj_def.obj_body is null 
+										and target_obj.obj_body is not null
+									)
+								)
+							)
+						when obj_def.obj_class = 'comment on materialized view' then
+							(
+								nullif(obj_def.obj_body, target_obj.obj_body) is not null 
+								or (
+									obj_def.obj_body is null 
+									and target_obj.obj_body is not null
+								)
+							)
+						else 
+							true
+					end as must_be_executed
+				 	, obj_def.chunking_filter_marker
+				 	, obj_def.chunking_filter_expr
+					, obj_def.chunk_row_limit_marker
+					, obj_def.chunk_row_limit_expr
+				from (
+					select 
+						sttmnt.expr[1] as sttmnt
+						, sttmnt.ordinal_num
+						, obj_def.class as obj_class
+						, lower(obj_def.name[1]) as obj_name					
+						, obj_def.body[1] as obj_body
+					 	, chunking_filter_marker[1] as chunking_filter_marker
+					 	, chunking_filter_expr[1] as chunking_filter_expr
+						, chunk_row_limit_marker[1] as chunk_row_limit_marker
+						, chunk_row_limit_expr[1] as chunk_row_limit_expr
+					from  
+						regexp_matches(
+							i_view_rec.query
+							, '(.+?);'  
+							, 'g'
+						) with ordinality as sttmnt(expr, ordinal_num)
+						left join lateral (
+							values (
+									'materialized view'
+									, null::name[]
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*create materialized view\s+.+?as\s+(.+?)(?:\s*(?:with\s+no\s+data|with\s+data)\s*)?' 
+										, 'i'
+									)
+								)
+								, (
+									'index'
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*create\s+index\s+(.+?)\s+on' 
+										, 'i'
+									)
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*create\s+index\s+.+?\(\s*(.+?)\s*\)' 
+										, 'i'
+									)
+								)
+								, (
+									'unique index'
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*create\s+unique\s+index\s+(.+?)\s+on' 
+										, 'i'
+									)
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*create\s+unique\s+index\s+.+?\(\s*(.+?)\s*\)' 
+										, 'i'
+									)
+								)
+								, (
+									'comment on materialized view'
+									, null::name[]
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*comment\s+on\s+materialized\s+view\s+.+?is\s*''(.+?)''' 
+										, 'i'
+									)
+								)
+								, (
+									'comment on column'
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*comment\s+on\s+column\s+.+?"*([^\.]+?)"*\s+is' 
+										, 'i'
+									)
+									, regexp_match(
+										sttmnt.expr[1]
+										, '\s*comment\s+on\s+column\s+.+?is\s*''(.+?)''' 
+										, 'i'
+									)
+								)
+						) as obj_def(
+							class
+							, name
+							, body
+						)
+						on obj_def.body is not null						
 					left join lateral 
 						regexp_matches(
-							view_query[1]
+							obj_def.body[1]
 							, '(\/\*\s*\#chunking_filter\:\s*.+?\s*\*\/){1,1}?' 
 							, 'ig'
 						) as chunking_filter_marker
-							on true
+						on obj_def.class = 'materialized view'
 					cross join lateral
 						regexp_match(
 							chunking_filter_marker[1]
 							, '\/\*\s*\#chunking_filter\:\s*(.+?)\s*\*\/' 
 							, 'i'
 						) as chunking_filter_expr
-					cross join lateral
+					left join lateral
 						regexp_match(
-							view_query[1]
+							obj_def.body[1]
 							, '(\/\*\s*\#chunk_row_limit\:\s*.+?\s*\*\/){1,1}?' 
 							, 'i'
 						) as chunk_row_limit_marker
+						on obj_def.class = 'materialized view'
 					cross join lateral
 						regexp_match(
 							chunk_row_limit_marker[1]
 							, '\/\*\s*\#chunk_row_limit\:\s*(.+?)\s*\*\/' 
 							, 'i'
 						) as chunk_row_limit_expr
+				) obj_def
+				full join (
+					select 
+						case 
+							when i.indisunique then 'unique index'
+							else 'index'
+						end as obj_class
+						, target_index.relname as obj_name
+						, index_col.index_columns as obj_body
+					from
+						pg_catalog.pg_class target_table
+					join pg_catalog.pg_namespace n 
+						on n.oid = target_table.relnamespace
+						and n.nspname = i_view_rec.schema_name
+					join pg_catalog.pg_index i
+						on i.indrelid = target_table.oid 
+					join pg_catalog.pg_class target_index
+						on target_index.oid = i.indexrelid
+					left join lateral (
+						select 
+							string_agg(
+								a.attname
+								, ',' 
+								order by 
+									array_position(i.indkey, a.attnum)
+							) as index_columns
+						from 
+							pg_catalog.pg_attribute a
+						where
+							a.attrelid = i.indrelid
+							and a.attnum = any(i.indkey)
+					) index_col 
+						on true
+					where 
+						target_table.relname = i_view_rec.internal_name
+					union all 
+					select 
+						'comment on materialized view' as obj_class
+						, null::name as obj_name
+						, d.description as obj_body
+					from
+						pg_catalog.pg_class target_table
+					join pg_catalog.pg_namespace n 
+						on n.oid = target_table.relnamespace
+						and n.nspname = i_view_rec.schema_name
+					join pg_catalog.pg_description d 
+						on d.objoid = target_table.oid
+						and d.classoid = 'pg_class'::regclass
+						and d.objsubid = 0
+					where 
+						target_table.relname = i_view_rec.internal_name
+					union all 
+					select 
+						'comment on column' as obj_class
+						, a.attname as obj_name
+						, d.description as obj_body
+					from
+						pg_catalog.pg_class target_table
+					join pg_catalog.pg_namespace n 
+						on n.oid = target_table.relnamespace
+						and n.nspname = i_view_rec.schema_name
+					join pg_catalog.pg_attribute a
+						on a.attrelid = target_table.oid
+						and a.attnum > 0
+					join pg_catalog.pg_description d 
+						on d.objoid = target_table.oid
+						and d.classoid = 'pg_class'::regclass
+						and d.objsubid = a.attnum
+					where 
+						target_table.relname = i_view_rec.internal_name
+				) target_obj
+					on obj_def.obj_class = target_obj.obj_class
+					and obj_def.obj_name is not distinct from target_obj.obj_name			
 			) t
+			where 
+				t.must_be_executed
 			group by 
-				t.sttmnt
-				, t.ordinal_num
+				t.obj_class
+				, t.obj_name
 				, t.view_query
+				, t.sttmnt
+				, t.ordinal_num
 				, t.chunk_row_limit_marker
 				, t.chunk_row_limit_expr
 		) t
@@ -927,7 +1141,7 @@ begin
 			)
 			, query_with_chunking_filter
 			|| case 
-				when i_view_rec.has_unique_index and view_query not ilike '%order by%' then 
+				when i_view_rec.has_unique_index and t.view_query not ilike '%order by%' then 
 					format(
 						E'\norder by'
 						'\n	%s'

@@ -111,23 +111,6 @@ select
 					, v.mv_emulation_filled_chunk_table_name
 				)
 		end
-		, (
-			select 
-				string_agg(
-					format(
-						'drop index %I.%I'
-						, v.schema_name
-						, target_index.relname
-					)		
-					, E';\n'
-				)	
-			from 
-				pg_catalog.pg_index i
-			join pg_catalog.pg_class target_index
-				on target_index.oid = i.indexrelid
-			where 
-				i.indrelid = v.view_oid 
-		)
 	)
 from
 	${mainSchemaName}.v_meta_view v
