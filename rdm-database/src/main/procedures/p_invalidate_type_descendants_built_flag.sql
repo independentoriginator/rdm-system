@@ -45,6 +45,31 @@ begin
 	where 
 		t.id = d.id
 	;
+
+	with 
+		dependent_view as (
+			select 
+				v.id
+			from 
+				${mainSchemaName}.meta_view_dependency d
+			join ${mainSchemaName}.meta_view v
+				on v.id = d.view_id
+				and v.is_created = true
+			where
+				d.master_type_id = i_type_id
+			order by 
+				v.id
+			for update of v
+		)
+	update 
+		${mainSchemaName}.meta_view v
+	set 
+		is_created = false
+	from 
+		dependent_view d
+	where
+		v.id = d.id
+	;
 end
 $procedure$;
 
