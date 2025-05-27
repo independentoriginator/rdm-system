@@ -131,7 +131,7 @@ begin
 		
 		if i_defer_dependent_obj_recreation then 
 			raise notice 
-				'Re-creation of the dependent objects has been deferred.'
+				'Re-creation of the dependent objects has been deferred. '
 				'Don''t forget to call the p_perform_deferred_dependent_obj_rebuild procedure before the session completion.';
 
 			create temporary table if not exists t_pending_rebuild_dependent_sys_obj(
