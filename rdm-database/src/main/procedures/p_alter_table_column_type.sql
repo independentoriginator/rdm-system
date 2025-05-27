@@ -137,7 +137,7 @@ begin
 			create temporary table if not exists t_pending_rebuild_dependent_sys_obj(
 				id oid not null
 				, name text not null
-				, definition text not null
+				, definition text null
 				, dep_level integer not null
 				, iteration_num integer not null
 				, primary key(id)
