@@ -36,11 +36,14 @@ select
 	|| ${mainSchemaName}.f_apply_backward_compatibility_macro(
 		i_program_code => 
 			case o.obj_class
-				when 'relation' then 
-					${mainSchemaName}.f_view_definition(
-						i_view_oid => o.obj_id
-						, i_enforce_nodata_for_matview => i_enforce_nodata_for_matview
-					)
+				when 'relation' then
+					case 
+						when o.obj_general_type = 'view' then
+							${mainSchemaName}.f_view_definition(
+								i_view_oid => o.obj_id
+								, i_enforce_nodata_for_matview => i_enforce_nodata_for_matview
+							)
+					end
 				when 'routine' then
 					pg_catalog.pg_get_functiondef(o.obj_id)
 				when 'schema' then

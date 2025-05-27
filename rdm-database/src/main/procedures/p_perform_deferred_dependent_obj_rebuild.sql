@@ -21,6 +21,8 @@ begin
 					, definition
 				from
 					%I
+				where 
+					definition is not null
 				order by 
 					iteration_num desc
 					, dep_level
