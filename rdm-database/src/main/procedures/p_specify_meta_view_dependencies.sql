@@ -205,7 +205,12 @@ begin
 			left join new_external_schema ns 
 				on ns.internal_name = d.dep_obj_schema
 			where
-				d.view_id is null 
+				d.view_id is null
+ 				and d.type_id is null 
+ 				and ( 
+	 				d.dep_obj_type in ('v'::"char", 'm'::"char")
+	 				or d.dep_obj_class = 'routine'
+				)
 				and i_consider_registered_objects_only = false
 			returning 
 				id
@@ -225,6 +230,10 @@ begin
 			where 
 				v.id = d.view_id
 				and d.is_external = true
+ 				and ( 
+	 				d.dep_obj_type in ('v'::"char", 'm'::"char")
+	 				or d.dep_obj_class = 'routine'
+				)
 			returning 
 				id
 		)
