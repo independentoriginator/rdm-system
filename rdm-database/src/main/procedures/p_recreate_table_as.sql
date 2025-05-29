@@ -19,6 +19,16 @@ drop procedure if exists
 	)
 ;
 
+drop procedure if exists
+	p_recreate_table_as(
+		name
+		, name
+		, text
+		, text
+		, text
+	)
+;
+
 create or replace procedure 
 	p_recreate_table_as(
 		i_table_schema name
@@ -26,6 +36,7 @@ create or replace procedure
 		, i_query text
 		, i_partitioning_strategy text = null
 		, i_partition_key text = null
+		, i_forcibly_recreate boolean = false
 	)
 language plpgsql
 security definer
@@ -44,8 +55,10 @@ begin
 	-- temporary table as a sample of the target structure
 	execute
 		format('
-			create temp table %I as %s with no data
+			drop table if exists %I;
+			create temp table %I as %s with no data;
 			'
+			, l_temp_table_name
 			, l_temp_table_name
 			, i_query
 		)
@@ -263,6 +276,7 @@ begin
 									m.old_column_name = m.new_column_name
 									and m.old_column_position <> m.new_column_position
 							)
+							or i_forcibly_recreate
 						)
 					then
 						concat_ws(
@@ -348,24 +362,9 @@ begin
 							'\n			, i_defer_dependent_obj_recreation => true'
 							'\n		)'
 							'\n	;'
-							'\nexception'
-							'\n	-- Class 42 — Syntax Error or Access Rule Violation'
-							'\n	-- 42846 cannot_coerce'
-							'\n	when sqlstate ''42846'' then'
-							'\n		alter table %I.%I drop column %I'
-							'\n		;'
-							'\n		alter table %I.%I add column %I %s null'
-							'\n		;'
 							'\nend'
 							'\n$$'
 							'\n;'	
-							, i_table_schema
-							, i_table_name
-							, t.new_column_name
-							, t.new_column_type
-							, i_table_schema
-							, i_table_name
-							, t.old_column_name
 							, i_table_schema
 							, i_table_name
 							, t.new_column_name
@@ -396,6 +395,7 @@ begin
 					m.old_column_name = m.new_column_name
 					and m.old_column_position <> m.new_column_position
 			)
+			and not i_forcibly_recreate
 	)
 	loop
 		raise notice
@@ -416,6 +416,21 @@ begin
 			, l_temp_table_name
 		)
 	;
+
+exception
+	-- Class 42 — Syntax Error or Access Rule Violation
+	-- 42846 cannot_coerce
+	when sqlstate '42846' then
+		call
+			${mainSchemaName}.p_recreate_table_as(
+				i_table_schema => i_table_schema
+				, i_table_name => i_table_name
+				, i_query => i_query
+				, i_partitioning_strategy => i_partitioning_strategy
+				, i_partition_key => i_partition_key
+				, i_forcibly_recreate => true
+			)
+		;
 end
 $procedure$
 ;		
@@ -427,6 +442,7 @@ comment on procedure
 		, text
 		, text
 		, text
+		, boolean
 	) 
 	is 'Пересоздать таблицу на основе запроса'
 ;
