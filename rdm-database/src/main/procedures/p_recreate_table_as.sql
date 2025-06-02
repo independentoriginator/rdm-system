@@ -175,15 +175,18 @@ begin
 									, p.partition_expression
 								)
 						end
-						, format(
-							'insert into %I.%I(%s) select %s from %I.%I'
-							, i_table_schema
-							, target_table.temp_name
-							, transition_columns.columns
-							, transition_columns.columns
-							, p.partition_schema_name
-							, p.partition_table_name
-						)
+						, case 
+							when p.partition_table_name is not null then 
+								format(
+									'insert into %I.%I(%s) select %s from %I.%I'
+									, i_table_schema
+									, target_table.temp_name
+									, transition_columns.columns
+									, transition_columns.columns
+									, p.partition_schema_name
+									, p.partition_table_name
+								)
+						end
 					)
 					, E';\n'
 				) as data_copy_commands
