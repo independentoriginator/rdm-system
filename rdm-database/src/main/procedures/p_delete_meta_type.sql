@@ -13,13 +13,16 @@ as $procedure$
 declare 
 	l_type_id ${mainSchemaName}.meta_type.id%type;
 	l_schema_name ${mainSchemaName}.meta_schema.internal_name%type;
+	l_log_table_name ${mainSchemaName}.meta_type.internal_name%type;
 begin
 	select 
 		t.id
 		, t.schema_name
+		, t.log_table_name
 	into
 		l_type_id
 		, l_schema_name
+		, l_log_table_name
 	from 
 		${mainSchemaName}.v_meta_type t
 	where
@@ -49,13 +52,22 @@ begin
 		'
 		, i_internal_name
 	);
-	
+
 	execute format('
 		drop table if exists %I.%I_lc
 		'
 		, l_schema_name
 		, i_internal_name
 	);
+
+	if l_log_table_name is not null then
+		execute format('
+			drop table if exists %I.%I
+			'
+			, l_schema_name
+			, l_log_table_name
+		);
+	end if;
 
 	execute format('
 		drop table if exists %I.%I %s
