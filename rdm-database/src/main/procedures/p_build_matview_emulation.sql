@@ -869,23 +869,23 @@ begin
 					, case 
 						when obj_def.obj_body is null
 							and target_obj.obj_body is not null
-							and obj_def.obj_class <> 'materialized view' 
+							and target_obj.obj_class <> 'materialized view' 
 						then
 							case 
-								when obj_def.obj_class in ('index', 'unique index') then
+								when target_obj.obj_class in ('index', 'unique index') then
 									format(	
 										'drop index %I.%I'
 										, i_view_rec.schema_name
-										, obj_def.obj_name
+										, target_obj.obj_name
 									)
-								when obj_def.obj_class = 'comment on column' then
+								when target_obj.obj_class = 'comment on column' then
 									format(	
 										'comment on column %I.%I.%s is null'
 										, i_view_rec.schema_name
 										, i_view_rec.internal_name
-										, obj_def.obj_name
+										, target_obj.obj_name
 									)
-								when obj_def.obj_class = 'comment on materialized view' then
+								when target_obj.obj_class = 'comment on materialized view' then
 									format(	
 										'comment on table %I.%I is null'
 										, i_view_rec.schema_name
