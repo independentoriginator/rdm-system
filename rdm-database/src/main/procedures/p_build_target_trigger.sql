@@ -59,7 +59,6 @@ begin
 			execute 
 				format(
 					'drop function %I.%I'
-					, i_trigger_rec.trigger_name
 					, i_trigger_rec.function_schema_name
 					, i_trigger_rec.function_name
 				)
