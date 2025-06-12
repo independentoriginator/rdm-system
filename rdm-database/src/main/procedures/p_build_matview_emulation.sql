@@ -874,7 +874,7 @@ begin
 							case 
 								when target_obj.obj_class in ('index', 'unique index') then
 									format(	
-										'drop index %I.%I'
+										'drop index if exists %I.%I'
 										, i_view_rec.schema_name
 										, target_obj.obj_name
 									)
