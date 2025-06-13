@@ -801,5 +801,25 @@
 		</delete>
 		
 	</changeSet>
+	
+	<changeSet id="external_id unique deferrable constraint" author="${default_author}">
+
+		<update tableName="meta_index">
+			<column name="is_constraint_used" value="true"/>
+			<column name="is_constraint_deferrable" value="true"/>
+			<where>
+				master_id = (
+					select 
+						id 
+					from 
+						meta_type 
+					where 
+						internal_name = 'entity'
+				)
+				and tag = 'external_id' 
+			</where>
+		</update>
+
+	</changeSet>
 
 </databaseChangeLog>
