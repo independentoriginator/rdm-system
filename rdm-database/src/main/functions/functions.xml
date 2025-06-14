@@ -206,4 +206,13 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="f_sys_table_size-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_sys_table_size" 
+			dbms="postgresql" 
+			path="f_sys_table_size.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>

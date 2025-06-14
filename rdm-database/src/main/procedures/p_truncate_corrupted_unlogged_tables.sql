@@ -21,12 +21,12 @@ begin
 				, t.table_name
 			) as truncate_cmd
 		from 
-			${mainSchemaName}.v_sys_table_size t
+			${mainSchemaName}.f_sys_table_size(
+				i_schema_name => array[i_schema_name]
+			) t
 		join pg_catalog.pg_class c
 			on c.oid = t.table_id
 			and c.relpersistence = 'u'::"char" -- unlogged
-		where 
-			t.schema_name = i_schema_name
 		order by 
 			table_name
 	) loop

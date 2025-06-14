@@ -61,10 +61,11 @@ begin
 							, t.table_name
 						)
 					from 
-						${mainSchemaName}.v_sys_table_size t
+						${mainSchemaName}.f_sys_table_size(
+							i_schema_name => string_to_array(%L, ',')
+						) t
 					where 
-						t.schema_name = any(string_to_array(%L, ','))
-						and t.table_id not in (
+						t.table_id not in (
 							select 
 								o.obj_id							
 							from 
