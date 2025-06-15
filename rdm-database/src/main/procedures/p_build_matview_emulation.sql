@@ -880,7 +880,29 @@ begin
 									)
 								when target_obj.obj_class = 'comment on column' then
 									format(	
-										'comment on column %I.%I.%s is null'
+										E'do $$'
+										'\nbegin'
+										'\n	if exists ('
+										'\n		select'
+										'\n			1'
+										'\n		from'
+										'\n			information_schema.columns'
+										'\n		where'
+										'\n			table_schema = %L'
+										'\n			and table_name = %L'
+										'\n			and column_name = %s'
+										'\n	)'
+										'\n	then'
+										'\n		comment on column %I.%I.%s is null'
+										'\n		;'
+										'\n	end if'
+										'\n	;'
+										'\nend'
+										'\n$$'
+										'\n;'	
+										, i_view_rec.schema_name
+										, i_view_rec.internal_name
+										, target_obj.obj_name
 										, i_view_rec.schema_name
 										, i_view_rec.internal_name
 										, target_obj.obj_name
