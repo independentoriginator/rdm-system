@@ -72,6 +72,7 @@ begin
 				i_meta_view_id => v.id
 				, i_cascade => true
 				, i_check_existence => true
+				, i_drop_emulated_matview_table => false
 			)
 			, E';\n'
 			order by 

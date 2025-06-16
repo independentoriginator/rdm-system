@@ -1,8 +1,17 @@
+drop function if exists 
+	f_meta_view_drop_command(
+		${mainSchemaName}.meta_view.id%type
+		, boolean
+		, boolean
+	)
+;
+
 create or replace function 
 	f_meta_view_drop_command(
 		i_meta_view_id ${mainSchemaName}.meta_view.id%type
 		, i_cascade boolean = false
 		, i_check_existence boolean = false
+		, i_drop_emulated_matview_table boolean = true
 	)
 returns text
 language sql
@@ -13,6 +22,10 @@ select
 		E';\n'
 		, case 
 			when not v.is_matview_emulation
+				or (
+					v.is_matview_emulation
+					and i_drop_emulated_matview_table
+				)
 				or (
 					v.view_oid is not null
 					and v.view_type <> 'table'
@@ -122,6 +135,7 @@ $function$
 comment on function 
 	f_meta_view_drop_command(
 		${mainSchemaName}.meta_view.id%type
+		, boolean
 		, boolean
 		, boolean
 	) 
