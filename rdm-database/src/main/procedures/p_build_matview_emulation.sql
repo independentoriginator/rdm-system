@@ -890,7 +890,7 @@ begin
 										'\n		where'
 										'\n			table_schema = %L'
 										'\n			and table_name = %L'
-										'\n			and column_name = %s'
+										'\n			and column_name = %L'
 										'\n	)'
 										'\n	then'
 										'\n		comment on column %I.%I.%s is null'
