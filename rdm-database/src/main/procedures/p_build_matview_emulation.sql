@@ -914,6 +914,19 @@ begin
 										, i_view_rec.internal_name
 									)
 							end
+						when obj_def.obj_body is not null
+							and target_obj.obj_body is not null
+							and target_obj.obj_class in ('index', 'unique index') 
+						then
+							concat_ws(
+								E'\n;'
+								, format(	
+									'drop index if exists %I.%I'
+									, i_view_rec.schema_name
+									, target_obj.obj_name
+								)
+								, obj_def.sttmnt
+							)
 						else 
 							obj_def.sttmnt
 					end as sttmnt
