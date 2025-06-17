@@ -971,7 +971,11 @@ begin
 						sttmnt.expr[1] as sttmnt
 						, sttmnt.ordinal_num
 						, obj_def.class as obj_class
-						, lower(obj_def.name[1]) as obj_name					
+						, substring(
+							lower(obj_def.name[1])
+							, 1
+							, ${mainSchemaName}.f_system_name_max_length()
+						) as obj_name					
 						, obj_def.body[1] as obj_body
 					 	, chunking_filter_marker[1] as chunking_filter_marker
 					 	, chunking_filter_expr[1] as chunking_filter_expr
