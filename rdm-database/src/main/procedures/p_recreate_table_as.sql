@@ -330,75 +330,79 @@ begin
 			temp_table.schema_id = pg_my_temp_schema()
 			and temp_table.table_name = l_temp_table_name			
 		union all
-		select 
-			ddl.sttmnt
-		from 
-			column_matching t
-		join table_spec target_table
-			on target_table.schema_name = i_table_schema
-			and target_table.table_name = i_table_name
-		join lateral(
-			values (
-				case 
-					when t.old_column_name is null 
-						and t.new_column_name is not null
-					then
-						format(
-							'alter table %I.%I add column %I %s null'
-							, i_table_schema
-							, i_table_name
-							, t.new_column_name
-							, t.new_column_type
-						)
-					when t.old_column_name = t.new_column_name
-						and t.old_column_type <> t.new_column_type
-					then
-						format(
-							E'do $$'
-							'\nbegin'
-							'\n	call'
-							'\n		${mainSchemaName}.p_alter_table_column_type('
-							'\n			i_schema_name => %L'
-							'\n			, i_table_name => %L'
-							'\n			, i_column_name => %L'
-							'\n			, i_column_type => %L'
-							'\n			, i_defer_dependent_obj_recreation => true'
-							'\n		)'
-							'\n	;'
-							'\nend'
-							'\n$$'
-							'\n;'	
-							, i_table_schema
-							, i_table_name
-							, t.new_column_name
-							, t.new_column_type
-						)
-					when t.old_column_name is not null 
-						and t.new_column_name is null
-					then
-						format(
-							'alter table %I.%I drop column %I'
-							, i_table_schema
-							, i_table_name
-							, t.old_column_name
-						)
-				end 
+		(
+			select 
+				ddl.sttmnt
+			from 
+				column_matching t
+			join table_spec target_table
+				on target_table.schema_name = i_table_schema
+				and target_table.table_name = i_table_name
+			join lateral(
+				values (
+					case 
+						when t.old_column_name is null 
+							and t.new_column_name is not null
+						then
+							format(
+								'alter table %I.%I add column %I %s null'
+								, i_table_schema
+								, i_table_name
+								, t.new_column_name
+								, t.new_column_type
+							)
+						when t.old_column_name = t.new_column_name
+							and t.old_column_type <> t.new_column_type
+						then
+							format(
+								E'do $$'
+								'\nbegin'
+								'\n	call'
+								'\n		${mainSchemaName}.p_alter_table_column_type('
+								'\n			i_schema_name => %L'
+								'\n			, i_table_name => %L'
+								'\n			, i_column_name => %L'
+								'\n			, i_column_type => %L'
+								'\n			, i_defer_dependent_obj_recreation => true'
+								'\n		)'
+								'\n	;'
+								'\nend'
+								'\n$$'
+								'\n;'	
+								, i_table_schema
+								, i_table_name
+								, t.new_column_name
+								, t.new_column_type
+							)
+						when t.old_column_name is not null 
+							and t.new_column_name is null
+						then
+							format(
+								'alter table %I.%I drop column %I'
+								, i_table_schema
+								, i_table_name
+								, t.old_column_name
+							)
+					end 
+				)
+			) ddl(
+				sttmnt
 			)
-		) ddl(
-			sttmnt
+				on ddl.sttmnt is not null
+			where 
+				not exists (
+					select 
+						1
+					from 
+						column_matching m 
+					where 
+						m.old_column_name = m.new_column_name
+						and m.old_column_position <> m.new_column_position
+				)
+				and not i_forcibly_recreate
+			order by 
+				new_column_position
 		)
-			on ddl.sttmnt is not null
-		where 
-			not exists (
-				select 
-					1
-				from 
-					column_matching m 
-				where 
-					m.old_column_name = m.new_column_name
-					and m.old_column_position <> m.new_column_position
-			)
-			and not i_forcibly_recreate
 	)
 	loop
 		raise notice
