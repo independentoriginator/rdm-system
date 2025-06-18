@@ -61,6 +61,15 @@
 			relativeToChangelogFile="true"/>
 		<rollback/>
 	</changeSet>
+	
+	<changeSet id="f_host_name-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_host_name" 
+			dbms="postgresql" 
+			path="f_host_name.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
 
 	<changeSet id="f_system_name_max_length-function" author="${default_author}" runOnChange="true">
 		<createProcedure 
