@@ -222,12 +222,6 @@ begin
 										'\nas $routine$%s'
 										'\nbegin'
 										'\n	if %s is null then'
-										'\n		delete from'
-										'\n			%I.%I'
-										'\n		where'
-										'\n			%s is null'
-										'\n		;'
-										'\n'
 										'\n		call'
 										'\n			${stagingSchemaName}.p_execute_in_parallel('
 										'\n				i_command_list_query => $sql$'
@@ -308,9 +302,6 @@ begin
 												''
 										end					
 										, i_view_rec.mv_emulation_refresh_proc_param
-										, i_view_rec.schema_name
-										, i_view_rec.internal_name
-										, i_view_rec.mv_emulation_chunking_field
 										, i_view_rec.schema_name
 										, i_view_rec.mv_emulation_refresh_proc_name
 										, i_view_rec.mv_emulation_refresh_proc_param
@@ -750,12 +741,14 @@ begin
 															E'\n\ndelete from'
 															'\n	%I.%I'
 															'\nwhere'
-															'\n	%s = any(%s)'	
+															'\n	%s = any(%s)'
+															'\n	or %s is null'
 															'\n;'
 															, i_view_rec.schema_name
 															, i_view_rec.internal_name
 															, i_view_rec.mv_emulation_chunking_field
-															, i_view_rec.mv_emulation_refresh_proc_param												
+															, i_view_rec.mv_emulation_refresh_proc_param
+															, i_view_rec.mv_emulation_chunking_field
 														) 
 														|| E'\n\n'
 														|| case 
