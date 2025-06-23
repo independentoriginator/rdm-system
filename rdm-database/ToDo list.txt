@@ -16,4 +16,5 @@ included months, quarter, year, should be sorted by year-quarter due to there is
 (also there should be invalidation of the view due to a source table column type modification event).
 - mv_emulation: ensure data availability during the deployment process if possible
 - p_refresh_materialized_views: looping bug fix
+- core system tables should be specially marked or placed separately so that they can be maintained during deployment rather than during regular maintenance
   
