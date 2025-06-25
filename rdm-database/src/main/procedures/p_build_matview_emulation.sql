@@ -918,7 +918,32 @@ begin
 									, i_view_rec.schema_name
 									, target_obj.obj_name
 								)
-								, obj_def.sttmnt
+								, case 
+									when target_obj.obj_class = 'unique index' then
+										format(
+											E'do $$'
+											'\nbegin'
+											'\n	%s'
+											'\n	;'
+											'\nexception'
+											'\n	\-\- Class 23 - Integrity Constraint Violation'
+											'\n	\-\- 23505 unique_violation'
+											'\n when sqlstate ''23505'' then'
+											'\n		truncate %I.%I'
+											'\n		;'
+											'\n		%s'
+											'\n		;'
+											'\nend'
+											'\n$$'
+											'\n;'	
+											, obj_def.sttmnt
+											, i_view_rec.schema_name
+											, i_view_rec.internal_name
+											, obj_def.sttmnt
+										)
+									else 
+										obj_def.sttmnt
+								end
 							)
 						else 
 							obj_def.sttmnt
