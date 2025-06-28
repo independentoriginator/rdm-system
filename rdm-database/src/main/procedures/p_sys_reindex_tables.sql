@@ -68,7 +68,10 @@ begin
 									o.obj_schema = '${mainSchemaName}'
 									and (
 										o.obj_name like 'meta\_%%'
-										or o.obj_name = 'source'
+										or o.obj_name in (
+											'source'
+											, 'language'
+										)
 									)
 								)
 								or o.obj_schema = '${etlRepositorySchemaName}'
