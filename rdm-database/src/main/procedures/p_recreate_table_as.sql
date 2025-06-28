@@ -162,33 +162,34 @@ begin
 		join lateral (
 			select 
 				string_agg(
-					concat_ws(
-						E';\n'
-						, case 
-							when p.partition_expression is not null then 
-								format(
-									'create table %I.%I partition of %I.%I %s'
-									, p.partition_schema_name
-									, p.partition_temp_name
-									, i_table_schema
-									, target_table.temp_name
-									, p.partition_expression
-								)
-						end
-						, case 
-							when p.partition_table_name is not null then 
-								format(
-									'insert into %I.%I(%s) select %s from %I.%I'
-									, i_table_schema
-									, target_table.temp_name
-									, transition_columns.columns
-									, transition_columns.columns
-									, p.partition_schema_name
-									, p.partition_table_name
-								)
-						end
+					format(
+						'create table %I.%I partition of %I.%I %s'
+						, p.partition_schema_name
+						, coalesce(p.partition_temp_name, p.partition_table_name)
+						, i_table_schema
+						, target_table.temp_name
+						, p.partition_expression
 					)
 					, E';\n'
+				) filter (
+					where
+						p.is_new
+						and p.partition_expression is not null
+				) as new_partition_creation_commands
+				, string_agg(
+					format(
+						'insert into %I.%I(%s) select %s from %I.%I'
+						, i_table_schema
+						, target_table.temp_name
+						, transition_columns.columns
+						, transition_columns.columns
+						, p.partition_schema_name
+						, p.partition_table_name
+					)
+					, E';\n'
+				) filter (
+					where 
+						p.is_old
 				) as data_copy_commands
 				, string_agg(
 					format(
@@ -200,27 +201,37 @@ begin
 					, E';\n'
 				) filter (
 					where 
-						p.partition_expression is not null 
+						p.is_new
+						and p.partition_temp_name is not null
 				) as partition_rename_commands
 			from (
 				select
 					p.partition_schema_name
 					, p.partition_table_name
-					, format(
-						l_temp_name_tmpl
-						, p.partition_table_id
-					)::name as partition_temp_name
+					, case 
+						when p.partition_table_id is not null then
+							format(
+								l_temp_name_tmpl
+								, p.partition_table_id
+							)
+					end::name as partition_temp_name
 					, p.partition_expression
+					, p.is_old
+					, p.is_new
 				from
-					${mainSchemaName}.v_sys_table_partition p
-				where 
-					p.table_id = target_table.table_id
+					${mainSchemaName}.f_table_partitions(
+						i_table_id => target_table.table_id
+						, i_partitioning_strategy => i_partitioning_strategy
+						, i_partition_key => i_partition_key
+					) p
 				union all
 				select 
 					target_table.schema_name as partition_schema_name
 					, target_table.table_name as partition_table_name
-					, target_table.table_name as partition_temp_name
+					, null as partition_temp_name
 					, null as partition_expression
+					, true as is_old
+					, (i_partitioning_strategy is null) as is_new
 				where 
 					target_table.partitioning_strategy is null
 			) p
@@ -302,6 +313,8 @@ begin
 										''
 								end
 							)
+							-- create new partitions
+							, partitions.new_partition_creation_commands
 							-- copy existing data
 							, partitions.data_copy_commands
 							-- drop old table

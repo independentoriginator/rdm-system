@@ -71,4 +71,13 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="f_table_partitions-function" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="f_table_partitions" 
+			dbms="postgresql" 
+			path="f_table_partitions.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 </databaseChangeLog>
