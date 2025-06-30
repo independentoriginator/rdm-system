@@ -190,6 +190,7 @@ begin
 				) filter (
 					where 
 						p.is_old
+						and p.partition_table_name is not null
 				) as data_copy_commands
 				, string_agg(
 					format(
