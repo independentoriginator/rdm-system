@@ -29,6 +29,17 @@ drop procedure if exists
 	)
 ;
 
+drop procedure if exists
+	p_recreate_table_as(
+		name
+		, name
+		, text
+		, text
+		, text
+		, boolean
+	)
+;
+
 create or replace procedure 
 	p_recreate_table_as(
 		i_table_schema name
@@ -37,6 +48,7 @@ create or replace procedure
 		, i_partitioning_strategy text = null
 		, i_partition_key text = null
 		, i_forcibly_recreate boolean = false
+		, i_can_existing_data_be_lost boolean = false
 	)
 language plpgsql
 security definer
@@ -159,7 +171,7 @@ begin
 		left join table_spec target_table
 			on target_table.schema_name = i_table_schema
 			and target_table.table_name = i_table_name
-		join lateral (
+		left join lateral (
 			select 
 				string_agg(
 					format(
@@ -249,7 +261,7 @@ begin
 			) transition_columns
 				on true
 		) partitions
-			on true
+			on not i_can_existing_data_be_lost
 		join lateral(
 			values (
 				case 
@@ -463,6 +475,7 @@ comment on procedure
 		, text
 		, text
 		, text
+		, boolean
 		, boolean
 	) 
 	is 'Пересоздать таблицу на основе запроса'

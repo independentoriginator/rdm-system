@@ -57,12 +57,14 @@ begin
 											, i_query => %L
 											, i_partitioning_strategy => ''list''
 											, i_partition_key => %L
+											, i_can_existing_data_be_lost => %L::boolean
 										)			
 									'
 									, i_view_rec.schema_name
 									, i_view_rec.internal_name
 									, t.view_query
 									, i_view_rec.mv_emulation_chunking_field
+									, case when not i_view_rec.is_top_level then true else false end
 								)
 							else 
 								format('

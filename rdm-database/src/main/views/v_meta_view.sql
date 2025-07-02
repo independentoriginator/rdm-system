@@ -80,6 +80,7 @@ select
 	, v.mv_emulation_filled_chunk_table_name
 	, v.date_range_filter_condition
 	, v.actualize_inquiring_statictics
+	, v.is_top_level
 from (
 	select
 		v.id
@@ -207,6 +208,7 @@ from (
 		, v.mv_emulation_chunk_row_limit
 		, v.date_range_filter_condition
 		, v.actualize_inquiring_statictics
+		, v.is_top_level
 	from 
 		${mainSchemaName}.meta_view v
 	left join ${mainSchemaName}.meta_schema s

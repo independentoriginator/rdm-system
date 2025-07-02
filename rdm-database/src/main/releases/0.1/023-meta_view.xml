@@ -897,5 +897,16 @@
 			</column>
 		</addColumn>
 	</changeSet>
+	
+	<changeSet id="meta_view: is_top_level" author="${default_author}">
+		<addColumn tableName="meta_view">
+			<column 
+				name="is_top_level" 
+				type="boolean"
+				remarks="Is top-level view">
+				<constraints nullable="true" />
+			</column>
+		</addColumn> 
+	</changeSet>
             			
 </databaseChangeLog>
