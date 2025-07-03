@@ -121,7 +121,7 @@ begin
 					, l_partitioned_table_rec.table_name
 				)
 		;
-	else
+	elsif i_partitioning_strategy is not null then
 		return query
 			select
 				null::${type.system_object_id} as partition_table_id
