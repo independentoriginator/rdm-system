@@ -50,6 +50,60 @@ begin
 						i_text =>  
 							concat_ws(
 								E'\n;\n'
+								, format(
+									E'insert into'
+									'\n	${stagingSchemaName}.matview_stat_inquiry_log('
+									'\n		stat_inquiring_view_id'
+									'\n		, stat_inquiry_time'
+									'\n		, stat_update_time'
+									'\n		, stat_autoupdate_time'
+									'\n		, meta_type_id'
+									'\n		, meta_view_id'
+									'\n	)'
+									'\nselect'
+									'\n	dep.view_id as stat_inquiring_view_id'
+									'\n	, ${mainSchemaName}.f_current_timestamp() as stat_inquiry_time'
+									'\n	, stat.last_analyze as stat_update_time'
+									'\n	, stat.last_autoanalyze as stat_autoupdate_time'
+									'\n	, dep.master_type_id as meta_type_id'
+									'\n	, dep.master_view_id as meta_view_id'
+									'\nfrom' 
+									'\n	${mainSchemaName}.meta_view_dependency dep' 
+									'\nleft join ${mainSchemaName}.v_meta_type master_type'
+									'\n	on master_type.id = dep.master_type_id'
+									'\nleft join ${mainSchemaName}.v_meta_view master_view'
+									'\n	on master_view.id = dep.master_view_id'
+									'\n	and master_view.is_materialized'
+									'\njoin lateral ('
+									'\n	values'
+									'\n		('
+									'\n			master_view.schema_name'
+									'\n			, master_view.internal_name'
+									'\n		)'
+									'\n		, ('
+									'\n			master_type.schema_name'
+									'\n			, master_type.internal_name'
+									'\n		)'
+									'\n		, ('
+									'\n			master_type.schema_name'
+									'\n			, case'
+									'\n				when master_type.is_localization_table_generated then'
+									'\n					master_type.localization_table_name'
+									'\n			end'
+									'\n		)'
+									'\n) as master_table('
+									'\n	schema_name'
+									'\n	, table_name'
+									'\n)'
+									'\n	on master_table.table_name is not null'
+									'\nleft join pg_catalog.pg_stat_all_tables stat'
+									'\n	on stat.schemaname = master_table.schema_name'
+									'\n	and stat.relname = master_table.table_name'
+									'\nwhere'
+									'\n	dep.view_id = %s'
+									'\n	and dep.level <= 2'
+									, i_view_id
+								)
 								, case
 									when t.actualize_inquiring_statictics then 
 										format(
@@ -128,6 +182,22 @@ begin
 									'analyze %I.%I'
 									, t.schema_name
 									, t.internal_name
+								)
+								, formmat(
+									E'insert into'
+									'\n	${stagingSchemaName}.matview_stat_explicit_update_log('
+									'\n		meta_view_id'
+									'\n		, update_time'
+									'\n		, session_context'
+									'\n	)'
+									'\nvalues('
+									'\n	%s'
+									'\n	, ${mainSchemaName}.f_current_timestamp()'
+									'\n	, ${stagingSchemaName}.f_session_context('
+									'\n		i_key => ''${session_context_key_task_name}'''
+									'\n	)'
+									'\n)'
+									, i_view_id
 								)
 							)
 						, i_indentation_level => 1

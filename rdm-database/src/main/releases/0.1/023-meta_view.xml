@@ -908,5 +908,148 @@
 			</column>
 		</addColumn> 
 	</changeSet>
+	
+	<changeSet id="table statistics explicit update log" author="${default_author}">
+	
+		<createTable
+			tableName="table_stat_explicit_update_log" 
+			schemaName="${stagingSchemaName}"
+			remarks="Журнал явного обновления статистики таблиц">
+			<column name="meta_type_id" type="${type.id}" remarks="Идентификатор метатипа">
+				<constraints nullable="false" />
+			</column>
+			<column name="update_time" type="timestamp" remarks="Дата обновления">
+				<constraints nullable="false" />
+			</column>
+			<column name="session_context" type="${type.name}" remarks="Контекст сессии">
+				<constraints nullable="true" />
+			</column>
+		</createTable>
+		
+		<createIndex 
+			indexName="i_table_stat_explicit_update_log$meta_type_id" 
+			tableName="table_stat_explicit_update_log"
+			schemaName="${stagingSchemaName}">
+			<column name="meta_type_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_table_stat_explicit_update_log$meta_type_id"
+			baseTableName="table_stat_explicit_update_log" 
+			baseTableSchemaName="${stagingSchemaName}"
+			baseColumnNames="meta_type_id" 
+			referencedTableName="meta_type" 
+			referencedTableSchemaName="${mainSchemaName}"
+			referencedColumnNames="id"
+			onDelete="CASCADE" />
+
+		<createTable
+			tableName="matview_stat_explicit_update_log" 
+			schemaName="${stagingSchemaName}"
+			remarks="Журнал явного обновления статистики материализованных представлений">
+			<column name="meta_view_id" type="${type.id}" remarks="Идентификатор метапредставления">
+				<constraints nullable="false" />
+			</column>
+			<column name="update_time" type="timestamp" remarks="Дата обновления">
+				<constraints nullable="false" />
+			</column>
+			<column name="session_context" type="${type.name}" remarks="Контекст сессии">
+				<constraints nullable="true" />
+			</column>
+		</createTable>
+		
+		<createIndex 
+			indexName="i_matview_stat_explicit_update_log$meta_view_id" 
+			tableName="matview_stat_explicit_update_log"
+			schemaName="${stagingSchemaName}">
+			<column name="meta_view_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_matview_stat_explicit_update_log$meta_view_id"
+			baseTableName="matview_stat_explicit_update_log" 
+			baseTableSchemaName="${stagingSchemaName}"
+			baseColumnNames="meta_view_id" 
+			referencedTableName="meta_view" 
+			referencedTableSchemaName="${mainSchemaName}"
+			referencedColumnNames="id"
+			onDelete="CASCADE" />
+			
+		<createTable
+			tableName="matview_stat_inquiry_log" 
+			schemaName="${stagingSchemaName}"
+			remarks="Журнал запросов статистики со стороны материализованного представления">
+			<column name="stat_inquiring_view_id" type="${type.id}" remarks="Идентификатор метапредставления">
+				<constraints nullable="false" />
+			</column>
+			<column name="stat_inquiry_time" type="timestamp" remarks="Дата запроса статистики">
+				<constraints nullable="false" />
+			</column>
+			<column name="stat_update_time" type="timestamp" remarks="Дата обновления статистики в системном каталоге">
+				<constraints nullable="true" />
+			</column>
+			<column name="stat_autoupdate_time" type="timestamp" remarks="Дата автообновления статистики в системном каталоге">
+				<constraints nullable="true" />
+			</column>
+			<column name="meta_type_id" type="${type.id}" remarks="Идентификатор метатипа">
+				<constraints nullable="true" />
+			</column>
+			<column name="meta_view_id" type="${type.id}" remarks="Идентификатор метапредставления">
+				<constraints nullable="true" />
+			</column>
+		</createTable>
+		
+		<createIndex 
+			indexName="i_matview_stat_inquiry_log$stat_inquiring_view_id" 
+			tableName="matview_stat_inquiry_log"
+			schemaName="${stagingSchemaName}">
+			<column name="stat_inquiring_view_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_matview_stat_inquiry_log$stat_inquiring_view_id"
+			baseTableName="matview_stat_inquiry_log" 
+			baseTableSchemaName="${stagingSchemaName}"
+			baseColumnNames="stat_inquiring_view_id" 
+			referencedTableName="meta_view" 
+			referencedTableSchemaName="${mainSchemaName}"
+			referencedColumnNames="id"
+			onDelete="CASCADE" />
+
+		<createIndex 
+			indexName="i_matview_stat_inquiry_log$meta_view_id" 
+			tableName="matview_stat_inquiry_log"
+			schemaName="${stagingSchemaName}">
+			<column name="meta_view_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_matview_stat_inquiry_log$meta_view_id"
+			baseTableName="matview_stat_inquiry_log" 
+			baseTableSchemaName="${stagingSchemaName}"
+			baseColumnNames="meta_view_id" 
+			referencedTableName="meta_view" 
+			referencedTableSchemaName="${mainSchemaName}"
+			referencedColumnNames="id"
+			onDelete="CASCADE" />
+
+		<createIndex 
+			indexName="i_matview_stat_inquiry_log$meta_type_id" 
+			tableName="matview_stat_inquiry_log"
+			schemaName="${stagingSchemaName}">
+			<column name="meta_type_id" />
+		</createIndex>
+
+		<addForeignKeyConstraint 
+			constraintName="fk_matview_stat_inquiry_log$meta_type_id"
+			baseTableName="matview_stat_inquiry_log" 
+			baseTableSchemaName="${stagingSchemaName}"
+			baseColumnNames="meta_type_id" 
+			referencedTableName="meta_type" 
+			referencedTableSchemaName="${mainSchemaName}"
+			referencedColumnNames="id"
+			onDelete="CASCADE" />
+			
+	</changeSet>
             			
 </databaseChangeLog>
