@@ -5,8 +5,8 @@ select
 	, v.internal_name as matview_name
 	, v.schema_name as matview_schema
 	, t.stat_inquiry_time
-	, coalesce(underlying_type.internal_name, underlying_type.internal_name) as underlying_table_name
-	, coalesce(underlying_matview.schema_name, underlying_matview.schema_name) as underlying_table_schema
+	, coalesce(underlying_type.internal_name, underlying_matview.internal_name) as underlying_table_name
+	, coalesce(underlying_type.schema_name, underlying_matview.schema_name) as underlying_table_schema
 	, coalesce(t_upd_log.update_time, mv_upd_log.update_time) as last_explicit_stat_update_time
 	, t.stat_update_time as actual_stat_update_time
 	, t.stat_autoupdate_time as actual_stat_autoupdate_time
