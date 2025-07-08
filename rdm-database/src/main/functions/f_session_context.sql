@@ -4,16 +4,30 @@ create or replace function
 		, i_value text = null
 	)
 returns text
-language sql
+language plpgsql
 stable
 as $function$
-select 	
-	case 
-		when i_value is null then	
+begin
+	if i_value is null then
+		return 
 			current_setting(i_key)
-        else 
-        	set_config(i_key, i_value, false)
-	end	
+		;
+	end if
+	;
+	perform
+		set_config(i_key, i_value, false)
+	;
+	return 
+		null
+	;
+exception
+	-- Class 42 — Syntax Error or Access Rule Violation
+	-- 42704 - undefined_object
+	when sqlstate '42704' then
+		return 
+			null
+		;
+end
 $function$
 ;	
 
