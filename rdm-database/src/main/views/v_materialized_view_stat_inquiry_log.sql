@@ -1,3 +1,5 @@
+drop view if exists v_materialized_view_stat_inquiry_log
+;
 create or replace view v_materialized_view_stat_inquiry_log
 as
 select
