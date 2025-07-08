@@ -183,7 +183,7 @@ begin
 									, t.schema_name
 									, t.internal_name
 								)
-								, formmat(
+								, format(
 									E'insert into'
 									'\n	${stagingSchemaName}.matview_stat_explicit_update_log('
 									'\n		meta_view_id'
