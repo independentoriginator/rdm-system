@@ -12,7 +12,15 @@ select
 	, coalesce(t_upd_log.update_time, mv_upd_log.update_time) as last_explicit_stat_update_time
 	, t.stat_update_time as actual_stat_update_time
 	, t.stat_autoupdate_time as actual_stat_autoupdate_time
-	, coalesce(t_upd_log.update_time, mv_upd_log.update_time) > greatest(t.stat_update_time, t.stat_autoupdate_time) as is_statistics_inactual
+	, case 
+		when coalesce(t_upd_log.update_time, mv_upd_log.update_time) > greatest(t.stat_update_time, t.stat_autoupdate_time)
+			or (
+				t.stat_update_time is null
+				and t.stat_autoupdate_time is null 
+			)
+		then true
+		else false
+	end as is_statistics_inactual
 from
 	${stagingSchemaName}.matview_stat_inquiry_log t
 join ${mainSchemaName}.v_meta_view v
