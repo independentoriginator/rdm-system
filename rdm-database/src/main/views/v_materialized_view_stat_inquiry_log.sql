@@ -39,7 +39,7 @@ left join lateral (
 		upd_log.meta_type_id = t.meta_type_id
 		and upd_log.update_time <= t.stat_inquiry_time
 	order by 
-		upd_log.update_time
+		upd_log.update_time desc
 	limit 
 		1
 ) t_upd_log
@@ -53,7 +53,7 @@ left join lateral (
 		upd_log.meta_view_id = t.meta_view_id
 		and upd_log.update_time <= t.stat_inquiry_time
 	order by 
-		upd_log.update_time
+		upd_log.update_time desc
 	limit 
 		1
 ) mv_upd_log
