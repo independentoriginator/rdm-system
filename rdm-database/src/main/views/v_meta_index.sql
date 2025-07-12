@@ -280,6 +280,17 @@ where
 			uc_index.master_id = t.id
 			and uc_index.index_name = target_index.relname
 	)
+	and not exists (
+		select 
+			1
+		from 
+			meta_index
+		where 
+			meta_index.master_id = t.id
+			and meta_index.constraint_name = target_index.relname
+			and meta_index.is_unique
+			and meta_index.is_constraint_used
+	)
 union all 
 select
 	null as id
