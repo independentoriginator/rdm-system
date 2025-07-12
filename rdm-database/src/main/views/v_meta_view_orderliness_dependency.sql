@@ -5,7 +5,7 @@ as
 with 
 	index_owner_name as (
 		select 
-			${mainSchemaName}.f_system_name_max_length() / 2 - 2 as max_len
+			${mainSchemaName}.f_system_name_max_length() / 2 - 3 as max_len
 	)
 	, orderliness_dependency as (
 		select
