@@ -43,6 +43,8 @@ begin
 	call 
 		${mainSchemaName}.p_sys_update_table_statistics(
 			i_schema_name => '{${mainSchemaName}}'
+			, i_max_worker_processes => 1
+			, i_single_transaction => true
 		)
 	;
 end

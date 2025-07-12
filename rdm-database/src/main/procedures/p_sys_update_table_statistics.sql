@@ -1,8 +1,19 @@
+drop procedure if exists 
+	p_sys_update_table_statistics(
+		name[]
+		, boolean
+		, integer
+		, interval
+		, interval
+	) 
+;
+
 create or replace procedure 
 	p_sys_update_table_statistics(
 		i_schema_name name[] = null
 		, i_check_out_of_date_threshold boolean = true
 		, i_max_worker_processes integer = ${max_parallel_worker_processes}
+		, i_single_transaction boolean = false
 		, i_polling_interval interval = '10 seconds'
 		, i_max_run_time interval = '8 hours'
 	)
@@ -63,6 +74,7 @@ begin
 			, i_context_id => '${mainSchemaName}.p_sys_update_table_statistics'::regproc
 			, i_use_notifications => false
 			, i_max_worker_processes => i_max_worker_processes
+			, i_single_transaction => i_single_transaction
 			, i_polling_interval => i_polling_interval
 			, i_max_run_time => i_max_run_time
 			, i_close_process_pool_on_completion => true
@@ -77,6 +89,7 @@ comment on procedure
 		name[]
 		, boolean
 		, integer
+		, boolean
 		, interval
 		, interval
 	) 
