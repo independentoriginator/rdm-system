@@ -53,6 +53,15 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="p_sys_update_table_statistics-procedure" author="${default_author}" runOnChange="true">
+		<createProcedure 
+			procedureName="p_sys_update_table_statistics" 
+			dbms="postgresql" 
+			path="p_sys_update_table_statistics.sql" 
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="p_build_target_roles-procedure" author="${default_author}" runOnChange="true">
 		<createProcedure 
 			procedureName="p_build_target_roles" 
