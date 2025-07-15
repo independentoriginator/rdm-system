@@ -50,6 +50,13 @@ as $procedure$
 declare 
 	l_rec record
 	;
+	l_filter_condition text :=
+		concat_ws(
+			E'\n'	
+			, case when i_unpopulated_only then 'and t.is_populated = false' end
+			, case when i_new_only then E'and t.refresh_time is null\nand coalesce(t.is_top_level, true) = true' end
+		)
+	;
 begin
 	if i_refresh_all then 
 		update 
@@ -78,6 +85,9 @@ begin
 	end if
 	;
 
+	l_filter_condition := E'\n' || nullif(l_filter_condition, '')
+	;
+
 	call 
 		${stagingSchemaName}.p_execute_in_parallel(
 			i_command_list_query => 
@@ -95,7 +105,7 @@ begin
 								and coalesce(
 									t.is_disabled
 									, false
-								) = false%s%s
+								) = false%s
 						)
 					select
 						format(
@@ -151,8 +161,7 @@ begin
 					order by 
 						v.dependency_level
 					$sql$
-					, case when i_unpopulated_only then E'\nand t.is_populated = false' else '' end
-					, case when i_new_only then E'\nand t.refresh_time is null\nand t.is_top_level = true' else '' end
+					, l_filter_condition
 				)
 			, i_do_while_checking_condition =>
 				format(
@@ -169,11 +178,10 @@ begin
 								and coalesce(
 									t.is_disabled
 									, false
-								) = false%s%s
+								) = false%s
 						)
 					$sql$
-					, case when i_unpopulated_only then E'\nand t.is_populated = false' else '' end
-					, case when i_new_only then E'\nand t.refresh_time is null\nand t.is_top_level = true' else '' end
+					, l_filter_condition
 				)
 			, i_context_id => '${mainSchemaName}.p_refresh_materialized_views'::regproc
 			, i_max_worker_processes => i_max_worker_processes
