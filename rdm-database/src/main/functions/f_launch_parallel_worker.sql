@@ -59,6 +59,24 @@ drop function if exists
 	)
 ;
 
+drop function if exists 
+	${stagingSchemaName}.f_launch_parallel_worker(
+		text
+		, boolean
+		, ${stagingSchemaName}.parallel_worker.extra_info%type
+		, ${stagingSchemaName}.parallel_worker.context_id%type
+		, ${stagingSchemaName}.parallel_worker.operation_instance_id%type
+		, boolean
+		, name
+		, name
+		, integer
+		, interval
+		, interval
+		, name
+		, boolean
+	)
+;
+
 create or replace function 
 	${stagingSchemaName}.f_launch_parallel_worker(
 		i_command text
@@ -74,6 +92,7 @@ create or replace function
 		, i_max_run_time interval = '8 hours'
 		, i_application_name name = '${project_internal_name}'
 		, i_is_oneoff boolean = false
+		, i_retry_attempt_number integer = 0		
 	)
 returns text
 language plpgsql
@@ -92,6 +111,7 @@ declare
 	l_db name := current_database();
 	l_user name := session_user;
 	l_start_timestamp timestamp := clock_timestamp();
+	l_message text;
 begin
 	-- Make sure of start possibility
 	perform 
@@ -350,13 +370,48 @@ begin
 				, l_command
 			) != 1 
 			then
-				raise exception 
-					'Error sending command to the worker: %: % (error description: %)'
-					, l_worker_name
-					, i_command
-					, ${dbms_extension.dblink.schema}.dblink_error_message(
+				l_message = 
+					${dbms_extension.dblink.schema}.dblink_error_message(
 						l_worker_name
 					)
+				;
+				if l_message = 'another command is already in progress'
+					and i_retry_attempt_number <= 3 
+				then 
+					call 
+						${mainSchemaName}.p_delay_execution(
+							i_delay_interval => i_polling_interval
+							, i_max_run_time => i_max_run_time
+							, i_start_timestamp => l_start_timestamp
+						)
+					;	
+	
+					return
+						${stagingSchemaName}.f_launch_parallel_worker(
+							i_command => i_command
+							, i_async_mode => i_async_mode
+							, i_extra_info => i_extra_info
+							, i_context_id => i_context_id
+							, i_operation_instance_id => i_operation_instance_id
+							, i_use_notifications => i_use_notifications
+							, i_notification_channel => i_notification_channel
+							, i_notification_listener_worker => i_notification_listener_worker
+							, i_max_worker_processes => i_max_worker_processes
+							, i_polling_interval => i_polling_interval
+							, i_max_run_time => i_max_run_time
+							, i_application_name => i_application_name
+							, i_is_oneoff => i_is_oneoff
+							, i_retry_attempt_number => i_retry_attempt_number + 1		
+						)
+					;
+				else 
+					raise exception 
+						'Error sending command to the worker: %: % (error description: %)'
+						, l_worker_name
+						, i_command
+						, l_message
+					;
+				end if
 				;
 			end if
 			;
@@ -393,5 +448,7 @@ comment on function
 		, interval
 		, name
 		, boolean
-	) is 'Параллельная обработка. Запустить рабочий процесс многопоточной операции'
+		, integer
+	) 
+	is 'Параллельная обработка. Запустить рабочий процесс многопоточной операции'
 ;
