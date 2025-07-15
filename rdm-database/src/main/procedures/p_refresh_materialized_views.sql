@@ -25,10 +25,21 @@ drop procedure if exists
 	)
 ;
 
+drop procedure if exists 
+	p_refresh_materialized_views(
+		boolean
+		, boolean
+		, integer
+		, interval
+		, interval
+	)
+;
+
 create or replace procedure 
 	p_refresh_materialized_views(
 		i_refresh_all boolean = false
 		, i_unpopulated_only boolean = false
+		, i_new_only boolean = false
 		, i_max_worker_processes integer = ${max_parallel_worker_processes}
 		, i_polling_interval interval = '10 seconds'
 		, i_max_run_time interval = '8 hours'
@@ -84,7 +95,7 @@ begin
 								and coalesce(
 									t.is_disabled
 									, false
-								) = false%s
+								) = false%s%s
 						)
 					select
 						format(
@@ -141,6 +152,7 @@ begin
 						v.dependency_level
 					$sql$
 					, case when i_unpopulated_only then E'\nand t.is_populated = false' else '' end
+					, case when i_new_only then E'\nand t.refresh_time is null\nand t.is_top_level = true' else '' end
 				)
 			, i_do_while_checking_condition =>
 				format(
@@ -157,10 +169,11 @@ begin
 								and coalesce(
 									t.is_disabled
 									, false
-								) = false%s
+								) = false%s%s
 						)
 					$sql$
 					, case when i_unpopulated_only then E'\nand t.is_populated = false' else '' end
+					, case when i_new_only then E'\nand t.refresh_time is null\nand t.is_top_level = true' else '' end
 				)
 			, i_context_id => '${mainSchemaName}.p_refresh_materialized_views'::regproc
 			, i_max_worker_processes => i_max_worker_processes
@@ -177,8 +190,10 @@ comment on procedure
 	p_refresh_materialized_views(
 		boolean
 		, boolean
+		, boolean
 		, integer
 		, interval
 		, interval
-	) is 'Обновить материализованные представления'
+	) 
+	is 'Обновить материализованные представления'
 ;
