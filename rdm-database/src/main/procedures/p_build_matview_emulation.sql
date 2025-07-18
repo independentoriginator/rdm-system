@@ -1272,7 +1272,7 @@ begin
 			t.ordinal_num
 	) 
 	loop
-		raise notice 
+		raise debug 
 			'%'
 			, l_sttmnt.ddl_sttmnt
 		;
