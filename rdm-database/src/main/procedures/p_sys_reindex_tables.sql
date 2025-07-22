@@ -34,7 +34,7 @@ begin
 		into
 			l_schema_name	
 		from 
-			ng_rdm.meta_schema
+			${mainSchemaName}.meta_schema
 		where
 			not is_external 
 			and not is_disabled
