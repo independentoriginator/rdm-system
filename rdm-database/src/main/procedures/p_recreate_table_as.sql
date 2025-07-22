@@ -330,20 +330,42 @@ begin
 							, partitions.new_partition_creation_commands
 							-- copy existing data
 							, partitions.data_copy_commands
-							-- drop old table
+							-- replace the table with the new one
 							, format(
-								'drop table %I.%I'
-								, i_table_schema
+								E'do $$'
+								'\nbegin'
+								'\n	call'
+								'\n		${mainSchemaName}.p_alter_obj_with_dep_obj_recreation('
+								'\n			i_obj_name => %L'
+								'\n			, i_obj_schema => %L'
+								'\n			, i_obj_class => ''relation'''
+								'\n			, i_ddl_sttmnt => %L'
+								'\n			, i_defer_dependent_obj_recreation => true'
+								'\n		)'
+								'\n	;'
+								'\nend'
+								'\n$$'
+								'\n;'	
 								, i_table_name
-							)
-							-- rename newly created partitions
-							, partitions.partition_rename_commands
-							-- rename newly created table
-							, format(
-								'alter table %I.%I rename to %I'
 								, i_table_schema
-								, target_table.temp_name
-								, i_table_name
+								, concat_ws(
+									E';\n'
+									-- drop old table
+									, format(
+										'drop table %I.%I'
+										, i_table_schema
+										, i_table_name
+									)
+									-- rename newly created partitions
+									, partitions.partition_rename_commands
+									-- rename newly created table
+									, format(
+										'alter table %I.%I rename to %I'
+										, i_table_schema
+										, target_table.temp_name
+										, i_table_name
+									)
+								)								
 							)
 						)
 				end 

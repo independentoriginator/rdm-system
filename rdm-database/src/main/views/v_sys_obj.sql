@@ -26,12 +26,17 @@ from (
 		, c.relkind as obj_type
 		, case 
 			when c.relkind = any(array['v', 'm']::char[]) then 'view'::name
+			when c.relkind = any(array['i', 'I']::char[]) then 'index'::name
+			when c.relkind = 'S'::char then 'sequence'::name
 			else 'table'::name
 		end as obj_general_type
 		, case c.relkind
 			when 'v'::"char" then 'view'::name
 			when 'm'::"char" then 'materialized view'::name
 			when 'f'::"char" then 'foreign table'::name
+			when 'i'::"char" then 'index'::name
+			when 'I'::"char" then 'partitioned index'::name
+			when 'S'::char then 'sequence'::name
 			else 'table'::name
 		end as obj_specific_type
 		, obj_owner.rolname as obj_owner
@@ -62,7 +67,7 @@ from (
 		and d.classoid = 'pg_class'::regclass
 		and d.objsubid = 0
 	where 
-		c.relkind = any(array['r', 'p', 'v', 'm', 'f']::char[])
+		c.relkind = any(array['r', 'p', 'v', 'm', 'f', 'i', 'I', 'S']::char[])
 	union all 
 	select 
 		p.oid as obj_id
