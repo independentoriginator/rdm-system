@@ -147,6 +147,16 @@
 		<rollback/>
 	</changeSet>
 	
+	<changeSet id="v_sys_table_index-view" author="${default_author}" runOnChange="true">
+		<createView 
+			viewName="v_sys_table_index" 
+			path="v_sys_table_index.sql"
+			fullDefinition="true"
+			replaceIfExists="false"   
+			relativeToChangelogFile="true"/>
+		<rollback/>
+	</changeSet>
+	
 	<changeSet id="v_month_lc_name-view" author="${default_author}" runOnChange="true">
 		<createView 
 			viewName="v_month_lc_name" 
