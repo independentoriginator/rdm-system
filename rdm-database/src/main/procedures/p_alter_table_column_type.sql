@@ -69,9 +69,10 @@ begin
 			i_obj_name => i_table_name
 			, i_obj_schema => i_schema_name
 			, i_obj_class => 'relation'
-			, i_ddl_sttmnt => i_ddl_sttmnt
+			, i_ddl_sttmnt => l_ddl_sttmnt
 			, i_defer_dependent_obj_recreation => i_defer_dependent_obj_recreation
 			, i_enforce_nodata_for_dependent_matview_being_recreated => i_enforce_nodata_for_dependent_matview_being_recreated
+			, i_dep_obj_type => array['v', 'm']::"char"[]
 		)
 	;
 end

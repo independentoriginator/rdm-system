@@ -1,4 +1,5 @@
-create or replace procedure p_perform_deferred_dependent_obj_rebuild()
+create or replace procedure 
+	p_perform_deferred_dependent_obj_rebuild()
 language plpgsql
 as $procedure$
 declare 
@@ -30,11 +31,19 @@ begin
 				, l_temp_table
 			)
 		loop
-			raise notice 'Deferred re-creation of the dependent object %...', l_rec.name;
+			raise notice 
+				'Deferred re-creation of the dependent object %...'
+				, l_rec.name
+			;
+			raise debug 
+				'%'
+				, l_rec.definition
+			;
 	  		execute 
 	  			l_rec.definition
 	  		;
-		end loop;
+		end loop
+		;
 	
 		execute 
 			format('
@@ -44,11 +53,15 @@ begin
 				, l_temp_table
 				, l_temp_table
 			)
-			;
-	end if;
+		;
+	end if
+	;
 end
-$procedure$;	
+$procedure$
+;	
 
-comment on procedure p_perform_deferred_dependent_obj_rebuild(
-) is 'Выполнение отложенного восстановления зависимых объектов';
+comment on procedure 
+	p_perform_deferred_dependent_obj_rebuild() 
+	is 'Выполнение отложенного восстановления зависимых объектов'
+;
 

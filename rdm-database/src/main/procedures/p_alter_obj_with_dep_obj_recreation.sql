@@ -1,3 +1,14 @@
+drop procedure if exists 
+	p_alter_obj_with_dep_obj_recreation(
+		${mainSchemaName}.v_sys_obj.obj_name%type
+		, ${mainSchemaName}.v_sys_obj.obj_schema%type
+		, ${mainSchemaName}.v_sys_obj.obj_class%type
+		, text
+		, boolean
+		, boolean
+	)
+;
+
 create or replace procedure 
 	p_alter_obj_with_dep_obj_recreation(
 		i_obj_name ${mainSchemaName}.v_sys_obj.obj_name%type
@@ -6,6 +17,7 @@ create or replace procedure
 		, i_ddl_sttmnt text
 		, i_defer_dependent_obj_recreation boolean = false -- calling p_perform_deferred_dependent_obj_rebuild before the session completion is expected
 		, i_enforce_nodata_for_dependent_matview_being_recreated boolean = false
+		, i_dep_obj_type "char"[] = null
 	)
 language plpgsql
 as $procedure$
@@ -66,6 +78,10 @@ begin
 		) dependent_obj 
 	where 
 		dependent_obj.dep_obj_class = 'relation'
+		and (
+			dependent_obj.dep_obj_type = any(i_dep_obj_type)
+			or i_dep_obj_type is null 
+		)
 	;	
 	
 	if l_dependent_objs_deletion_script is not null then
