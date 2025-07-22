@@ -35,7 +35,7 @@ from (
 			when 'm'::"char" then 'materialized view'::name
 			when 'f'::"char" then 'foreign table'::name
 			when 'i'::"char" then 'index'::name
-			when 'I'::"char" then 'partitioned index'::name
+			when 'I'::"char" then 'index'::name
 			when 'S'::char then 'sequence'::name
 			else 'table'::name
 		end as obj_specific_type
@@ -44,16 +44,16 @@ from (
 		, (
 			array[]::text[] 
 			|| case 
-				when c.relkind = 'm'::"char" 
-				then array['is_materialized'::text]
+				when c.relkind = 'm'::"char" then
+					array['is_materialized'::text]
 			end
 			|| case 
-				when c.relkind = 'm'::"char" and c.relispopulated 
-				then array['is_populated'::text]
+				when c.relkind = 'm'::"char" and c.relispopulated then 
+					array['is_populated'::text]
 			end
 			|| case 
-				when c.relispartition
-				then array['is_partition'::text]
+				when c.relispartition then
+					array['is_partition'::text]
 			end
 		) as flags
 	from 
