@@ -140,7 +140,7 @@ begin
 							select 
 								dep.view_id
 							from 
-								ng_rdm.meta_view_dependency dep
+								${mainSchemaName}.meta_view_dependency dep
 							join materialized_view mv 
 								on mv.id = dep.master_view_id						
 						) mv 

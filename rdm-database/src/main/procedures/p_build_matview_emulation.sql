@@ -428,7 +428,7 @@ begin
 																		'\n	${stagingSchemaName}.materialized_view_partition p'
 																		'\njoin ${mainSchemaName}.v_sys_obj current_table'
 																		'\n	on current_table.obj_id = p.current_table_id'
-																		'\nleft join ng_rdm.v_sys_table_partition current_partition'
+																		'\nleft join ${mainSchemaName}.v_sys_table_partition current_partition'
 																		'\n	on current_partition.partition_schema_name = current_table.obj_schema'
 																		'\n	and current_partition.partition_table_name = current_table.obj_name'
 																		'\n	and current_partition.partition_table_id = current_table.obj_id'
