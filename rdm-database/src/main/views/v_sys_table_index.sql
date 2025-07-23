@@ -6,6 +6,14 @@ select
 	, c.relname as index_name
 	, i.indisunique as is_unique
 	, index_col.index_columns
+	, row_number() 
+		over(
+			partition by 
+				t.oid
+			order by 
+				c.relname		
+		)
+		as index_number
 from 
 	pg_catalog.pg_index i
 join pg_catalog.pg_class c 
