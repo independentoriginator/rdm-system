@@ -237,84 +237,97 @@ begin
 			returning 
 				id
 		)
+		, type_dependency as (
+			insert into 
+				${mainSchemaName}.meta_view_dependency(
+					view_id
+					, master_type_id
+					, level
+				)
+			select 
+				master_view.view_id
+				, dependent_obj.type_id as master_type_id
+				, min(abs(dependent_obj.dep_level)) as level
+			from 
+				dependency master_view
+			join dependency dependent_obj
+				on dependent_obj.obj_id = master_view.obj_id
+				and dependent_obj.dep_level <> 0
+			where
+				master_view.dep_level = 0
+				and master_view.view_id is not null
+				and dependent_obj.type_id is not null
+				and i_treat_the_obj_as_dependent
+			group by
+				master_view.view_id
+				, dependent_obj.type_id
+			on conflict (view_id, master_type_id) 
+				do update set
+					level = excluded.level
+			returning
+				view_id
+				, master_type_id
+				, level
+		)
 	insert into 
 		${mainSchemaName}.meta_view_dependency(
 			view_id
 			, master_view_id
-			, master_type_id
 			, level
 		)
 	select 
 		t.view_id
 		, t.master_view_id
-		, t.master_type_id
 		, t.level
 	from (
-		select  
-			t.view_id
-			, t.master_view_id
-			, null::${type.id} as master_type_id
-			, t.level
-		from (
-			select
-				case 
-					when i_treat_the_obj_as_dependent 
-					then master_view.view_id
-					else coalesce(dependent_obj.view_id, ev.id)
-				end as view_id
-				, case 
-					when i_treat_the_obj_as_dependent 
-					then coalesce(dependent_obj.view_id, ev.id)
-					else master_view.view_id
-				end as master_view_id
-				, min(abs(dependent_obj.dep_level)) as level
-			from 
-				dependency master_view
-			join dependency dependent_obj
-				on dependent_obj.obj_id = master_view.obj_id 
-				and dependent_obj.dep_level <> 0
-			left join ${mainSchemaName}.meta_schema s 
-				on s.internal_name = dependent_obj.dep_obj_schema 
-			left join new_external_schema es 
-				on es.internal_name = dependent_obj.dep_obj_schema
-			left join new_external_view ev 
-				on ev.internal_name = dependent_obj.dep_obj_name
-				and ev.schema_id = coalesce(s.id, es.id)
-				and ev.is_routine = dependent_obj.is_routine
-			left join actualized_external_view aev
-				on aev.id = dependent_obj.view_id
-			where
-				master_view.dep_level = 0
-				and master_view.view_id is not null
-			group by
-				coalesce(dependent_obj.view_id, ev.id)
-				, master_view.view_id
-		) t 
-		where 
-			t.view_id <> t.master_view_id
-		union all
 		select
-			master_view.view_id
-			, null::${type.id} as master_view_id
-			, dependent_obj.type_id as master_type_id
+			case 
+				when i_treat_the_obj_as_dependent 
+				then master_view.view_id
+				else coalesce(dependent_obj.view_id, ev.id)
+			end as view_id
+			, case 
+				when i_treat_the_obj_as_dependent 
+				then coalesce(dependent_obj.view_id, ev.id)
+				else master_view.view_id
+			end as master_view_id
 			, min(abs(dependent_obj.dep_level)) as level
 		from 
 			dependency master_view
 		join dependency dependent_obj
-			on dependent_obj.obj_id = master_view.obj_id
+			on dependent_obj.obj_id = master_view.obj_id 
 			and dependent_obj.dep_level <> 0
+		left join ${mainSchemaName}.meta_schema s 
+			on s.internal_name = dependent_obj.dep_obj_schema 
+		left join new_external_schema es 
+			on es.internal_name = dependent_obj.dep_obj_schema
+		left join new_external_view ev 
+			on ev.internal_name = dependent_obj.dep_obj_name
+			and ev.schema_id = coalesce(s.id, es.id)
+			and ev.is_routine = dependent_obj.is_routine
+		left join actualized_external_view aev
+			on aev.id = dependent_obj.view_id
 		where
 			master_view.dep_level = 0
 			and master_view.view_id is not null
-			and dependent_obj.type_id is not null
-			and i_treat_the_obj_as_dependent
 		group by
-			master_view.view_id
-			, dependent_obj.type_id
+			coalesce(dependent_obj.view_id, ev.id)
+			, master_view.view_id
+		union all
+		select 
+			view_id
+			, master_type_id
+			, level
+		from 
+			type_dependency 
+		where 
+			false		
 	) t 
 	where 
-		t.view_id is not null 
-		and coalesce(t.master_view_id, t.master_type_id) is not null	
+		t.view_id <> t.master_view_id
+	on conflict (view_id, master_view_id) 
+		do update set
+			level = excluded.level
 	;	
 
 	if i_treat_the_obj_as_dependent then
