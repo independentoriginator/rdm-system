@@ -43,7 +43,7 @@ begin
 	return
 		format(
 			$$CREATE %s VIEW %I.%I AS %s%s%s%s%s%s$$
-			, case l_view_type when 'm'::char then 'MATERIALIZED' else '' end
+			, case l_view_type when 'm'::char then 'MATERIALIZED' else 'OR REPLACE' end
 			, l_schema_name
 			, l_view_name
 			, E'\n' || l_view_def
