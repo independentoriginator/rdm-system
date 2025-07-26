@@ -78,6 +78,11 @@ begin
 		) dependent_obj 
 	where 
 		dependent_obj.dep_obj_class = 'relation'
+		-- excluding subindexes of a partial index 
+		and ( 
+			dependent_obj.dep_level = 1
+			or dependent_obj.dep_obj_type <> 'i'
+		)
 		and (
 			dependent_obj.dep_obj_type = any(i_dep_obj_type)
 			or i_dep_obj_type is null 
