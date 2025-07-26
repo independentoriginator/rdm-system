@@ -140,7 +140,7 @@ begin
 			from 
 				dependent_obj
 			left join meta_view v 
-				on v.view_oid = dependent_obj.obj_id 
+				on v.view_oid = dependent_obj.dep_obj_id 
 				or (
 					v.view_name = dependent_obj.dep_obj_name 
 					and v.view_schema = dependent_obj.dep_obj_schema
